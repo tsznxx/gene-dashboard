@@ -14,7 +14,10 @@ from analysis import (
     run_pca,
     run_differential_expression
 )
-from visualization import create_pca_plot
+from visualization import (
+    create_pca_plot,
+    create_volcano_plot
+)
 
 
 st.set_page_config(
@@ -153,11 +156,12 @@ with st.sidebar:
 # Tabs
 #
 
-tab_data, tab_pca, tab_de = st.tabs(
+tab_data, tab_pca, tab_de, tab_volcano = st.tabs(
     [
         "Data",
         "PCA",
-        "DE Analysis"
+        "DE Analysis",
+        "Volcano Plot"
     ]
 )
 
@@ -352,6 +356,7 @@ with tab_de:
             group2=group2,
             apply_log2=apply_log2
         )
+        st.session_state["de_results"] = de_results
 
         st.success(
             f"{len(de_results)} genes analysed."
@@ -369,4 +374,99 @@ with tab_de:
             ),
             file_name="DE_results.csv",
             mime="text/csv"
+        )
+        
+with tab_volcano:
+
+    st.subheader(
+        "Volcano Plot"
+    )
+
+    if "de_results" not in st.session_state:
+
+        st.info(
+            "Run Differential Expression first."
+        )
+
+    else:
+
+        de_df = (
+            st.session_state["de_results"]
+        )
+
+        significance_column = st.radio(
+            "Use significance metric:",
+            ["PValue", "FDR"],
+            horizontal=True
+        )
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+
+            log2fc_cutoff = st.number_input(
+                "Absolute log2FC cutoff",
+                value=1.0,
+                step=0.1
+            )
+
+        with col2:
+
+            significance_cutoff = (
+                st.number_input(
+                    f"{significance_column} cutoff",
+                    value=0.05,
+                    step=0.01,
+                    format="%.3f"
+                )
+            )
+        top_up = (
+            de_df
+            .sort_values(
+                "log2FC",
+                ascending=False
+            )
+            .head(5)["Gene"]
+            .tolist()
+        )
+
+        top_down = (
+            de_df
+            .sort_values(
+                "log2FC",
+                ascending=True
+            )
+            .head(5)["Gene"]
+            .tolist()
+        )
+
+        default_genes = (
+            top_up + top_down
+        )
+                custom_gene_text = st.text_area(
+            "Additional genes to highlight (comma-separated)",
+            value=",".join(default_genes),
+            height=100
+        )
+
+        highlight_genes = [
+            gene.strip()
+            for gene in custom_gene_text.split(",")
+            if gene.strip()
+        ]
+        fig = create_volcano_plot(
+            de_df=de_df,
+            significance_column=
+            significance_column,
+            significance_cutoff=
+            significance_cutoff,
+            log2fc_cutoff=
+            log2fc_cutoff,
+            highlight_genes=
+            highlight_genes
+        )
+
+        st.plotly_chart(
+            fig,
+            use_container_width=True
         )
