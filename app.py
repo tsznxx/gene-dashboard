@@ -1,12 +1,13 @@
-# app.py
-
 import streamlit as st
-import pandas as pd
 
 from data_loader import (
     load_expression_file,
+    load_metadata_file,
     validate_expression_matrix,
-    summarize_expression_matrix
+    validate_metadata,
+    validate_sample_matching,
+    summarize_expression,
+    summarize_metadata
 )
 
 st.set_page_config(
@@ -16,65 +17,148 @@ st.set_page_config(
 
 st.title("Gene Expression Dashboard")
 
-st.markdown(
-    """
-    ### Module 1: Upload Expression Matrix
+st.header("Module 2: Data Upload & Validation")
 
-    Upload a gene expression matrix where:
+left, right = st.columns(2)
 
-    - Rows = Genes
-    - Columns = Samples
-    - First column = Gene
-    """
-)
+with left:
 
-uploaded_expression = st.file_uploader(
-    "Upload Expression Matrix (.csv)",
-    type=["csv"]
-)
+    uploaded_expression = st.file_uploader(
+        "Expression Matrix",
+        type=["csv"]
+    )
 
-if uploaded_expression:
+with right:
+
+    uploaded_metadata = st.file_uploader(
+        "Metadata Table",
+        type=["csv"]
+    )
+
+if uploaded_expression and uploaded_metadata:
 
     try:
 
-        expression_df = load_expression_file(
+        expr_df = load_expression_file(
             uploaded_expression
         )
 
-        errors = validate_expression_matrix(
-            expression_df
+        meta_df = load_metadata_file(
+            uploaded_metadata
         )
 
-        if errors:
+        expr_errors = validate_expression_matrix(
+            expr_df
+        )
 
-            st.error("Validation failed")
+        meta_errors = validate_metadata(
+            meta_df
+        )
 
-            for err in errors:
-                st.write("•", err)
+        all_errors = expr_errors + meta_errors
 
-        else:
+        if all_errors:
 
-            st.success("Expression matrix loaded successfully")
-
-            summary = summarize_expression_matrix(
-                expression_df
+            st.error(
+                "Validation failed."
             )
 
-            col1, col2 = st.columns(2)
+            for err in all_errors:
+                st.write("•", err)
 
-            with col1:
-                st.metric("Genes", summary["Genes"])
+            st.stop()
 
-            with col2:
-                st.metric("Samples", summary["Samples"])
+        match_result = validate_sample_matching(
+            expr_df,
+            meta_df
+        )
 
-            st.subheader("Preview")
+        if not match_result["matching"]:
 
+            st.error(
+                "Sample IDs do not match."
+            )
+
+            if match_result["missing_in_metadata"]:
+                st.write(
+                    "Missing in metadata:"
+                )
+                st.write(
+                    match_result["missing_in_metadata"]
+                )
+
+            if match_result["missing_in_expression"]:
+                st.write(
+                    "Missing in expression matrix:"
+                )
+                st.write(
+                    match_result["missing_in_expression"]
+                )
+
+            st.stop()
+
+        st.success(
+            "Expression matrix and metadata validated."
+        )
+
+        st.session_state["expression_df"] = expr_df
+        st.session_state["metadata_df"] = meta_df
+
+        st.subheader("Dataset Summary")
+
+        e_summary = summarize_expression(
+            expr_df
+        )
+
+        m_summary = summarize_metadata(
+            meta_df
+        )
+
+        c1, c2, c3 = st.columns(3)
+
+        with c1:
+            st.metric(
+                "Genes",
+                e_summary["Genes"]
+            )
+
+        with c2:
+            st.metric(
+                "Samples",
+                e_summary["Samples"]
+            )
+
+        with c3:
+            st.metric(
+                "Groups",
+                m_summary.get("Groups", "NA")
+            )
+
+        tab1, tab2 = st.tabs(
+            [
+                "Expression Matrix",
+                "Metadata"
+            ]
+        )
+
+        with tab1:
             st.dataframe(
-                expression_df.head(20),
+                expr_df.head(20),
+                use_container_width=True
+            )
+
+        with tab2:
+            st.dataframe(
+                meta_df.head(20),
                 use_container_width=True
             )
 
     except Exception as e:
 
         st.exception(e)
+
+else:
+
+    st.info(
+        "Please upload both files."
+    )
