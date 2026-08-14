@@ -1,26 +1,47 @@
 # analysis.py
 
+import numpy as np
 import pandas as pd
+
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
 
-def run_pca(expression_df, n_components=2):
+def run_pca(
+    expression_df,
+    apply_log2=False,
+    n_components=2
+):
     """
-    expression_df format:
+    Run PCA on expression matrix.
 
-    Gene  Sample1 Sample2 ...
-    TP53  10      15
-    EGFR  20      12
+    Parameters
+    ----------
+    expression_df : DataFrame
+        Expression matrix:
+        Gene, Sample1, Sample2 ...
+
+    apply_log2 : bool
+        Apply log2(x+1) transformation
+
+    n_components : int
+        Number of principal components
+
+    Returns
+    -------
+    pca_df : DataFrame
+    explained_variance : ndarray
     """
 
     gene_col = expression_df.columns[0]
 
     expr = expression_df.set_index(gene_col)
 
-    # transpose:
-    # samples become rows
-    expr_t = expr.T
+    # genes x samples -> samples x genes
+    expr_t = expr.T.astype(float)
+
+    if apply_log2:
+        expr_t = np.log2(expr_t + 1)
 
     scaler = StandardScaler()
 
@@ -28,20 +49,19 @@ def run_pca(expression_df, n_components=2):
 
     pca = PCA(n_components=n_components)
 
-    components = pca.fit_transform(scaled_data)
+    pcs = pca.fit_transform(scaled_data)
 
-    result_df = pd.DataFrame(
-        components,
+    pca_df = pd.DataFrame(
+        pcs,
         columns=[
             f"PC{i+1}"
             for i in range(n_components)
         ]
     )
 
-    result_df["Sample"] = expr_t.index
+    pca_df["Sample"] = expr_t.index
 
-    explained_variance = (
+    return (
+        pca_df,
         pca.explained_variance_ratio_
     )
-
-    return result_df, explained_variance
