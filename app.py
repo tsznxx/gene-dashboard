@@ -267,7 +267,7 @@ with tab_pca:
             config={
                 "toImageButtonOptions": {
                     "format": "svg",
-                    "filename": "volcano_plot",
+                    "filename": "PCA_plot",
                     "height": 800,
                     "width": 1200,
                     "scale": 1

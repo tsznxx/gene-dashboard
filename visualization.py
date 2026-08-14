@@ -185,25 +185,26 @@ def create_volcano_plot(
             )
         ]
 
-        fig.add_trace(
-            go.Scatter(
-                x=highlight_df["log2FC"],
-                y=highlight_df["neglog10"],
-                mode="markers+text",
-                text=highlight_df["Gene"],
-                textposition="top center",
-                marker=dict(
-                    color="black",
-                    size=11,
-                    line=dict(
-                        color="white",
-                        width=1
-                    )
-                ),
-                showlegend=False,
-                hoverinfo="skip"
+        if (
+            highlight_genes is not None
+            and len(highlight_genes) > 0
+        ):
+
+            highlight_df = df[
+                df["Gene"].isin(highlight_genes)
+            ]
+
+            fig.add_trace(
+                go.Scatter(
+                    x=highlight_df["log2FC"],
+                    y=highlight_df["neglog10"],
+                    mode="text",
+                    text=highlight_df["Gene"],
+                    textposition="top center",
+                    showlegend=False,
+                    hoverinfo="skip"
+                )
             )
-        )
 
     fig.update_layout(
         template="plotly_white",
