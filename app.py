@@ -468,5 +468,40 @@ with tab_volcano:
 
         st.plotly_chart(
             fig,
-            use_container_width=True
+            use_container_width=True,
+            config={
+                "toImageButtonOptions": {
+                    "format": "svg",
+                    "filename": "volcano_plot",
+                    "height": 800,
+                    "width": 1200,
+                    "scale": 1
+                }
+            }
         )
+        import plotly.io as pio
+
+        svg_bytes = fig.to_image(
+            format="svg"
+        )
+
+        png_bytes = fig.to_image(
+            format="png",
+            width=1200,
+            height=800,
+            scale=2
+        )
+
+        st.download_button(
+            "Download SVG",
+            svg_bytes,
+            file_name="volcano.svg",
+            mime="image/svg+xml"
+        )
+
+        st.download_button(
+            "Download PNG",
+            png_bytes,
+            file_name="volcano.png",
+            mime="image/png"
+)
