@@ -155,6 +155,44 @@ if uploaded_expression and uploaded_metadata:
                 meta_df.head(20),
                 use_container_width=True
             )
+        st.header("PCA Analysis")
+
+        metadata_columns = meta_df.columns.tolist()
+
+        color_by = st.selectbox(
+            "Color PCA by",
+            metadata_columns
+        )
+
+        if st.button("Run PCA"):
+
+            pca_df, explained_variance = run_pca(
+                expr_df
+            )
+
+            pca_df = pca_df.merge(
+                meta_df,
+                on="Sample",
+                how="left"
+            )
+
+            fig = create_pca_plot(
+                pca_df,
+                color_by,
+                explained_variance
+            )
+
+            st.plotly_chart(
+                fig,
+                use_container_width=True
+            )
+
+            st.subheader("PCA Coordinates")
+
+            st.dataframe(
+                pca_df,
+                use_container_width=True
+            )
 
     except Exception as e:
 
@@ -166,41 +204,3 @@ else:
         "Please upload both files."
     )
     
-st.header("PCA Analysis")
-
-metadata_columns = meta_df.columns.tolist()
-
-color_by = st.selectbox(
-    "Color PCA by",
-    metadata_columns
-)
-
-if st.button("Run PCA"):
-
-    pca_df, explained_variance = run_pca(
-        expr_df
-    )
-
-    pca_df = pca_df.merge(
-        meta_df,
-        on="Sample",
-        how="left"
-    )
-
-    fig = create_pca_plot(
-        pca_df,
-        color_by,
-        explained_variance
-    )
-
-    st.plotly_chart(
-        fig,
-        use_container_width=True
-    )
-
-    st.subheader("PCA Coordinates")
-
-    st.dataframe(
-        pca_df,
-        use_container_width=True
-    )
