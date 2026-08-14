@@ -153,7 +153,7 @@ with st.sidebar:
 # Tabs
 #
 
-tab_data, tab_pca = st.tabs(
+tab_data, tab_pca, tab_de = st.tabs(
     [
         "Data",
         "PCA",
