@@ -1,6 +1,7 @@
 # data_loader.py
 
 import pandas as pd
+import numpy as np
 
 
 def load_expression_file(uploaded_file):
@@ -19,7 +20,7 @@ def load_expression_file(uploaded_file):
 
 def load_metadata_file(uploaded_file):
     """
-    Load metadata table.
+    Load metadata file.
 
     Expected format:
 
@@ -33,14 +34,14 @@ def load_metadata_file(uploaded_file):
 
 def validate_expression_matrix(df):
     """
-    Validate expression matrix structure.
+    Validate expression matrix.
     """
 
     errors = []
 
     if df.shape[1] < 2:
         errors.append(
-            "Expression matrix must contain a Gene column and at least one sample column."
+            "Expression matrix must contain Gene column and at least one sample column."
         )
         return errors
 
@@ -61,27 +62,20 @@ def validate_expression_matrix(df):
 
 def validate_metadata(df):
     """
-    Validate metadata structure.
+    Validate metadata table.
     """
 
     errors = []
 
-    sample_col = None
-
-    for col in df.columns:
-        if col.lower() == "sample":
-            sample_col = col
-            break
-
-    if sample_col is None:
+    if "Sample" not in df.columns:
         errors.append(
-            "Metadata table must contain a 'Sample' column."
+            "Metadata must contain a 'Sample' column."
         )
         return errors
 
-    if df[sample_col].duplicated().any():
+    if df["Sample"].duplicated().any():
         errors.append(
-            "Duplicate sample IDs detected."
+            "Duplicate Sample IDs detected."
         )
 
     return errors
@@ -89,19 +83,13 @@ def validate_metadata(df):
 
 def validate_sample_matching(expr_df, meta_df):
     """
-    Check whether samples match between
-    expression matrix and metadata table.
+    Check if sample IDs match between
+    expression matrix and metadata.
     """
 
     expr_samples = set(expr_df.columns[1:])
 
-    sample_col = [
-        col
-        for col in meta_df.columns
-        if col.lower() == "sample"
-    ][0]
-
-    meta_samples = set(meta_df[sample_col])
+    meta_samples = set(meta_df["Sample"])
 
     missing_in_metadata = expr_samples - meta_samples
     missing_in_expression = meta_samples - expr_samples
@@ -122,8 +110,7 @@ def validate_sample_matching(expr_df, meta_df):
 
 def summarize_expression(expr_df):
     """
-    Generate summary statistics
-    for expression matrix.
+    Summarize expression matrix.
     """
 
     return {
@@ -134,33 +121,65 @@ def summarize_expression(expr_df):
 
 def summarize_metadata(meta_df):
     """
-    Generate summary statistics
-    for metadata table.
+    Summarize metadata.
     """
 
     summary = {
         "Samples": len(meta_df)
     }
 
-    group_cols = [
-        col
-        for col in meta_df.columns
-        if col.lower() == "group"
-    ]
-
-    if len(group_cols) > 0:
+    if "Group" in meta_df.columns:
         summary["Groups"] = (
-            meta_df[group_cols[0]]
-            .nunique()
+            meta_df["Group"].nunique()
         )
 
     return summary
 
 
-def get_sample_column(meta_df):
+def get_gene_names(expr_df):
     """
-    Return metadata sample column name.
+    Return gene names.
     """
 
-    for col in meta_df.columns:
-        if col.lower() == "sample"
+    return expr_df.iloc[:, 0].tolist()
+
+
+def get_sample_names(expr_df):
+    """
+    Return sample names.
+    """
+
+    return expr_df.columns[1:].tolist()
+
+
+def prepare_expression_matrix(
+    expr_df,
+    apply_log2=False
+):
+    """
+    Convert expression matrix into a
+    samples x genes numeric matrix.
+
+    Output format:
+
+               TP53  EGFR  MYC
+    Sample1     10    20     5
+    Sample2     15    22     3
+    """
+
+    gene_col = expr_df.columns[0]
+
+    matrix = expr_df.set_index(
+        gene_col
+    )
+
+    matrix = matrix.astype(float)
+
+    if apply_log2:
+        matrix = np.log2(matrix + 1)
+
+    # transpose:
+    # rows=samples, columns=genes
+    matrix = matrix.T
+
+    return matrix
