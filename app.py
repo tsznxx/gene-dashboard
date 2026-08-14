@@ -17,7 +17,7 @@ st.set_page_config(
 
 st.title("Gene Expression Dashboard")
 
-st.header("Module 2: Data Upload & Validation")
+st.header("Data Upload & Validation")
 
 left, right = st.columns(2)
 
@@ -100,6 +100,9 @@ if uploaded_expression and uploaded_metadata:
         st.success(
             "Expression matrix and metadata validated."
         )
+        
+        from analysis import run_pca
+        from visualization import create_pca_plot
 
         st.session_state["expression_df"] = expr_df
         st.session_state["metadata_df"] = meta_df
@@ -161,4 +164,43 @@ else:
 
     st.info(
         "Please upload both files."
+    )
+    
+st.header("PCA Analysis")
+
+metadata_columns = meta_df.columns.tolist()
+
+color_by = st.selectbox(
+    "Color PCA by",
+    metadata_columns
+)
+
+if st.button("Run PCA"):
+
+    pca_df, explained_variance = run_pca(
+        expr_df
+    )
+
+    pca_df = pca_df.merge(
+        meta_df,
+        on="Sample",
+        how="left"
+    )
+
+    fig = create_pca_plot(
+        pca_df,
+        color_by,
+        explained_variance
+    )
+
+    st.plotly_chart(
+        fig,
+        use_container_width=True
+    )
+
+    st.subheader("PCA Coordinates")
+
+    st.dataframe(
+        pca_df,
+        use_container_width=True
     )
