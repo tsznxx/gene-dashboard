@@ -119,3 +119,104 @@ def run_pca(
         pca_df,
         pca.explained_variance_ratio_
     )
+    
+    
+from scipy.stats import ttest_ind
+from statsmodels.stats.multitest import multipletests
+
+
+def run_differential_expression(
+    expression_df,
+    metadata_df,
+    group_column,
+    group1,
+    group2,
+    apply_log2=False
+):
+    """
+    Differential expression analysis using
+    Welch t-test.
+    """
+
+    gene_col = expression_df.columns[0]
+
+    expr = expression_df.set_index(gene_col)
+
+    expr = expr.apply(
+        pd.to_numeric,
+        errors="coerce"
+    )
+
+    if apply_log2:
+        expr = np.log2(expr + 1)
+
+    group1_samples = metadata_df[
+        metadata_df[group_column] == group1
+    ]["Sample"].tolist()
+
+    group2_samples = metadata_df[
+        metadata_df[group_column] == group2
+    ]["Sample"].tolist()
+
+    results = []
+
+    for gene in expr.index:
+
+        values1 = expr.loc[
+            gene,
+            group1_samples
+        ].dropna()
+
+        values2 = expr.loc[
+            gene,
+            group2_samples
+        ].dropna()
+
+        if (
+            len(values1) < 2
+            or len(values2) < 2
+        ):
+            continue
+
+        mean1 = values1.mean()
+        mean2 = values2.mean()
+
+        log2fc = mean1 - mean2
+
+        stat, pvalue = ttest_ind(
+            values1,
+            values2,
+            equal_var=False
+        )
+
+        results.append(
+            [
+                gene,
+                mean1,
+                mean2,
+                log2fc,
+                pvalue
+            ]
+        )
+
+    de_df = pd.DataFrame(
+        results,
+        columns=[
+            "Gene",
+            f"{group1}_Mean",
+            f"{group2}_Mean",
+            "log2FC",
+            "PValue"
+        ]
+    )
+
+    de_df["FDR"] = multipletests(
+        de_df["PValue"],
+        method="fdr_bh"
+    )[1]
+
+    de_df = de_df.sort_values(
+        "FDR"
+    )
+
+    return de_df

@@ -10,7 +10,10 @@ from data_loader import (
     summarize_metadata
 )
 
-from analysis import run_pca
+from analysis import (
+    run_pca,
+    run_differential_expression
+)
 from visualization import create_pca_plot
 
 
@@ -153,7 +156,8 @@ with st.sidebar:
 tab_data, tab_pca = st.tabs(
     [
         "Data",
-        "PCA"
+        "PCA",
+        "DE Analysis"
     ]
 )
 
@@ -282,4 +286,87 @@ with tab_pca:
         st.dataframe(
             pca_df,
             use_container_width=True
+        )
+        
+        
+# DE Tab        
+with tab_de:
+
+    st.subheader(
+        "Differential Expression Analysis"
+    )
+
+    eligible_columns = []
+
+    for col in meta_df.columns:
+
+        if meta_df[col].nunique() >= 2:
+            eligible_columns.append(col)
+
+    group_column = st.selectbox(
+        "Grouping Column",
+        eligible_columns,
+        key="de_group_column"
+    )
+
+    groups = sorted(
+        meta_df[group_column]
+        .dropna()
+        .unique()
+        .tolist()
+    )
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+
+        group1 = st.selectbox(
+            "Group 1",
+            groups,
+            key="group1"
+        )
+
+    with col2:
+
+        remaining = [
+            g for g in groups
+            if g != group1
+        ]
+
+        group2 = st.selectbox(
+            "Group 2",
+            remaining,
+            key="group2"
+        )
+
+    if st.button(
+        "Run Differential Expression",
+        type="primary"
+    ):
+
+        de_results = run_differential_expression(
+            expression_df=expr_df,
+            metadata_df=meta_df,
+            group_column=group_column,
+            group1=group1,
+            group2=group2,
+            apply_log2=apply_log2
+        )
+
+        st.success(
+            f"{len(de_results)} genes analysed."
+        )
+
+        st.dataframe(
+            de_results,
+            use_container_width=True
+        )
+
+        st.download_button(
+            label="Download DE Results",
+            data=de_results.to_csv(
+                index=False
+            ),
+            file_name="DE_results.csv",
+            mime="text/csv"
         )
