@@ -98,4 +98,93 @@ def validate_metadata(df):
 
     if df[sample_col].duplicated().any():
         errors.append(
-        
+            "Duplicate sample IDs detected in metadata."
+        )
+
+    return errors
+
+
+def validate_sample_matching(expr_df, meta_df):
+    """
+    Check whether samples match between expression matrix
+    and metadata table.
+
+    Returns
+    -------
+    dict
+    """
+
+    expr_samples = set(expr_df.columns[1:])
+
+    sample_col = [
+        c for c in meta_df.columns
+        if c.lower() == "sample"
+    ][0]
+
+    meta_samples = set(meta_df[sample_col])
+
+    missing_in_metadata = expr_samples - meta_samples
+    missing_in_expression = meta_samples - expr_samples
+
+    return {
+        "matching": (
+            len(missing_in_metadata) == 0
+            and len(missing_in_expression) == 0
+        ),
+        "missing_in_metadata": sorted(
+            list(missing_in_metadata)
+        ),
+        "missing_in_expression": sorted(
+            list(missing_in_expression)
+        )
+    }
+
+
+def summarize_expression(expr_df):
+    """
+    Summarize expression dataset.
+    """
+
+    return {
+        "Genes": expr_df.shape[0],
+        "Samples": expr_df.shape[1] - 1
+    }
+
+
+def summarize_metadata(meta_df):
+    """
+    Summarize metadata dataset.
+    """
+
+    summary = {
+        "Samples": len(meta_df)
+    }
+
+    group_cols = [
+        c for c in meta_df.columns
+        if c.lower() == "group"
+    ]
+
+    if len(group_cols) > 0:
+        summary["Groups"] = (
+            meta_df[group_cols[0]]
+            .nunique()
+        )
+
+    return summary
+
+
+def get_sample_columns(expr_df):
+    """
+    Return sample names from expression matrix.
+    """
+
+    return list(expr_df.columns[1:])
+
+
+def get_gene_names(expr_df):
+    """
+    Return gene names.
+    """
+
+    gene
