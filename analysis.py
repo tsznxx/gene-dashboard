@@ -12,50 +12,104 @@ def run_pca(
     apply_log2=False,
     n_components=2
 ):
-    """
-    Run PCA on expression matrix.
-
-    Parameters
-    ----------
-    expression_df : DataFrame
-        Expression matrix:
-        Gene, Sample1, Sample2 ...
-
-    apply_log2 : bool
-        Apply log2(x+1) transformation
-
-    n_components : int
-        Number of principal components
-
-    Returns
-    -------
-    pca_df : DataFrame
-    explained_variance : ndarray
-    """
 
     gene_col = expression_df.columns[0]
 
+    #
+    # Set Gene as row index
+    #
     expr = expression_df.set_index(gene_col)
 
-    # genes x samples -> samples x genes
-    expr_t = expr.T.astype(float)
+    #
+    # Force all values to numeric
+    # Non-numeric values become NaN
+    #
+    expr = expr.apply(
+        pd.to_numeric,
+        errors="coerce"
+    )
 
+    #
+    # Debug information
+    #
+    total_na = expr.isna().sum().sum()
+
+    print("========== PCA DEBUG ==========")
+    print("Expression matrix shape:", expr.shape)
+    print("Total missing values:", total_na)
+
+    if total_na > 0:
+
+        print("\nColumns containing NaN:")
+
+        bad_cols = expr.columns[
+            expr.isna().any()
+        ]
+
+        print(list(bad_cols))
+
+        print("\nFirst few rows with NaN:")
+
+        print(
+            expr.loc[
+                expr.isna().any(axis=1)
+            ].head()
+        )
+
+    #
+    # Convert to samples x genes
+    #
+    expr_t = expr.T
+
+    #
+    # Optional log2 transform
+    #
     if apply_log2:
-        expr_t = np.log2(expr_t + 1)
+        expr_t = np.log2(
+            expr_t + 1
+        )
 
+    #
+    # Stop immediately if NaN exists
+    #
+    if expr_t.isna().sum().sum() > 0:
+
+        raise ValueError(
+            f"Expression matrix contains "
+            f"{expr_t.isna().sum().sum()} "
+            f"missing values."
+        )
+
+    #
+    # Scale
+    #
     scaler = StandardScaler()
 
-    scaled_data = scaler.fit_transform(expr_t)
+    scaled_data = scaler.fit_transform(
+        expr_t
+    )
 
-    pca = PCA(n_components=n_components)
+    #
+    # PCA
+    #
+    pca = PCA(
+        n_components=n_components
+    )
 
-    pcs = pca.fit_transform(scaled_data)
+    pcs = pca.fit_transform(
+        scaled_data
+    )
 
+    #
+    # Output dataframe
+    #
     pca_df = pd.DataFrame(
         pcs,
         columns=[
             f"PC{i+1}"
-            for i in range(n_components)
+            for i in range(
+                n_components
+            )
         ]
     )
 
