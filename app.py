@@ -443,7 +443,7 @@ with tab_volcano:
         default_genes = (
             top_up + top_down
         )
-                custom_gene_text = st.text_area(
+        custom_gene_text = st.text_area(
             "Additional genes to highlight (comma-separated)",
             value=",".join(default_genes),
             height=100
