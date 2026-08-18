@@ -499,26 +499,17 @@ with tab_box:
     st.subheader(
         "Gene Expression Boxplots"
     )
-    plot_mode = st.radio(
-    "Plot Layout",
-    [
-        "Combined",
-        "Per Gene"
-        
-    ],
-    horizontal=True
-)
 
-    default_genes = (
-        st.session_state.get(
-            "highlight_genes",
-            []
-        )
+    default_genes = st.session_state.get(
+        "highlight_genes",
+        []
     )
 
     gene_text = st.text_area(
         "Genes (comma separated)",
-        value=",".join(default_genes),
+        value=",".join(
+            default_genes
+        ),
         height=120
     )
 
@@ -532,20 +523,106 @@ with tab_box:
     ]
 
     group_column = st.selectbox(
-        "Group samples by",
+        "Group By",
         meta_df.columns.tolist(),
         key="boxplot_group"
     )
-    if st.button(
-        "Generate Boxplots"
+
+    plot_mode = st.radio(
+        "Plot Mode",
+        [
+            "Combined",
+            "Single Gene"
+        ],
+        horizontal=True
+    )
+
+    #
+    # Single Gene Selector
+    #
+    selected_gene = None
+
+    if (
+        plot_mode == "Single Gene"
+        and len(selected_genes) > 0
     ):
+
+        selected_gene = st.selectbox(
+            "Select Gene",
+            selected_genes
+        )
+
+    st.divider()
+
+    st.subheader(
+        "Figure Settings"
+    )
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+
+        plot_width = st.number_input(
+            "Width (px)",
+            value=1200,
+            min_value=400,
+            step=100
+        )
+
+    with col2:
+
+        plot_height = st.number_input(
+            "Height (px)",
+            value=600,
+            min_value=300,
+            step=100
+        )
+
+    auto_y = st.checkbox(
+        "Automatic Y-axis",
+        value=True
+    )
+
+    y_range = None
+
+    if not auto_y:
+
+        col3, col4 = st.columns(2)
+
+        with col3:
+
+            y_min = st.number_input(
+                "Y-axis Min",
+                value=0.0
+            )
+
+        with col4:
+
+            y_max = st.number_input(
+                "Y-axis Max",
+                value=20.0
+            )
+
+        y_range = [
+            y_min,
+            y_max
+        ]
+
+    if st.button(
+        "Generate Boxplot"
+    ):
+
         fig = create_gene_boxplot(
             expression_df=expr_df,
             metadata_df=meta_df,
             genes=selected_genes,
             group_column=group_column,
             apply_log2=apply_log2,
-            plot_mode=plot_mode
+            plot_mode=plot_mode,
+            selected_gene=selected_gene,
+            width=plot_width,
+            height=plot_height,
+            y_range=y_range
         )
 
         st.plotly_chart(
@@ -555,10 +632,7 @@ with tab_box:
                 "displaylogo": False,
                 "toImageButtonOptions": {
                     "format": "svg",
-                    "filename": "gene_boxplots",
-                    "width": 1800,
-                    "height": 900,
-                    "scale": 1
-                }
-            }
-        )
+                    "filename": "gene_boxplot",
+                    "width": plot_width,
+                    "height": plot_height,
+                   

@@ -230,26 +230,14 @@ def create_gene_boxplot(
     genes,
     group_column,
     apply_log2=False,
-    plot_mode="Combined"
+    plot_mode="Combined",
+    selected_gene=None,
+    width=1200,
+    height=600,
+    y_range=None
 ):
     """
-    Create gene expression boxplots.
-
-    Parameters
-    ----------
-    expression_df : DataFrame
-
-    metadata_df : DataFrame
-
-    genes : list
-
-    group_column : str
-
-    apply_log2 : bool
-
-    plot_mode : str
-        "Combined"
-        "Per Gene"
+    Create gene expression boxplot(s).
     """
 
     import numpy as np
@@ -258,7 +246,9 @@ def create_gene_boxplot(
 
     gene_col = expression_df.columns[0]
 
-    expr = expression_df.set_index(gene_col)
+    expr = expression_df.set_index(
+        gene_col
+    )
 
     expr = expr.apply(
         pd.to_numeric,
@@ -298,10 +288,22 @@ def create_gene_boxplot(
         how="left"
     )
 
-    #
-    # Combined Plot
-    #
-    if plot_mode == "Combined":
+    if plot_mode == "Single Gene":
+
+        plot_df = plot_df[
+            plot_df["Gene"] == selected_gene
+        ]
+
+        fig = px.box(
+            plot_df,
+            x=group_column,
+            y="Expression",
+            color=group_column,
+            points="all",
+            title=selected_gene
+        )
+
+    else:
 
         fig = px.box(
             plot_df,
@@ -311,76 +313,31 @@ def create_gene_boxplot(
             points="all"
         )
 
-        fig.update_traces(
-            pointpos=0,
-            jitter=0.1,
-            marker_size=3
-        )
-
-        fig.update_layout(
-            template="plotly_white",
-            height=800,
-            width=1600,
-            boxmode="group",
-            xaxis_title="Gene",
-            yaxis_title="Expression"
-        )
-
     #
-    # Per-Gene Facets
+    # Center points on boxplots
     #
-    else:
-
-        fig = px.box(
-            plot_df,
-            x=group_column,
-            y="Expression",
-            color=group_column,
-            facet_col="Gene",
-            facet_col_wrap=5,  # wider panels
-            points="all"
+    fig.update_traces(
+        pointpos=0,
+        jitter=0.08,
+        marker=dict(
+            size=3,
+            color="black"
+        ),
+        selector=dict(
+            type="box"
         )
+    )
 
-        #
-        # Center points on boxes
-        #
-        fig.update_traces(
-            pointpos=0,
-            jitter=0.1,
-            marker=dict(
-                size=3
-            ),
-            selector=dict(type="box")
-        )
+    fig.update_layout(
+        template="plotly_white",
+        width=width,
+        height=height
+    )
 
-        #
-        # Number of facet rows
-        #
-        n_rows = max(
-            1,
-            (len(genes) + 1) // 2
-        )
+    if y_range is not None:
 
-        #
-        # Roughly 2:1 width:height per panel
-        #
-        fig.update_layout(
-            template="plotly_white",
-            width=1600,
-            height=max(
-                400,
-                400 * n_rows
-            ),
-            showlegend=False
-        )
-
-        #
-        # Remove "Gene="
-        #
-        fig.for_each_annotation(
-            lambda a: a.update(
-                text=a.text.split("=")[-1]
-            )
+        fig.update_yaxes(
+            range=y_range
         )
 
     return fig
