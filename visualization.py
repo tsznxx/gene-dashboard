@@ -63,45 +63,18 @@ def create_pca_plot(
 
 def create_volcano_plot(
     de_df,
-    significance_column,
-    significance_cutoff,
-    log2fc_cutoff,
+    significance_column="FDR",
+    significance_cutoff=0.05,
+    log2fc_cutoff=1.0,
     highlight_genes=None,
     width=1200,
     height=800,
     x_range=None,
     y_range=None
 ):
-    """
-    Create volcano plot.
-
-    Parameters
-    ----------
-    de_df : DataFrame
-
-        Must contain:
-
-        Gene
-        log2FC
-        PValue
-        FDR
-
-    significance_column : str
-
-        "PValue" or "FDR"
-
-    significance_cutoff : float
-
-    log2fc_cutoff : float
-
-    highlight_genes : list
-    """
 
     df = de_df.copy()
 
-    #
-    # Avoid log(0)
-    #
     df[significance_column] = (
         df[significance_column]
         .clip(lower=1e-300)
@@ -113,9 +86,6 @@ def create_volcano_plot(
         )
     )
 
-    #
-    # Define Up/Down/NS
-    #
     df["Direction"] = "Not Significant"
 
     up_mask = (
@@ -162,42 +132,26 @@ def create_volcano_plot(
             "Gene": True,
             "log2FC": ":.3f",
             "PValue": ":.3e",
-            "FDR": ":.3e",
-            "Direction": True
+            "FDR": ":.3e"
         }
     )
 
-    #
-    # FC thresholds
-    #
     fig.add_vline(
         x=log2fc_cutoff,
-        line_dash="dash",
-        line_color="black"
+        line_dash="dash"
     )
 
     fig.add_vline(
         x=-log2fc_cutoff,
-        line_dash="dash",
-        line_color="black"
+        line_dash="dash"
     )
 
-    #
-    # Significance threshold
-    #
     fig.add_hline(
         y=-np.log10(significance_cutoff),
-        line_dash="dash",
-        line_color="black"
+        line_dash="dash"
     )
 
-    #
-    # Highlight genes
-    #
-    if (
-        highlight_genes is not None
-        and len(highlight_genes) > 0
-    ):
+    if highlight_genes:
 
         highlight_df = df[
             df["Gene"].isin(
@@ -209,17 +163,10 @@ def create_volcano_plot(
             go.Scatter(
                 x=highlight_df["log2FC"],
                 y=highlight_df["neglog10"],
-                mode="markers+text",
+                mode="text",
                 text=highlight_df["Gene"],
                 textposition="top center",
-                marker=dict(
-                    color="purple",
-                    size=11,
-                    line=dict(
-                        color="white",
-                        width=1
-                    )
-                ),
+                textfont=dict(size=12),
                 showlegend=False,
                 hoverinfo="skip"
             )
@@ -229,23 +176,17 @@ def create_volcano_plot(
         template="plotly_white",
         width=width,
         height=height,
-        title=(
-            f"Volcano Plot "
-            f"({significance_column} ≤ {significance_cutoff}, "
-            f"|log2FC| ≥ {log2fc_cutoff})"
-        ),
+        title="Volcano Plot",
         xaxis_title="log2 Fold Change",
-        yaxis_title=f"-log10({significance_column})",
-        legend_title=""
+        yaxis_title=f"-log10({significance_column})"
     )
-    if x_range is not None:
 
+    if x_range is not None:
         fig.update_xaxes(
             range=x_range
         )
 
     if y_range is not None:
-
         fig.update_yaxes(
             range=y_range
         )
@@ -265,9 +206,6 @@ def create_gene_boxplot(
     height=600,
     y_range=None
 ):
-    """
-    Create gene expression boxplot(s).
-    """
 
     gene_col = expression_df.columns[0]
 
@@ -312,18 +250,40 @@ def create_gene_boxplot(
         on="Sample",
         how="left"
     )
-    
-    groups = plot_df[group_column].dropna().unique()
+
+    TAB10 = [
+        "#1f77b4",
+        "#ff7f0e",
+        "#2ca02c",
+        "#d62728",
+        "#9467bd",
+        "#8c564b",
+        "#e377c2",
+        "#7f7f7f",
+        "#bcbd22",
+        "#17becf"
+    ]
+
+    groups = (
+        plot_df[group_column]
+        .dropna()
+        .unique()
+    )
 
     color_map = {
         group: TAB10[i % len(TAB10)]
         for i, group in enumerate(groups)
     }
-    
+
     if plot_mode == "Single Gene":
 
+        if selected_gene is None:
+            selected_gene = genes[0]
+
         plot_df = plot_df[
-            plot_df["Gene"] == selected_gene
+            plot_df["Gene"]
+            ==
+            selected_gene
         ]
 
         fig = px.box(
@@ -331,9 +291,9 @@ def create_gene_boxplot(
             x=group_column,
             y="Expression",
             color=group_column,
+            color_discrete_map=color_map,
             points="all",
-            title=f"{selected_gene} Expression",
-            color_discrete_map=color_map
+            title=f"{selected_gene} Expression"
         )
 
     else:
@@ -343,24 +303,15 @@ def create_gene_boxplot(
             x="Gene",
             y="Expression",
             color=group_column,
-            points="all",
-            color_discrete_map=color_map
+            color_discrete_map=color_map,
+            points="all"
         )
 
-
-
-    #
-    # Center points on boxplots
-    #
     fig.update_traces(
         pointpos=0,
         jitter=0.08,
-        marker=dict(
-            size=3,
-        ),
-        selector=dict(
-            type="box"
-        )
+        marker_size=3,
+        selector=dict(type="box")
     )
 
     fig.update_layout(

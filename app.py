@@ -386,7 +386,11 @@ with tab_de:
             file_name="DE_results.csv",
             mime="text/csv"
         )
-        
+
+# ==================================================
+# VOLCANO TAB
+# ==================================================
+
 with tab_volcano:
 
     st.subheader(
@@ -401,12 +405,15 @@ with tab_volcano:
 
     else:
 
-        de_df = (
-            st.session_state["de_results"]
-        )
+        de_df = st.session_state[
+            "de_results"
+        ]
 
+        #
+        # Significance settings
+        #
         significance_column = st.radio(
-            "Use significance metric:",
+            "Use significance metric",
             ["PValue", "FDR"],
             horizontal=True
         )
@@ -418,19 +425,22 @@ with tab_volcano:
             log2fc_cutoff = st.number_input(
                 "Absolute log2FC cutoff",
                 value=1.0,
-                step=0.1
+                step=0.1,
+                key="volcano_fc_cutoff"
             )
 
         with col2:
 
-            significance_cutoff = (
-                st.number_input(
-                    f"{significance_column} cutoff",
-                    value=0.05,
-                    step=0.01,
-                    format="%.3f"
-                )
+            significance_cutoff = st.number_input(
+                f"{significance_column} cutoff",
+                value=0.05,
+                step=0.01,
+                key="volcano_sig_cutoff"
             )
+
+        #
+        # Default highlighted genes
+        #
         top_up = (
             de_df
             .sort_values(
@@ -454,135 +464,16 @@ with tab_volcano:
         default_genes = (
             top_up + top_down
         )
-        custom_gene_text = st.text_area(
-            "Additional genes to highlight (comma-separated)",
-            value=",".join(default_genes),
-            height=100
+
+        gene_text = st.text_area(
+            "Genes to highlight",
+            value=",".join(
+                default_genes
+            ),
+            height=120,
+            key="volcano_gene_text"
         )
 
-        highlight_genes = [
-            gene.strip()
-            for gene in custom_gene_text.split(",")
-            if gene.strip()
-        ]
-        st.session_state[
-        "highlight_genes"
-        ] = highlight_genes
-        
-        st.divider()
-
-        st.subheader(
-            "Figure Settings"
-        )
-
-        col1, col2 = st.columns(2)
-
-        with col1:
-
-            volcano_width = st.number_input(
-                "Figure Width (px)",
-                value=1200,
-                min_value=400,
-                max_value=4000,
-                step=100
-            )
-
-        with col2:
-
-            volcano_height = st.number_input(
-                "Figure Height (px)",
-                value=800,
-                min_value=300,
-                max_value=4000,
-                step=100
-            )
-            
-        auto_x = st.checkbox(
-            "Automatic X-axis",
-            value=True
-        )
-
-        x_range = None
-
-        if not auto_x:
-
-            col3, col4 = st.columns(2)
-
-            with col3:
-
-                volcano_x_min = st.number_input(
-                    "X-axis Minimum",
-                    value=-5.0
-                )
-
-            with col4:
-
-                volcano_x_max = st.number_input(
-                    "X-axis Maximum",
-                    value=5.0
-                )
-
-            x_range = [
-                volcano_x_min,
-                volcano_x_max
-            ]
-        
-        auto_y = st.checkbox(
-            "Automatic Y-axis",
-            value=True
-        )
-
-        y_range = None
-
-        if not auto_y:
-
-            col5, col6 = st.columns(2)
-
-            with col5:
-
-                volcano_y_min = st.number_input(
-                    "Y-axis Minimum",
-                    value=0.0
-                )
-
-            with col6:
-
-                volcano_y_max = st.number_input(
-                    "Y-axis Maximum",
-                    value=20.0
-                )
-
-            y_range = [
-                volcano_y_min,
-                volcano_y_max
-            ]
-        
-        fig = create_volcano_plot(
-            de_df=de_df,
-            significance_column=significance_column,
-            significance_cutoff=significance_cutoff,
-            log2fc_cutoff=log2fc_cutoff,
-            highlight_genes=highlight_genes,
-            width=volcano_width,
-            height=volcano_height,
-            x_range=x_range,
-            y_range=y_range
-        )
-
-        st.plotly_chart(
-            fig,
-            use_container_width=False,
-            config={
-                "toImageButtonOptions": {
-                    "format": "svg",
-                    "filename": "volcano_plot",
-                    "height": 800,
-                    "width": 1200,
-                    "scale": 1
-                }
-            }
-        )
-    
 
 with tab_box:
 
@@ -590,9 +481,6 @@ with tab_box:
         "Gene Expression Boxplots"
     )
 
-    #
-    # Default genes from Volcano Plot
-    #
     default_genes = st.session_state.get(
         "highlight_genes",
         []
@@ -605,23 +493,20 @@ with tab_box:
     )
 
     selected_genes = [
+
         gene.strip()
+
         for gene in gene_text.split(",")
+
         if gene.strip()
     ]
 
-    #
-    # Group By
-    #
     group_column = st.selectbox(
         "Group By",
         meta_df.columns.tolist(),
         key="boxplot_group"
     )
 
-    #
-    # Plot Mode
-    #
     plot_mode = st.radio(
         "Plot Mode",
         [
@@ -631,32 +516,21 @@ with tab_box:
         horizontal=True
     )
 
-    #
-    # Single Gene selector
-    #
     selected_gene = None
 
-    if plot_mode == "Single Gene":
+    if (
+        plot_mode == "Single Gene"
+        and len(selected_genes) > 0
+    ):
 
-        if len(selected_genes) == 0:
-
-            st.warning(
-                "Please enter at least one gene."
-            )
-
-        else:
-
-            selected_gene = st.selectbox(
-                "Select Gene",
-                selected_genes,
-                index=0
-            )
+        selected_gene = st.selectbox(
+            "Select Gene",
+            selected_genes,
+            index=0
+        )
 
     st.divider()
 
-    #
-    # Figure Settings
-    #
     st.subheader(
         "Figure Settings"
     )
@@ -665,30 +539,24 @@ with tab_box:
 
     with col1:
 
-        box_width = st.number_input(
+        plot_width = st.number_input(
             "Figure Width (px)",
-            min_value=400,
-            max_value=4000,
             value=1200,
-            step=100
+            key="boxplot_width"
         )
 
     with col2:
 
-        box_height = st.number_input(
+        plot_height = st.number_input(
             "Figure Height (px)",
-            min_value=300,
-            max_value=4000,
             value=600,
-            step=100
+            key="boxplot_height"
         )
 
-    #
-    # Y-axis Settings
-    #
     auto_y = st.checkbox(
         "Automatic Y-axis",
-        value=True
+        value=True,
+        key="boxplot_auto_y"
     )
 
     y_range = None
@@ -699,65 +567,44 @@ with tab_box:
 
         with col3:
 
-            box_y_min = st.number_input(
+            y_min = st.number_input(
                 "Y-axis Minimum",
-                value=0.0
+                value=0.0,
+                key="boxplot_ymin"
             )
 
         with col4:
 
-            box_y_max = st.number_input(
+            y_max = st.number_input(
                 "Y-axis Maximum",
-                value=20.0
+                value=20.0,
+                key="boxplot_ymax"
             )
 
         y_range = [
-            box_y_min,
-            box_y_max
+            y_min,
+            y_max
         ]
 
-    st.divider()
-
-    #
-    # Generate Plot
-    #
     if st.button(
         "Generate Boxplot",
         key="generate_boxplot"
     ):
 
-        if len(selected_genes) == 0:
+        fig = create_gene_boxplot(
+            expression_df=expr_df,
+            metadata_df=meta_df,
+            genes=selected_genes,
+            group_column=group_column,
+            apply_log2=apply_log2,
+            plot_mode=plot_mode,
+            selected_gene=selected_gene,
+            width=plot_width,
+            height=plot_height,
+            y_range=y_range
+        )
 
-            st.warning(
-                "Please specify at least one gene."
-            )
-
-        else:
-
-            fig = create_gene_boxplot(
-                expression_df=expr_df,
-                metadata_df=meta_df,
-                genes=selected_genes,
-                group_column=group_column,
-                apply_log2=apply_log2,
-                plot_mode=plot_mode,
-                selected_gene=selected_gene,
-                width=plot_width,
-                height=plot_height,
-                y_range=y_range
-            )
-
-            st.plotly_chart(
-                fig,
-                use_container_width=False,
-                config={
-                    "displaylogo": False,
-                    "toImageButtonOptions": {
-                        "format": "svg",
-                        "filename": "gene_boxplot",
-                        "width": plot_width,
-                        "height": plot_height,
-                        "scale": 1
-                    }
-                }
-            )
+        st.plotly_chart(
+            fig,
+            use_container_width=False
+        )
