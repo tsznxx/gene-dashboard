@@ -230,11 +230,31 @@ def create_gene_boxplot(
     genes,
     group_column,
     apply_log2=False,
-    plot_mode="Per Gene"
+    plot_mode="Combined"
 ):
     """
-    Gene expression boxplots
+    Create gene expression boxplots.
+
+    Parameters
+    ----------
+    expression_df : DataFrame
+
+    metadata_df : DataFrame
+
+    genes : list
+
+    group_column : str
+
+    apply_log2 : bool
+
+    plot_mode : str
+        "Combined"
+        "Per Gene"
     """
+
+    import numpy as np
+    import pandas as pd
+    import plotly.express as px
 
     gene_col = expression_df.columns[0]
 
@@ -278,6 +298,9 @@ def create_gene_boxplot(
         how="left"
     )
 
+    #
+    # Combined Plot
+    #
     if plot_mode == "Combined":
 
         fig = px.box(
@@ -285,25 +308,27 @@ def create_gene_boxplot(
             x="Gene",
             y="Expression",
             color=group_column,
-            points=False
+            points="all"
         )
 
-        scatter_fig = px.strip(
-            plot_df,
-            x="Gene",
-            y="Expression",
-            color=group_column
+        fig.update_traces(
+            pointpos=0,
+            jitter=0.08,
+            marker_size=5
         )
-
-        for trace in scatter_fig.data:
-            fig.add_trace(trace)
 
         fig.update_layout(
             template="plotly_white",
-            height=700,
-            width=1400
+            height=800,
+            width=1600,
+            boxmode="group",
+            xaxis_title="Gene",
+            yaxis_title="Expression"
         )
 
+    #
+    # Per-Gene Facets
+    #
     else:
 
         fig = px.box(
@@ -313,31 +338,7 @@ def create_gene_boxplot(
             color=group_column,
             facet_col="Gene",
             facet_col_wrap=4,
-            points=False
-        )
-        scatter_fig = px.strip(
-            plot_df,
-            x="Gene",
-            y="Expression",
-            color=group_column
+            points="all"
         )
 
-        for trace in scatter_fig.data:
-            fig.add_trace(trace)
-
-        n_rows = max(
-            1,
-            (len(genes) + 3) // 4
-        )
-
-        fig.update_layout(
-            template="plotly_white",
-            height=max(
-                500,
-                350 * n_rows
-            ),
-            width=1600,
-            showlegend=False
-        )
-
-    return fig
+        
