@@ -494,12 +494,16 @@ with tab_volcano:
             }
         )
     
+
 with tab_box:
 
     st.subheader(
         "Gene Expression Boxplots"
     )
 
+    #
+    # Default genes from Volcano Plot
+    #
     default_genes = st.session_state.get(
         "highlight_genes",
         []
@@ -507,27 +511,28 @@ with tab_box:
 
     gene_text = st.text_area(
         "Genes (comma separated)",
-        value=",".join(
-            default_genes
-        ),
+        value=",".join(default_genes),
         height=120
     )
 
     selected_genes = [
-
-        x.strip()
-
-        for x in gene_text.split(",")
-
-        if x.strip()
+        gene.strip()
+        for gene in gene_text.split(",")
+        if gene.strip()
     ]
 
+    #
+    # Group By
+    #
     group_column = st.selectbox(
         "Group By",
         meta_df.columns.tolist(),
         key="boxplot_group"
     )
 
+    #
+    # Plot Mode
+    #
     plot_mode = st.radio(
         "Plot Mode",
         [
@@ -538,7 +543,7 @@ with tab_box:
     )
 
     #
-    # Single Gene Selector
+    # Single Gene selector
     #
     selected_gene = None
 
@@ -554,6 +559,9 @@ with tab_box:
 
     st.divider()
 
+    #
+    # Figure Settings
+    #
     st.subheader(
         "Figure Settings"
     )
@@ -563,21 +571,26 @@ with tab_box:
     with col1:
 
         plot_width = st.number_input(
-            "Width (px)",
-            value=1200,
+            "Figure Width (px)",
             min_value=400,
+            max_value=4000,
+            value=1200,
             step=100
         )
 
     with col2:
 
         plot_height = st.number_input(
-            "Height (px)",
-            value=600,
+            "Figure Height (px)",
             min_value=300,
+            max_value=4000,
+            value=600,
             step=100
         )
 
+    #
+    # Y-axis Settings
+    #
     auto_y = st.checkbox(
         "Automatic Y-axis",
         value=True
@@ -592,14 +605,14 @@ with tab_box:
         with col3:
 
             y_min = st.number_input(
-                "Y-axis Min",
+                "Y-axis Minimum",
                 value=0.0
             )
 
         with col4:
 
             y_max = st.number_input(
-                "Y-axis Max",
+                "Y-axis Maximum",
                 value=20.0
             )
 
@@ -608,31 +621,48 @@ with tab_box:
             y_max
         ]
 
+    st.divider()
+
+    #
+    # Generate Plot
+    #
     if st.button(
-        "Generate Boxplot"
+        "Generate Boxplot",
+        key="generate_boxplot"
     ):
 
-        fig = create_gene_boxplot(
-            expression_df=expr_df,
-            metadata_df=meta_df,
-            genes=selected_genes,
-            group_column=group_column,
-            apply_log2=apply_log2,
-            plot_mode=plot_mode,
-            selected_gene=selected_gene,
-            width=plot_width,
-            height=plot_height,
-            y_range=y_range
-        )
+        if len(selected_genes) == 0:
 
-        st.plotly_chart(
-            fig,
-            use_container_width=True,
-            config={
-                "displaylogo": False,
-                "toImageButtonOptions": {
-                    "format": "svg",
-                    "filename": "gene_boxplot",
-                    "width": plot_width,
-                    "height": plot_height,
-                   
+            st.warning(
+                "Please specify at least one gene."
+            )
+
+        else:
+
+            fig = create_gene_boxplot(
+                expression_df=expr_df,
+                metadata_df=meta_df,
+                genes=selected_genes,
+                group_column=group_column,
+                apply_log2=apply_log2,
+                plot_mode=plot_mode,
+                selected_gene=selected_gene,
+                width=plot_width,
+                height=plot_height,
+                y_range=y_range
+            )
+
+            st.plotly_chart(
+                fig,
+                use_container_width=True,
+                config={
+                    "displaylogo": False,
+                    "toImageButtonOptions": {
+                        "format": "svg",
+                        "filename": "gene_boxplot",
+                        "width": plot_width,
+                        "height": plot_height,
+                        "scale": 1
+                    }
+                }
+            )
