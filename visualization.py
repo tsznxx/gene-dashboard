@@ -2,8 +2,23 @@
 
 import numpy as np
 import pandas as pd
+#import seaborn as sns
 import plotly.express as px
 import plotly.graph_objects as go
+
+
+TAB10 = [
+    "#1f77b4",  # blue
+    "#ff7f0e",  # orange
+    "#2ca02c",  # green
+    "#d62728",  # red
+    "#9467bd",  # purple
+    "#8c564b",  # brown
+    "#e377c2",  # pink
+    "#7f7f7f",  # gray
+    "#bcbd22",  # olive
+    "#17becf",  # cyan
+]
 
 
 def create_pca_plot(
@@ -283,7 +298,14 @@ def create_gene_boxplot(
         on="Sample",
         how="left"
     )
+    
+    groups = plot_df[group_column].dropna().unique()
 
+    color_map = {
+        group: TAB10[i % len(TAB10)]
+        for i, group in enumerate(groups)
+    }
+    
     if plot_mode == "Single Gene":
 
         plot_df = plot_df[
@@ -296,7 +318,8 @@ def create_gene_boxplot(
             y="Expression",
             color=group_column,
             points="all",
-            title=selected_gene
+            title=f"{selected_gene} Expression",
+            color_discrete_map=color_map
         )
 
     else:
@@ -306,8 +329,11 @@ def create_gene_boxplot(
             x="Gene",
             y="Expression",
             color=group_column,
-            points="all"
+            points="all",
+            color_discrete_map=color_map
         )
+
+
 
     #
     # Center points on boxplots
