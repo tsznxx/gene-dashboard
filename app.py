@@ -16,7 +16,8 @@ from analysis import (
 )
 from visualization import (
     create_pca_plot,
-    create_volcano_plot
+    create_volcano_plot,
+    create_gene_boxplot
 )
 
 
@@ -156,12 +157,13 @@ with st.sidebar:
 # Tabs
 #
 
-tab_data, tab_pca, tab_de, tab_volcano = st.tabs(
+tab_data, tab_pca, tab_de, tab_volcano, tab_box = st.tabs(
     [
         "Data",
         "PCA",
         "DE Analysis",
-        "Volcano Plot"
+        "Volcano Plot",
+        "Gene Boxplot"
     ]
 )
 
@@ -463,6 +465,9 @@ with tab_volcano:
             for gene in custom_gene_text.split(",")
             if gene.strip()
         ]
+        st.session_state[
+        "highlight_genes"
+        ] = highlight_genes
         fig = create_volcano_plot(
             de_df=de_df,
             significance_column=
@@ -485,6 +490,61 @@ with tab_volcano:
                     "height": 800,
                     "width": 1200,
                     "scale": 1
+                }
+            }
+        )
+    
+with tab_box:
+
+    st.subheader(
+        "Gene Expression Boxplots"
+    )
+
+    default_genes = (
+        st.session_state.get(
+            "highlight_genes",
+            []
+        )
+    )
+
+    gene_text = st.text_area(
+        "Genes (comma separated)",
+        value=",".join(default_genes),
+        height=120
+    )
+
+    selected_genes = [
+
+        x.strip()
+
+        for x in gene_text.split(",")
+
+        if x.strip()
+    ]
+
+    group_column = st.selectbox(
+        "Group samples by",
+        meta_df.columns.tolist(),
+        key="boxplot_group"
+    )
+    if st.button(
+        "Generate Boxplots"
+    ):
+        fig = create_gene_boxplot(
+            expression_df=expr_df,
+            metadata_df=meta_df,
+            genes=selected_genes,
+            group_column=group_column,
+            apply_log2=apply_log2
+        )
+
+        st.plotly_chart(
+            fig,
+            use_container_width=True,
+            config={
+                "toImageButtonOptions": {
+                    "format": "svg",
+                    "filename": "gene_boxplots"
                 }
             }
         )

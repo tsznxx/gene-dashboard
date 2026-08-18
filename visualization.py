@@ -221,3 +221,77 @@ def create_volcano_plot(
     )
 
     return fig
+    
+    
+
+def create_gene_boxplot(
+    expression_df,
+    metadata_df,
+    genes,
+    group_column,
+    apply_log2=False
+):
+
+    gene_col = expression_df.columns[0]
+
+    expr = expression_df.set_index(gene_col)
+
+    expr = expr.apply(
+        pd.to_numeric,
+        errors="coerce"
+    )
+
+    if apply_log2:
+        
+        expr = np.log2(expr + 1)
+
+    samples = expr.columns.tolist()
+
+    long_data = []
+
+    for gene in genes:
+
+        if gene not in expr.index:
+            continue
+
+        for sample in samples:
+
+            long_data.append(
+                {
+                    "Gene": gene,
+                    "Sample": sample,
+                    "Expression": expr.loc[
+                        gene,
+                        sample
+                    ]
+                }
+            )
+
+    plot_df = pd.DataFrame(long_data)
+
+    plot_df = plot_df.merge(
+        metadata_df,
+        on="Sample",
+        how="left"
+    )
+
+    fig = px.box(
+        plot_df,
+        x=group_column,
+        y="Expression",
+        color=group_column,
+        facet_col="Gene",
+        facet_col_wrap=3,
+        points="all"
+    )
+
+    fig.update_layout(
+        template="plotly_white",
+        height=max(
+            800,
+            250 * ((len(genes) + 2) // 3)
+        ),
+        showlegend=False
+    )
+
+    return fig
