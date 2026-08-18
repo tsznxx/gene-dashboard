@@ -499,6 +499,14 @@ with tab_box:
     st.subheader(
         "Gene Expression Boxplots"
     )
+    plot_mode = st.radio(
+    "Plot Layout",
+    [
+        "Per Gene",
+        "Combined"
+    ],
+    horizontal=True
+)
 
     default_genes = (
         st.session_state.get(
@@ -535,16 +543,21 @@ with tab_box:
             metadata_df=meta_df,
             genes=selected_genes,
             group_column=group_column,
-            apply_log2=apply_log2
+            apply_log2=apply_log2,
+            plot_mode=plot_mode
         )
 
         st.plotly_chart(
             fig,
             use_container_width=True,
             config={
+                "displaylogo": False,
                 "toImageButtonOptions": {
                     "format": "svg",
-                    "filename": "gene_boxplots"
+                    "filename": "gene_boxplots",
+                    "width": 1800,
+                    "height": 900,
+                    "scale": 1
                 }
             }
         )

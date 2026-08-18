@@ -224,14 +224,17 @@ def create_volcano_plot(
     return fig
     
     
-
 def create_gene_boxplot(
     expression_df,
     metadata_df,
     genes,
     group_column,
-    apply_log2=False
+    apply_log2=False,
+    plot_mode="Per Gene"
 ):
+    """
+    Gene expression boxplots
+    """
 
     gene_col = expression_df.columns[0]
 
@@ -243,21 +246,18 @@ def create_gene_boxplot(
     )
 
     if apply_log2:
-        
         expr = np.log2(expr + 1)
 
-    samples = expr.columns.tolist()
-
-    long_data = []
+    plot_records = []
 
     for gene in genes:
 
         if gene not in expr.index:
             continue
 
-        for sample in samples:
+        for sample in expr.columns:
 
-            long_data.append(
+            plot_records.append(
                 {
                     "Gene": gene,
                     "Sample": sample,
@@ -268,7 +268,9 @@ def create_gene_boxplot(
                 }
             )
 
-    plot_df = pd.DataFrame(long_data)
+    plot_df = pd.DataFrame(
+        plot_records
+    )
 
     plot_df = plot_df.merge(
         metadata_df,
@@ -276,23 +278,47 @@ def create_gene_boxplot(
         how="left"
     )
 
-    fig = px.box(
-        plot_df,
-        x=group_column,
-        y="Expression",
-        color=group_column,
-        facet_col="Gene",
-        facet_col_wrap=3,
-        points="all"
-    )
+    if plot_mode == "Combined":
 
-    fig.update_layout(
-        template="plotly_white",
-        height=max(
-            800,
-            250 * ((len(genes) + 2) // 3)
-        ),
-        showlegend=False
-    )
+        fig = px.box(
+            plot_df,
+            x="Gene",
+            y="Expression",
+            color=group_column,
+            points="all"
+        )
+
+        fig.update_layout(
+            template="plotly_white",
+            height=700,
+            width=1400
+        )
+
+    else:
+
+        fig = px.box(
+            plot_df,
+            x=group_column,
+            y="Expression",
+            color=group_column,
+            facet_col="Gene",
+            facet_col_wrap=4,
+            points="all"
+        )
+
+        n_rows = max(
+            1,
+            (len(genes) + 3) // 4
+        )
+
+        fig.update_layout(
+            template="plotly_white",
+            height=max(
+                500,
+                350 * n_rows
+            ),
+            width=1600,
+            showlegend=False
+        )
 
     return fig
