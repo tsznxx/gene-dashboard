@@ -510,21 +510,21 @@ with tab_volcano:
 
             with col3:
 
-                x_min = st.number_input(
+                volcano_x_min = st.number_input(
                     "X-axis Minimum",
                     value=-5.0
                 )
 
             with col4:
 
-                x_max = st.number_input(
+                volcano_x_max = st.number_input(
                     "X-axis Maximum",
                     value=5.0
                 )
 
             x_range = [
-                x_min,
-                x_max
+                volcano_x_min,
+                volcano_x_max
             ]
         
         auto_y = st.checkbox(
@@ -540,21 +540,21 @@ with tab_volcano:
 
             with col5:
 
-                y_min = st.number_input(
+                volcano_y_min = st.number_input(
                     "Y-axis Minimum",
                     value=0.0
                 )
 
             with col6:
 
-                y_max = st.number_input(
+                volcano_y_max = st.number_input(
                     "Y-axis Maximum",
                     value=20.0
                 )
 
             y_range = [
-                y_min,
-                y_max
+                volcano_y_min,
+                volcano_y_max
             ]
         
         fig = create_volcano_plot(
@@ -665,7 +665,7 @@ with tab_box:
 
     with col1:
 
-        plot_width = st.number_input(
+        box_width = st.number_input(
             "Figure Width (px)",
             min_value=400,
             max_value=4000,
@@ -675,7 +675,7 @@ with tab_box:
 
     with col2:
 
-        plot_height = st.number_input(
+        box_height = st.number_input(
             "Figure Height (px)",
             min_value=300,
             max_value=4000,
@@ -699,21 +699,21 @@ with tab_box:
 
         with col3:
 
-            y_min = st.number_input(
+            box_y_min = st.number_input(
                 "Y-axis Minimum",
                 value=0.0
             )
 
         with col4:
 
-            y_max = st.number_input(
+            box_y_max = st.number_input(
                 "Y-axis Maximum",
                 value=20.0
             )
 
         y_range = [
-            y_min,
-            y_max
+            box_y_min,
+            box_y_max
         ]
 
     st.divider()
