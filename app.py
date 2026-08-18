@@ -393,9 +393,7 @@ with tab_de:
 
 with tab_volcano:
 
-    st.subheader(
-        "Volcano Plot"
-    )
+    st.subheader("Volcano Plot")
 
     if "de_results" not in st.session_state:
 
@@ -405,23 +403,21 @@ with tab_volcano:
 
     else:
 
-        de_df = st.session_state[
-            "de_results"
-        ]
+        de_df = st.session_state["de_results"]
 
         #
-        # Significance settings
+        # Volcano Settings
         #
         significance_column = st.radio(
             "Use significance metric",
             ["PValue", "FDR"],
-            horizontal=True
+            horizontal=True,
+            key="volcano_sig_metric"
         )
 
         col1, col2 = st.columns(2)
 
         with col1:
-
             log2fc_cutoff = st.number_input(
                 "Absolute log2FC cutoff",
                 value=1.0,
@@ -430,11 +426,11 @@ with tab_volcano:
             )
 
         with col2:
-
             significance_cutoff = st.number_input(
                 f"{significance_column} cutoff",
                 value=0.05,
                 step=0.01,
+                format="%.3f",
                 key="volcano_sig_cutoff"
             )
 
@@ -461,20 +457,149 @@ with tab_volcano:
             .tolist()
         )
 
-        default_genes = (
-            top_up + top_down
-        )
+        default_genes = top_up + top_down
 
         gene_text = st.text_area(
             "Genes to highlight",
-            value=",".join(
-                default_genes
-            ),
-            height=120,
+            value=",".join(default_genes),
+            height=100,
             key="volcano_gene_text"
         )
 
+        highlight_genes = [
+            x.strip()
+            for x in gene_text.split(",")
+            if x.strip()
+        ]
 
+        st.session_state[
+            "highlight_genes"
+        ] = highlight_genes
+
+        #
+        # Figure Settings
+        #
+        st.divider()
+        st.subheader("Figure Settings")
+
+        col3, col4 = st.columns(2)
+
+        with col3:
+            volcano_width = st.number_input(
+                "Figure Width (px)",
+                value=1200,
+                min_value=400,
+                max_value=4000,
+                step=100,
+                key="volcano_width"
+            )
+
+        with col4:
+            volcano_height = st.number_input(
+                "Figure Height (px)",
+                value=800,
+                min_value=300,
+                max_value=4000,
+                step=100,
+                key="volcano_height"
+            )
+
+        #
+        # X-axis
+        #
+        auto_x = st.checkbox(
+            "Automatic X-axis",
+            value=True,
+            key="volcano_auto_x"
+        )
+
+        x_range = None
+
+        if not auto_x:
+
+            c5, c6 = st.columns(2)
+
+            with c5:
+                x_min = st.number_input(
+                    "X-axis Min",
+                    value=-5.0,
+                    key="volcano_xmin"
+                )
+
+            with c6:
+                x_max = st.number_input(
+                    "X-axis Max",
+                    value=5.0,
+                    key="volcano_xmax"
+                )
+
+            x_range = [x_min, x_max]
+
+        #
+        # Y-axis
+        #
+        auto_y = st.checkbox(
+            "Automatic Y-axis",
+            value=True,
+            key="volcano_auto_y"
+        )
+
+        y_range = None
+
+        if not auto_y:
+
+            c7, c8 = st.columns(2)
+
+            with c7:
+                y_min = st.number_input(
+                    "Y-axis Min",
+                    value=0.0,
+                    key="volcano_ymin"
+                )
+
+            with c8:
+                y_max = st.number_input(
+                    "Y-axis Max",
+                    value=20.0,
+                    key="volcano_ymax"
+                )
+
+            y_range = [y_min, y_max]
+
+        #
+        # Create Figure
+        #
+        fig = create_volcano_plot(
+            de_df=de_df,
+            significance_column=significance_column,
+            significance_cutoff=significance_cutoff,
+            log2fc_cutoff=log2fc_cutoff,
+            highlight_genes=highlight_genes,
+            width=volcano_width,
+            height=volcano_height,
+            x_range=x_range,
+            y_range=y_range
+        )
+
+        #
+        # Display Figure
+        #
+        st.plotly_chart(
+            fig,
+            use_container_width=False,
+            config={
+                "displaylogo": False,
+                "toImageButtonOptions": {
+                    "format": "svg",
+                    "filename": "volcano_plot",
+                    "width": volcano_width,
+                    "height": volcano_height,
+                    "scale": 1
+                }
+            }
+        )
+        
+        
 with tab_box:
 
     st.subheader(
