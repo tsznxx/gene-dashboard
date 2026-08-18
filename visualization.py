@@ -341,4 +341,4 @@ def create_gene_boxplot(
             points="all"
         )
 
-        
+    return fig
