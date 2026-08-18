@@ -468,21 +468,110 @@ with tab_volcano:
         st.session_state[
         "highlight_genes"
         ] = highlight_genes
+        
+        st.divider()
+
+        st.subheader(
+            "Figure Settings"
+        )
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+
+            volcano_width = st.number_input(
+                "Figure Width (px)",
+                value=1200,
+                min_value=400,
+                max_value=4000,
+                step=100
+            )
+
+        with col2:
+
+            volcano_height = st.number_input(
+                "Figure Height (px)",
+                value=800,
+                min_value=300,
+                max_value=4000,
+                step=100
+            )
+            
+        auto_x = st.checkbox(
+            "Automatic X-axis",
+            value=True
+        )
+
+        x_range = None
+
+        if not auto_x:
+
+            col3, col4 = st.columns(2)
+
+            with col3:
+
+                x_min = st.number_input(
+                    "X-axis Minimum",
+                    value=-5.0
+                )
+
+            with col4:
+
+                x_max = st.number_input(
+                    "X-axis Maximum",
+                    value=5.0
+                )
+
+            x_range = [
+                x_min,
+                x_max
+            ]
+        
+        auto_y = st.checkbox(
+            "Automatic Y-axis",
+            value=True
+        )
+
+        y_range = None
+
+        if not auto_y:
+
+            col5, col6 = st.columns(2)
+
+            with col5:
+
+                y_min = st.number_input(
+                    "Y-axis Minimum",
+                    value=0.0
+                )
+
+            with col6:
+
+                y_max = st.number_input(
+                    "Y-axis Maximum",
+                    value=20.0
+                )
+
+            y_range = [
+                y_min,
+                y_max
+            ]
+        
         fig = create_volcano_plot(
             de_df=de_df,
-            significance_column=
-            significance_column,
-            significance_cutoff=
-            significance_cutoff,
-            log2fc_cutoff=
-            log2fc_cutoff,
-            highlight_genes=
-            highlight_genes
+            significance_column=significance_column,
+            significance_cutoff=significance_cutoff,
+            log2fc_cutoff=log2fc_cutoff,
+            highlight_genes=highlight_genes,
+            width=volcano_width,
+            height=volcano_height,
+            x_range=x_range,
+            y_range=y_range
         )
 
         st.plotly_chart(
             fig,
-            use_container_width=True,
+            use_container_width=False,
             config={
                 "toImageButtonOptions": {
                     "format": "svg",

@@ -63,10 +63,14 @@ def create_pca_plot(
 
 def create_volcano_plot(
     de_df,
-    significance_column="FDR",
-    significance_cutoff=0.05,
-    log2fc_cutoff=1.0,
-    highlight_genes=None
+    significance_column,
+    significance_cutoff,
+    log2fc_cutoff,
+    highlight_genes=None,
+    width=1200,
+    height=800,
+    x_range=None,
+    y_range=None
 ):
     """
     Create volcano plot.
@@ -223,18 +227,28 @@ def create_volcano_plot(
 
     fig.update_layout(
         template="plotly_white",
-        height=750,
+        width=width,
+        height=height,
         title=(
             f"Volcano Plot "
             f"({significance_column} ≤ {significance_cutoff}, "
             f"|log2FC| ≥ {log2fc_cutoff})"
         ),
         xaxis_title="log2 Fold Change",
-        yaxis_title=(
-            f"-log10({significance_column})"
-        ),
+        yaxis_title=f"-log10({significance_column})",
         legend_title=""
     )
+    if x_range is not None:
+
+        fig.update_xaxes(
+            range=x_range
+        )
+
+    if y_range is not None:
+
+        fig.update_yaxes(
+            range=y_range
+        )
 
     return fig
     
