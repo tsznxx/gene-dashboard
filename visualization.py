@@ -285,8 +285,18 @@ def create_gene_boxplot(
             x="Gene",
             y="Expression",
             color=group_column,
-            points="all"
+            points=False
         )
+
+        scatter_fig = px.strip(
+            plot_df,
+            x="Gene",
+            y="Expression",
+            color=group_column
+        )
+
+        for trace in scatter_fig.data:
+            fig.add_trace(trace)
 
         fig.update_layout(
             template="plotly_white",
@@ -303,8 +313,17 @@ def create_gene_boxplot(
             color=group_column,
             facet_col="Gene",
             facet_col_wrap=4,
-            points="all"
+            points=False
         )
+        scatter_fig = px.strip(
+            plot_df,
+            x="Gene",
+            y="Expression",
+            color=group_column
+        )
+
+        for trace in scatter_fig.data:
+            fig.add_trace(trace)
 
         n_rows = max(
             1,
