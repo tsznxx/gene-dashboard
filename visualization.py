@@ -337,7 +337,7 @@ def create_gene_boxplot(
             y="Expression",
             color=group_column,
             facet_col="Gene",
-            facet_col_wrap=2,  # wider panels
+            facet_col_wrap=5,  # wider panels
             points="all"
         )
 
