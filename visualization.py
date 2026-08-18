@@ -163,22 +163,15 @@ def create_volcano_plot(
             go.Scatter(
                 x=highlight_df["log2FC"],
                 y=highlight_df["neglog10"],
-                mode="markers+text",
+                mode="text",
                 text=highlight_df["Gene"],
                 textposition="top center",
-                marker=dict(
-                    size=8,
-                    color="purple",
-                    line=dict(
-                        color="white",
-                        width=1
-                    )
-                ),
                 textfont=dict(
                     size=12,
                     color="purple"
                 ),
-                showlegend=False
+                showlegend=False,
+                hoverinfo="skip"
             )
         )
 
