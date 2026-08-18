@@ -546,6 +546,8 @@ with tab_box:
             apply_log2=apply_log2,
             plot_mode=plot_mode
         )
+        st.write(type(fig))
+        st.write(fig)
 
         st.plotly_chart(
             fig,
