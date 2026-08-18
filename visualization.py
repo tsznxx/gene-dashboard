@@ -240,10 +240,6 @@ def create_gene_boxplot(
     Create gene expression boxplot(s).
     """
 
-    import numpy as np
-    import pandas as pd
-    import plotly.express as px
-
     gene_col = expression_df.columns[0]
 
     expr = expression_df.set_index(

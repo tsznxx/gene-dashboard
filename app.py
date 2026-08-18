@@ -547,15 +547,21 @@ with tab_box:
     #
     selected_gene = None
 
-    if (
-        plot_mode == "Single Gene"
-        and len(selected_genes) > 0
-    ):
+    if plot_mode == "Single Gene":
 
-        selected_gene = st.selectbox(
-            "Select Gene",
-            selected_genes
-        )
+        if len(selected_genes) == 0:
+
+            st.warning(
+                "Please enter at least one gene."
+            )
+
+        else:
+
+            selected_gene = st.selectbox(
+                "Select Gene",
+                selected_genes,
+                index=0
+            )
 
     st.divider()
 
