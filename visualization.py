@@ -163,15 +163,17 @@ def create_volcano_plot(
             go.Scatter(
                 x=highlight_df["log2FC"],
                 y=highlight_df["neglog10"],
-                mode="text",
+                mode="markers+text",
                 text=highlight_df["Gene"],
                 textposition="top center",
+                marker=dict(
+                    size=9,
+                    color="purple",
+                ),
                 textfont=dict(
                     size=12,
-                    color="purple"
                 ),
-                showlegend=False,
-                hoverinfo="skip"
+                showlegend=False
             )
         )
 
@@ -253,19 +255,6 @@ def create_gene_boxplot(
         on="Sample",
         how="left"
     )
-
-    TAB10 = [
-        "#1f77b4",
-        "#ff7f0e",
-        "#2ca02c",
-        "#d62728",
-        "#9467bd",
-        "#8c564b",
-        "#e377c2",
-        "#7f7f7f",
-        "#bcbd22",
-        "#17becf"
-    ]
 
     groups = (
         plot_df[group_column]
