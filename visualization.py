@@ -313,8 +313,8 @@ def create_gene_boxplot(
 
         fig.update_traces(
             pointpos=0,
-            jitter=0.08,
-            marker_size=5
+            jitter=0.1,
+            marker_size=3
         )
 
         fig.update_layout(
@@ -337,8 +337,51 @@ def create_gene_boxplot(
             y="Expression",
             color=group_column,
             facet_col="Gene",
-            facet_col_wrap=4,
+            facet_col_wrap=2,  # wider panels
             points="all"
+        )
+
+        #
+        # Center points on boxes
+        #
+        fig.update_traces(
+            pointpos=0,
+            jitter=0.1,
+            marker=dict(
+                color="black",
+                size=3
+            ),
+            selector=dict(type="box")
+        )
+
+        #
+        # Number of facet rows
+        #
+        n_rows = max(
+            1,
+            (len(genes) + 1) // 2
+        )
+
+        #
+        # Roughly 2:1 width:height per panel
+        #
+        fig.update_layout(
+            template="plotly_white",
+            width=1600,
+            height=max(
+                400,
+                400 * n_rows
+            ),
+            showlegend=False
+        )
+
+        #
+        # Remove "Gene="
+        #
+        fig.for_each_annotation(
+            lambda a: a.update(
+                text=a.text.split("=")[-1]
+            )
         )
 
     return fig
