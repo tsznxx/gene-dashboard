@@ -343,7 +343,6 @@ def create_gene_boxplot(
         jitter=0.08,
         marker=dict(
             size=3,
-            color="black"
         ),
         selector=dict(
             type="box"
