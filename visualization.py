@@ -425,8 +425,12 @@ def create_heatmap(
     cluster_genes=True,
     width=1200,
     height=800,
-    colorscale="RdBu_r"
+    colorscale="RdBu_r",
+    zmin=None,
+    zmid=None,
+    zmax=None
 ):
+
 
     #
     # Expression matrix
@@ -543,10 +547,16 @@ def create_heatmap(
 
     fig = px.imshow(
         expr,
-        color_continuous_scale=
-        colorscale,
+        color_continuous_scale=colorscale,
+        zmin=zmin,
+        zmax=zmax,
         aspect="auto"
     )
+    if zmid is not None:
+
+        fig.update_coloraxes(
+            cmid=zmid
+        )
 
     fig.update_xaxes(
         tickvals=list(

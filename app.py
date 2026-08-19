@@ -555,7 +555,7 @@ with tab_volcano:
         with col4:
             volcano_height = st.number_input(
                 "Figure Height (px)",
-                value=500,
+                value=400,
                 min_value=200,
                 max_value=1500,
                 step=100,
@@ -904,7 +904,54 @@ with tab_heatmap:
                 key="heatmap_colorscale"
             )
         )
+    st.divider()
 
+    st.subheader(
+        "Color Scale Settings"
+    )
+
+    auto_color_scale = st.checkbox(
+        "Automatic Color Scale",
+        value=True,
+        key="heatmap_auto_colorscale"
+    )
+    
+    zmin = None
+    zmid = None
+    zmax = None
+
+    if not auto_color_scale:
+
+        c3, c4, c5 = st.columns(3)
+
+        with c3:
+
+            zmin = st.number_input(
+                "Vmin",
+                value=-2.0,
+                step=0.1,
+                key="heatmap_zmin"
+            )
+
+        with c4:
+
+            zmid = st.number_input(
+                "Center",
+                value=0.0,
+                step=0.1,
+                key="heatmap_zmid"
+            )
+
+        with c5:
+
+            zmax = st.number_input(
+                "Vmax",
+                value=2.0,
+                step=0.1,
+                key="heatmap_zmax"
+            )
+        
+        
     st.divider()
 
     st.subheader(
@@ -952,18 +999,17 @@ with tab_heatmap:
                 expression_df=expr_df,
                 metadata_df=meta_df,
                 genes=selected_genes,
-                annotation_column=
-                annotation_column,
+                annotation_column=annotation_column,
                 apply_log2=apply_log2,
-                zscore_by_gene=
-                zscore_by_gene,
-                cluster_samples=
-                cluster_samples,
-                cluster_genes=
-                cluster_genes,
+                zscore_by_gene=zscore_by_gene,
+                cluster_samples=cluster_samples,
+                cluster_genes=cluster_genes,
                 width=heatmap_width,
                 height=heatmap_height,
-                colorscale=colorscale
+                colorscale=colorscale,
+                zmin=zmin,
+                zmid=zmid,
+                zmax=zmax
             )
             import plotly
             if not isinstance(fig,plotly.graph_objs.Figure):
