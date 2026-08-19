@@ -304,7 +304,7 @@ with tab_pca:
 
             st.plotly_chart(
                 fig,
-                use_container_width=False,
+                width="content",
                 config={
                     "displaylogo": False,
                     "toImageButtonOptions": {
