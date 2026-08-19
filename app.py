@@ -14,10 +14,12 @@ from analysis import (
     run_pca,
     run_differential_expression
 )
+
 from visualization import (
     create_pca_plot,
     create_volcano_plot,
-    create_gene_boxplot
+    create_gene_boxplot,
+    create_heatmap
 )
 
 
@@ -157,13 +159,14 @@ with st.sidebar:
 # Tabs
 #
 
-tab_data, tab_pca, tab_de, tab_volcano, tab_box = st.tabs(
+tab_data, tab_pca, tab_de, tab_volcano, tab_box, tab_heatmap = st.tabs(
     [
         "Data",
         "PCA",
         "DE Analysis",
         "Volcano Plot",
-        "Gene Boxplot"
+        "Gene Boxplot",
+        "Heatmap"
     ]
 )
 
@@ -790,3 +793,155 @@ with tab_box:
             }
             
         )
+        
+# ==================================================
+# HEATMAP TAB
+# ==================================================
+
+with tab_heatmap:
+
+    st.subheader(
+        "Expression Heatmap"
+    )
+
+    default_genes = (
+        st.session_state.get(
+            "highlight_genes",
+            []
+        )
+    )
+
+    gene_text = st.text_area(
+        "Genes",
+        value=",".join(
+            default_genes
+        ),
+        height=120,
+        key="heatmap_genes"
+    )
+
+    selected_genes = [
+
+        x.strip()
+
+        for x in gene_text.split(",")
+
+        if x.strip()
+    ]
+
+    annotation_column = (
+        st.selectbox(
+            "Annotation Column",
+            meta_df.columns,
+            index=1,
+            key="heatmap_annotation"
+        )
+    )
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+
+        zscore_by_gene = (
+            st.checkbox(
+                "Z-score by Gene",
+                value=True,
+                key="heatmap_zscore"
+            )
+        )
+
+        cluster_genes = (
+            st.checkbox(
+                "Cluster Genes",
+                value=True,
+                key="heatmap_cluster_genes"
+            )
+        )
+
+    with col2:
+
+        cluster_samples = (
+            st.checkbox(
+                "Cluster Samples",
+                value=True,
+                key="heatmap_cluster_samples"
+            )
+        )
+
+        colorscale = (
+            st.selectbox(
+                "Color Map",
+                [
+                    "RdBu_r",
+                    "Viridis",
+                    "Plasma",
+                    "Magma"
+                ],
+                key="heatmap_colorscale"
+            )
+        )
+
+    st.divider()
+
+    st.subheader(
+        "Figure Settings"
+    )
+
+    c1, c2 = st.columns(2)
+
+    with c1:
+
+        heatmap_width = st.number_input(
+            "Figure Width (px)",
+            value=1200,
+            min_value=300,
+            max_value=4000,
+            step=100,
+            key="heatmap_width"
+        )
+
+    with c2:
+
+        heatmap_height = (
+            st.number_input(
+                "Figure Height (px)",
+                value=800,
+                min_value=300,
+                max_value=4000,
+                step=100,
+                key="heatmap_height"
+            )
+        )
+
+    fig = create_heatmap(
+        expression_df=expr_df,
+        metadata_df=meta_df,
+        genes=selected_genes,
+        annotation_column=
+        annotation_column,
+        apply_log2=apply_log2,
+        zscore_by_gene=
+        zscore_by_gene,
+        cluster_samples=
+        cluster_samples,
+        cluster_genes=
+        cluster_genes,
+        width=heatmap_width,
+        height=heatmap_height,
+        colorscale=colorscale
+    )
+
+    st.plotly_chart(
+        fig,
+        width="content",
+        config={
+            "displaylogo": False,
+            "toImageButtonOptions": {
+                "format": "svg",
+                "filename":"expression_heatmap",
+                "width":heatmap_width,
+                "height": plot_height,
+                "scale": 1
+            }
+        }       
+    )

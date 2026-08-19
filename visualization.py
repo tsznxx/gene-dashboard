@@ -6,6 +6,11 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
+from scipy.cluster.hierarchy import (
+    linkage,
+    leaves_list
+)
+from scipy.stats import zscore
 
 TAB10 = [
     "#1f77b4",  # blue
@@ -406,5 +411,162 @@ def create_gene_boxplot(
         fig.update_yaxes(
             range=y_range
         )
+    fig = apply_publication_style(fig,width)
+    return fig
+    
+def create_heatmap(
+    expression_df,
+    metadata_df,
+    genes,
+    annotation_column,
+    apply_log2=False,
+    zscore_by_gene=True,
+    cluster_samples=True,
+    cluster_genes=True,
+    width=1200,
+    height=800,
+    colorscale="RdBu_r"
+):
+
+    #
+    # Expression matrix
+    #
+    gene_col = expression_df.columns[0]
+
+    expr = expression_df.set_index(
+        gene_col
+    )
+
+    expr = expr.apply(
+        pd.to_numeric,
+        errors="coerce"
+    )
+
+    #
+    # Keep selected genes
+    #
+    valid_genes = [
+        g for g in genes
+        if g in expr.index
+    ]
+
+    expr = expr.loc[
+        valid_genes
+    ]
+
+    #
+    # Log2
+    #
+    if apply_log2:
+        expr = np.log2(
+            expr + 1
+        )
+
+    #
+    # Z-score by gene
+    #
+    if zscore_by_gene:
+
+        expr = expr.apply(
+            zscore,
+            axis=1
+        )
+
+        expr = expr.fillna(0)
+
+    #
+    # Cluster genes
+    #
+    if (
+        cluster_genes
+        and expr.shape[0] > 1
+    ):
+
+        gene_linkage = linkage(
+            expr,
+            method="average"
+        )
+
+        gene_order = leaves_list(
+            gene_linkage
+        )
+
+        expr = expr.iloc[
+            gene_order
+        ]
+
+    #
+    # Cluster samples
+    #
+    if (
+        cluster_samples
+        and expr.shape[1] > 1
+    ):
+
+        sample_linkage = linkage(
+            expr.T,
+            method="average"
+        )
+
+        sample_order = leaves_list(
+            sample_linkage
+        )
+
+        expr = expr.iloc[
+            :,
+            sample_order
+        ]
+
+    #
+    # Sample labels
+    #
+    sample_labels = []
+
+    annotation_map = (
+        metadata_df
+        .set_index("Sample")
+        [annotation_column]
+        .to_dict()
+    )
+
+    for sample in expr.columns:
+
+        value = annotation_map.get(
+            sample,
+            ""
+        )
+
+        sample_labels.append(
+            f"{sample}<br>{value}"
+        )
+
+    fig = px.imshow(
+        expr,
+        color_continuous_scale=
+        colorscale,
+        aspect="auto"
+    )
+
+    fig.update_xaxes(
+        tickvals=list(
+            range(
+                len(expr.columns)
+            )
+        ),
+        ticktext=sample_labels
+    )
+
+    fig.update_layout(
+        width=width,
+        height=height,
+        template="plotly_white",
+        xaxis_title="Samples",
+        yaxis_title="Genes"
+    )
+
+    fig = apply_publication_style(
+        fig,
+        width
+    )
     fig = apply_publication_style(fig,width)
     return fig
