@@ -668,7 +668,7 @@ with tab_box:
         "highlight_genes",
         []
     )
-    st.write(default_genes)
+    
     if (
         "boxplot_gene_text"
         not in st.session_state
@@ -683,7 +683,8 @@ with tab_box:
         height=120,
         key="boxplot_gene_text"
     )
-
+    st.write(st.session_state["boxplot_gene_text"])
+    
     selected_genes = [
 
         gene.strip()
@@ -692,7 +693,7 @@ with tab_box:
 
         if gene.strip()
     ]
-
+    
     group_column = st.selectbox(
         "Group By",
         meta_df.columns.tolist(),
