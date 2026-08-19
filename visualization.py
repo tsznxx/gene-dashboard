@@ -28,7 +28,7 @@ def apply_publication_style(fig):
         plot_bgcolor="white",
         paper_bgcolor="white",
         legend=dict(
-            x=1.02,
+            x=1.15,
             y=1,
             xanchor="left",
             yanchor="top"
