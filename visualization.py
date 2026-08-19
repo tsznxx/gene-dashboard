@@ -32,6 +32,7 @@ def apply_publication_style(
         1
         + legend_gap_px / width
     )
+    st.write(legend_x)
 
     fig.update_layout(
         template="plotly_white",
