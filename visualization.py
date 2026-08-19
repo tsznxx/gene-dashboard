@@ -436,11 +436,12 @@ def create_heatmap(
     expr = expression_df.set_index(
         gene_col
     )
-
+    e1 = type(expr)
     expr = expr.apply(
         pd.to_numeric,
         errors="coerce"
     )
+    e2 = type(expr)
 
     #
     # Keep selected genes
@@ -453,6 +454,7 @@ def create_heatmap(
     expr = expr.loc[
         valid_genes
     ]
+    e3 = type(expr)
 
     #
     # Log2
@@ -473,11 +475,11 @@ def create_heatmap(
         )
 
         expr = expr.fillna(0)
-
+    e4 = type(expr)
     #
     # Cluster genes
     #
-    return expr
+    return [e1,e2,e3,d4]
     if (
         cluster_genes
         and expr.shape[0] > 1
