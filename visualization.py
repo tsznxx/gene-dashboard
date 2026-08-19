@@ -479,7 +479,7 @@ def create_heatmap(
     #
     # Cluster genes
     #
-    return [e1,e2,e3,d4]
+    return [e1,e2,e3,e4]
     if (
         cluster_genes
         and expr.shape[0] > 1
