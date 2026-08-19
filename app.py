@@ -904,11 +904,6 @@ with tab_heatmap:
                 key="heatmap_colorscale"
             )
         )
-    st.divider()
-
-    st.subheader(
-        "Color Scale Settings"
-    )
 
     auto_color_scale = st.checkbox(
         "Automatic Color Scale",
