@@ -782,9 +782,9 @@ with tab_box:
                 "displaylogo": False,
                 "toImageButtonOptions": {
                     "format": "svg",
-                    "filename": "box_plot",
-                    "width": boxplot_width,
-                    "height": boxplot_height,
+                    "filename": "gene_boxplot",
+                    "width": plot_width,
+                    "height": plot_height,
                     "scale": 1
                 }
             }
