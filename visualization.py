@@ -29,13 +29,27 @@ def create_pca_plot(
     height=500
 ):
 
+    #
+    # Build color map from categories
+    #
+    groups = (
+        pca_df[color_column]
+        .dropna()
+        .unique()
+    )
+
+    color_map = {
+        group: TAB10[i % len(TAB10)]
+        for i, group in enumerate(groups)
+    }
+
     fig = px.scatter(
         pca_df,
         x="PC1",
         y="PC2",
         color=color_column,
-        hover_data=["Sample"],
-        title="Principal Component Analysis"
+        color_discrete_map=color_map,
+        hover_data=["Sample"]
     )
 
     fig.update_traces(
@@ -53,7 +67,8 @@ def create_pca_plot(
         ),
         yaxis_title=(
             f"PC2 ({explained_variance[1]*100:.1f}%)"
-        )
+        ),
+        legend_title=color_column
     )
 
     return fig
