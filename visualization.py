@@ -463,7 +463,7 @@ def create_heatmap(
         expr = np.log2(
             expr + 1
         )
-
+    e4 = type(expr)
     #
     # Z-score by gene
     #
@@ -475,11 +475,11 @@ def create_heatmap(
         )
 
         expr = expr.fillna(0)
-    e4 = type(expr)
+    e5 = type(expr)
     #
     # Cluster genes
     #
-    return [e1,e2,e3,e4]
+    return [e1,e2,e3,e4,e5]
     if (
         cluster_genes
         and expr.shape[0] > 1
