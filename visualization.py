@@ -372,14 +372,15 @@ def create_gene_boxplot(
         strip_fig = px.strip(
             plot_df,
             x="Gene",
-            y="Expression"
+            y="Expression",
+            color=group_column
         )
 
         for trace in strip_fig.data:
 
             trace.marker.color = "black"
             trace.marker.size = 3
-            trace.jitter = 1.0
+            trace.jitter = 0.8
             trace.showlegend = False
 
             fig.add_trace(trace)
