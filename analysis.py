@@ -198,7 +198,19 @@ def run_differential_expression(
                 pvalue
             ]
         )
+    if len(results) == 0:
 
+        return pd.DataFrame(
+            columns=[
+                "Gene",
+                f"{group1}_Mean",
+                f"{group2}_Mean",
+                "log2FC",
+                "PValue",
+                "FDR"
+            ]
+        )
+    
     de_df = pd.DataFrame(
         results,
         columns=[

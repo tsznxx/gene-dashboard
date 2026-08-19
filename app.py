@@ -416,6 +416,15 @@ with tab_de:
             group2=group2,
             apply_log2=apply_log2
         )
+
+        if de_results.empty:
+
+            st.error(
+                "No genes available for differential expression analysis."
+            )
+
+            st.stop()
+        
         st.session_state["de_results"] = de_results
 
         st.success(
@@ -663,7 +672,8 @@ with tab_box:
     gene_text = st.text_area(
         "Genes (comma separated)",
         value=",".join(default_genes),
-        height=120
+        height=120,
+        key="boxplot_group"
     )
 
     selected_genes = [
@@ -804,18 +814,14 @@ with tab_heatmap:
         "Expression Heatmap"
     )
 
-    default_genes = (
-        st.session_state.get(
-            "highlight_genes",
-            []
-        )
+    default_genes = st.session_state.get(
+        "highlight_genes",
+        []
     )
 
     gene_text = st.text_area(
-        "Genes",
-        value=",".join(
-            default_genes
-        ),
+        "Genes (comma separated)",
+        value=",".join(default_genes),
         height=120,
         key="heatmap_genes"
     )
