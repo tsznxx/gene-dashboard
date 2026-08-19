@@ -712,7 +712,7 @@ with tab_box:
 
         plot_width = st.number_input(
             "Figure Width (px)",
-            value=300 if plot_mode=="Single Gene" else 1200,
+            value=1200,
             key="boxplot_width"
         )
 
@@ -720,7 +720,7 @@ with tab_box:
 
         plot_height = st.number_input(
             "Figure Height (px)",
-            value=400 if plot_mode=="Single Gene" else 600,
+            value=600,
             key="boxplot_height"
         )
 
@@ -777,5 +777,14 @@ with tab_box:
 
         st.plotly_chart(
             fig,
-            use_container_width=False
+            use_container_width=False,
+            config={
+                "displaylogo": False,
+                "toImageButtonOptions": {
+                    "format": "svg",
+                    "filename": "box_plot",
+                    "width": boxplot_width,
+                    "height": boxplot_height,
+                    "scale": 1
+                }
         )
