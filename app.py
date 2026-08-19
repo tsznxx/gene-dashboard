@@ -245,7 +245,7 @@ with tab_pca:
 
     color_column = st.selectbox(
         "Color samples by",
-        meta_df.columns.tolist(),
+        meta_df.columns[1:]),
         key="pca_color_column"
     )
 
@@ -699,7 +699,7 @@ with tab_box:
     
     group_column = st.selectbox(
         "Group By",
-        meta_df.columns.tolist(),
+        meta_df.columns[1:],
         key="boxplot_group_column"
     )
 
@@ -856,7 +856,7 @@ with tab_heatmap:
     annotation_column = (
         st.selectbox(
             "Annotation Column",
-            meta_df.columns,
+            meta_df.columns[1:],
             index=1,
             key="heatmap_annotation"
         )
