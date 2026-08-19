@@ -632,7 +632,7 @@ with tab_volcano:
         #
         st.plotly_chart(
             fig,
-            use_container_width=False,
+            width='content',
             config={
                 "displaylogo": False,
                 "toImageButtonOptions": {
@@ -777,7 +777,7 @@ with tab_box:
 
         st.plotly_chart(
             fig,
-            use_container_width=False,
+            width='content',
             config={
                 "displaylogo": False,
                 "toImageButtonOptions": {
