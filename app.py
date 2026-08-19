@@ -962,8 +962,9 @@ with tab_heatmap:
                 colorscale=colorscale
             )
             import pandas as pd
-            if isinstance(fig,pd.DataFrame):
+            if not isinstance(fig,plotly.graph_objs.Figure):
                 st.write(fig)
+                st.write(type(fig))
             else:
 
                 st.plotly_chart(
