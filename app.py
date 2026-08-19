@@ -712,7 +712,7 @@ with tab_box:
 
         plot_width = st.number_input(
             "Figure Width (px)",
-            value=1200,
+            value=300 if plot_mode=="Single Gene" else 1200,
             key="boxplot_width"
         )
 
@@ -720,7 +720,7 @@ with tab_box:
 
         plot_height = st.number_input(
             "Figure Height (px)",
-            value=600,
+            value=400 if plot_mode=="Single Gene" else 600,
             key="boxplot_height"
         )
 
