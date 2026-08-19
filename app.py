@@ -677,10 +677,14 @@ with tab_box:
         st.session_state[
             "boxplot_gene_text"
         ] = ",".join(default_genes)
+    else:
+        st.write("box_gene_text is empty")
+        
 
     gene_text = st.text_area(
         "Genes (comma separated)",
         height=120,
+        value=",".join(default_genes),
         key="boxplot_gene_text"
     )
     st.write(st.session_state["boxplot_gene_text"])
