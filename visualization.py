@@ -21,13 +21,18 @@ TAB10 = [
 ]
 
 
-def apply_publication_style(
-    fig
-):
+def apply_publication_style(fig):
+
     fig.update_layout(
         template="plotly_white",
         plot_bgcolor="white",
-        paper_bgcolor="white"
+        paper_bgcolor="white",
+        legend=dict(
+            x=1.02,
+            y=1,
+            xanchor="left",
+            yanchor="top"
+        )
     )
 
     fig.update_xaxes(
@@ -45,16 +50,6 @@ def apply_publication_style(
         linecolor="black",
         mirror=True
     )
-    fig.update_layout(
-    font=dict(
-        size=14,
-        color="black"
-    ),
-    legend=dict(
-        bordercolor="black",
-        borderwidth=1
-    )
-)
 
     return fig
 
