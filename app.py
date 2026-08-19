@@ -961,7 +961,7 @@ with tab_heatmap:
                 height=heatmap_height,
                 colorscale=colorscale
             )
-            import pandas as pd
+            import plotly
             if not isinstance(fig,plotly.graph_objs.Figure):
                 st.write(fig)
                 st.write(type(fig))
