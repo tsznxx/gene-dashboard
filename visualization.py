@@ -26,7 +26,7 @@ def apply_publication_style(
     width
 ):
 
-    legend_gap_px = 80
+    legend_gap_px = 40
 
     legend_x = (
         1
