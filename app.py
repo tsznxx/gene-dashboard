@@ -670,10 +670,10 @@ with tab_box:
     )
     st.write(
         st.session_state.get(
-            "highlight_genes"
+            "highlight_genes",[]
         )
         st.session_state.get(
-            "boxplot_gene_text"
+            "boxplot_gene_text",[]
         )
         
     )
