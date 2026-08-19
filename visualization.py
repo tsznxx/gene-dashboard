@@ -51,7 +51,12 @@ def apply_publication_style(
         showline=True,
         linewidth=1,
         linecolor="black",
-        mirror=True
+        mirror=True,
+        ticks="outside",
+        ticklen=6,
+        tickwidth=1,
+        tickcolor="black"
+
     )
 
     fig.update_yaxes(
@@ -59,9 +64,13 @@ def apply_publication_style(
         showline=True,
         linewidth=1,
         linecolor="black",
-        mirror=True
+        mirror=True,
+        ticks="outside",
+        ticklen=6,
+        tickwidth=1,
+        tickcolor="black"
+      
     )
-
     return fig
 
 def create_pca_plot(
