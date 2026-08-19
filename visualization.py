@@ -565,9 +565,5 @@ def create_heatmap(
         yaxis_title="Genes"
     )
 
-    fig = apply_publication_style(
-        fig,
-        width
-    )
     #fig = apply_publication_style(fig,width)
     return fig
