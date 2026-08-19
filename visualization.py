@@ -24,11 +24,10 @@ TAB10 = [
 def create_pca_plot(
     pca_df,
     color_column,
-    explained_variance
+    explained_variance,
+    width=500,
+    height=500
 ):
-    """
-    Generate interactive PCA plot.
-    """
 
     fig = px.scatter(
         pca_df,
@@ -47,14 +46,13 @@ def create_pca_plot(
 
     fig.update_layout(
         template="plotly_white",
-        height=700,
+        width=width,
+        height=height,
         xaxis_title=(
-            f"PC1 "
-            f"({explained_variance[0]*100:.1f}%)"
+            f"PC1 ({explained_variance[0]*100:.1f}%)"
         ),
         yaxis_title=(
-            f"PC2 "
-            f"({explained_variance[1]*100:.1f}%)"
+            f"PC2 ({explained_variance[1]*100:.1f}%)"
         )
     )
 

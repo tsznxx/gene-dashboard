@@ -230,6 +230,10 @@ with tab_data:
 # PCA Tab
 #
 
+# ==================================================
+# PCA TAB
+# ==================================================
+
 with tab_pca:
 
     st.subheader(
@@ -238,70 +242,112 @@ with tab_pca:
 
     color_column = st.selectbox(
         "Color samples by",
-        meta_df.columns.tolist()
+        meta_df.columns.tolist(),
+        key="pca_color_column"
     )
+
+    st.divider()
+
+    st.subheader(
+        "Figure Settings"
+    )
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+
+        pca_width = st.number_input(
+            "Figure Width (px)",
+            min_value=300,
+            max_value=1200,
+            value=500,
+            step=50,
+            key="pca_width"
+        )
+
+    with col2:
+
+        pca_height = st.number_input(
+            "Figure Height (px)",
+            min_value=300,
+            max_value=1200,
+            value=500,
+            step=50,
+            key="pca_height"
+        )
 
     if st.button(
         "Run PCA",
-        type="primary"
+        key="run_pca_button"
     ):
 
-        pca_df, variance = run_pca(
-            expr_df,
-            apply_log2=apply_log2
-        )
+        try:
 
-        pca_df = pca_df.merge(
-            meta_df,
-            on="Sample",
-            how="left"
-        )
+            pca_df, variance = run_pca(
+                expr_df,
+                apply_log2=apply_log2
+            )
 
-        fig = create_pca_plot(
-            pca_df,
-            color_column,
-            variance
-        )
+            pca_df = pca_df.merge(
+                meta_df,
+                on="Sample",
+                how="left"
+            )
 
-        st.plotly_chart(
-            fig,
-            use_container_width=True,
-            config={
-                "toImageButtonOptions": {
-                    "format": "svg",
-                    "filename": "PCA_plot",
-                    "height": 800,
-                    "width": 1200,
-                    "scale": 1
+            fig = create_pca_plot(
+                pca_df=pca_df,
+                color_column=color_column,
+                explained_variance=variance,
+                width=pca_width,
+                height=pca_height
+            )
+
+            st.plotly_chart(
+                fig,
+                use_container_width=False,
+                config={
+                    "displaylogo": False,
+                    "toImageButtonOptions": {
+                        "format": "svg",
+                        "filename": "PCA_plot",
+                        "width": pca_width,
+                        "height": pca_height,
+                        "scale": 1
+                    }
                 }
-            }
-        )
+            )
 
-        st.subheader(
-            "Explained Variance"
-        )
+            st.subheader(
+                "Explained Variance"
+            )
 
-        st.write(
-            {
-                "PC1": round(
-                    variance[0] * 100,
-                    2
-                ),
-                "PC2": round(
-                    variance[1] * 100,
-                    2
-                )
-            }
-        )
+            st.write(
+                {
+                    "PC1 (%)": round(
+                        variance[0] * 100,
+                        2
+                    ),
+                    "PC2 (%)": round(
+                        variance[1] * 100,
+                        2
+                    )
+                }
+            )
 
-        st.subheader(
-            "PCA Coordinates"
-        )
+            st.subheader(
+                "PCA Coordinates"
+            )
 
-        st.dataframe(
-            pca_df,
-            use_container_width=True
-        )
+            st.dataframe(
+                pca_df,
+                use_container_width=True
+            )
+
+        except Exception as e:
+
+            st.error(
+                str(e)
+            )
         
         
 # DE Tab        
@@ -487,9 +533,9 @@ with tab_volcano:
         with col3:
             volcano_width = st.number_input(
                 "Figure Width (px)",
-                value=1200,
-                min_value=400,
-                max_value=4000,
+                value=500,
+                min_value=200,
+                max_value=2000,
                 step=100,
                 key="volcano_width"
             )
@@ -497,9 +543,9 @@ with tab_volcano:
         with col4:
             volcano_height = st.number_input(
                 "Figure Height (px)",
-                value=800,
-                min_value=300,
-                max_value=4000,
+                value=500,
+                min_value=200,
+                max_value=1500,
                 step=100,
                 key="volcano_height"
             )
