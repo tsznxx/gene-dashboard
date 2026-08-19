@@ -569,5 +569,5 @@ def create_heatmap(
         fig,
         width
     )
-    fig = apply_publication_style(fig,width)
+    #fig = apply_publication_style(fig,width)
     return fig
