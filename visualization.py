@@ -340,27 +340,45 @@ def create_gene_boxplot(
             y="Expression",
             color=group_column,
             color_discrete_map=color_map,
-            points="all",
+            points="False",
             title=f"{selected_gene} Expression"
+        )
+        fig.add_trace(
+            go.Scatter(
+                x=plot_df[group_column],
+                y=plot_df["Expression"],
+                mode="markers",
+                marker=dict(
+                    color="black",
+                    size=3
+                ),
+                showlegend=False
+            )
         )
 
     else:
-
         fig = px.box(
             plot_df,
             x="Gene",
             y="Expression",
             color=group_column,
             color_discrete_map=color_map,
-            points="all"
+            points="False"
         )
 
-    fig.update_traces(
-        pointpos=0,
-        jitter=0.08,
-        marker_size=3,
-        selector=dict(type="box")
-    )
+        fig.add_trace(
+            go.Scatter(
+                x=plot_df["Gene"],
+                y=plot_df["Expression"],
+                mode="markers",
+                marker=dict(
+                    color="black",
+                    size=3
+                ),
+                showlegend=False
+            )
+        )
+
 
     fig.update_layout(
         template="plotly_white",
