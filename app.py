@@ -627,35 +627,39 @@ with tab_volcano:
         #
         # Create Figure
         #
-        fig = create_volcano_plot(
-            de_df=de_df,
-            significance_column=significance_column,
-            significance_cutoff=significance_cutoff,
-            log2fc_cutoff=log2fc_cutoff,
-            highlight_genes=highlight_genes,
-            width=volcano_width,
-            height=volcano_height,
-            x_range=x_range,
-            y_range=y_range
-        )
+        if st.button(
+            "Generate Volcano Plot",
+            key="generate_volcano_plot"
+        ):
+            fig = create_volcano_plot(
+                de_df=de_df,
+                significance_column=significance_column,
+                significance_cutoff=significance_cutoff,
+                log2fc_cutoff=log2fc_cutoff,
+                highlight_genes=highlight_genes,
+                width=volcano_width,
+                height=volcano_height,
+                x_range=x_range,
+                y_range=y_range
+            )
 
-        #
-        # Display Figure
-        #
-        st.plotly_chart(
-            fig,
-            width='content',
-            config={
-                "displaylogo": False,
-                "toImageButtonOptions": {
-                    "format": "svg",
-                    "filename": "volcano_plot",
-                    "width": volcano_width,
-                    "height": volcano_height,
-                    "scale": 1
+            #
+            # Display Figure
+            #
+            st.plotly_chart(
+                fig,
+                width='content',
+                config={
+                    "displaylogo": False,
+                    "toImageButtonOptions": {
+                        "format": "svg",
+                        "filename": "volcano_plot",
+                        "width": volcano_width,
+                        "height": volcano_height,
+                        "scale": 1
+                    }
                 }
-            }
-        )
+            )
         
         
 with tab_box:
