@@ -354,6 +354,7 @@ def create_gene_boxplot(
 
             trace.marker.color = "black"
             trace.marker.size = 3
+            trace.jitter = 1.0
             trace.showlegend = False
 
             fig.add_trace(trace)
@@ -378,6 +379,7 @@ def create_gene_boxplot(
 
             trace.marker.color = "black"
             trace.marker.size = 3
+            trace.jitter = 1.0
             trace.showlegend = False
 
             fig.add_trace(trace)
