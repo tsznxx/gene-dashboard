@@ -688,7 +688,7 @@ with tab_box:
     group_column = st.selectbox(
         "Group By",
         meta_df.columns.tolist(),
-        key="boxplot_group"
+        key="boxplot_group_column"
     )
 
     plot_mode = st.radio(
