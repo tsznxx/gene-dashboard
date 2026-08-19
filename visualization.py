@@ -344,22 +344,19 @@ def create_gene_boxplot(
             title=f"{selected_gene} Expression"
         )
 
-        #
-        # Add black points
-        #
         strip_fig = px.strip(
             plot_df,
             x=group_column,
             y="Expression"
         )
 
-for trace in strip_fig.data:
+        for trace in strip_fig.data:
 
-    trace.marker.color = "black"
-    trace.marker.size = 3
-    trace.showlegend = False
+            trace.marker.color = "black"
+            trace.marker.size = 3
+            trace.showlegend = False
 
-    fig.add_trace(trace)
+            fig.add_trace(trace)
 
     else:
         fig = px.box(
@@ -371,9 +368,6 @@ for trace in strip_fig.data:
             points=False
         )
 
-        #
-        # Add black points
-        #
         strip_fig = px.strip(
             plot_df,
             x="Gene",
