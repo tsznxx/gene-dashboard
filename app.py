@@ -668,6 +668,7 @@ with tab_box:
         "highlight_genes",
         []
     )
+    st.write(default_genes)
     if (
         "boxplot_gene_text"
         not in st.session_state
