@@ -668,19 +668,17 @@ with tab_box:
         "highlight_genes",
         []
     )
-    st.write(
-        st.session_state.get(
-            "highlight_genes",[]
-        )
-        st.session_state.get(
-            "boxplot_gene_text",[]
-        )
-        
-    )
+    if (
+        "boxplot_gene_text"
+        not in st.session_state
+    ):
+
+        st.session_state[
+            "boxplot_gene_text"
+        ] = ",".join(default_genes)
 
     gene_text = st.text_area(
         "Genes (comma separated)",
-        value=",".join(default_genes),
         height=120,
         key="boxplot_gene_text"
     )
