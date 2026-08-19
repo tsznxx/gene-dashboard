@@ -782,9 +782,9 @@ with tab_box:
                 "displaylogo": False,
                 "toImageButtonOptions": {
                     "format": "svg",
-                    "filename": "volcano_plot",
-                    "width": volcano_width,
-                    "height": volcano_height,
+                    "filename": "box_plot",
+                    "width": boxplot_width,
+                    "height": boxplot_height,
                     "scale": 1
                 }
             }
