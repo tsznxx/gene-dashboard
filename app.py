@@ -362,7 +362,7 @@ with tab_de:
 
     eligible_columns = []
 
-    for col in meta_df.columns:
+    for col in meta_df.columns[1:]:
 
         if meta_df[col].nunique() >= 2:
             eligible_columns.append(col)
