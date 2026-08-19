@@ -21,14 +21,25 @@ TAB10 = [
 ]
 
 
-def apply_publication_style(fig):
+def apply_publication_style(
+    fig,
+    width
+):
+
+    legend_gap_px = 80
+
+    legend_x = (
+        1
+        + legend_gap_px / width
+    )
 
     fig.update_layout(
         template="plotly_white",
         plot_bgcolor="white",
         paper_bgcolor="white",
+
         legend=dict(
-            x=1.15,
+            x=legend_x,
             y=1,
             xanchor="left",
             yanchor="top"
@@ -102,7 +113,7 @@ def create_pca_plot(
         ),
         legend_title=color_column
     )
-    fig = apply_publication_style(fig)
+    fig = apply_publication_style(fig,width)
     return fig
 
 
@@ -240,7 +251,7 @@ def create_volcano_plot(
         fig.update_yaxes(
             range=y_range
         )
-    fig = apply_publication_style(fig)
+    fig = apply_publication_style(fig,width)
     return fig
     
     
@@ -362,5 +373,5 @@ def create_gene_boxplot(
         fig.update_yaxes(
             range=y_range
         )
-    fig = apply_publication_style(fig)
+    fig = apply_publication_style(fig,width)
     return fig
