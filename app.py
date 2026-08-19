@@ -245,7 +245,7 @@ with tab_pca:
 
     color_column = st.selectbox(
         "Color samples by",
-        meta_df.columns[1:]),
+        meta_df.columns[1:],
         key="pca_color_column"
     )
 
