@@ -340,7 +340,7 @@ def create_gene_boxplot(
             y="Expression",
             color=group_column,
             color_discrete_map=color_map,
-            points="False",
+            points=False,
             title=f"{selected_gene} Expression"
         )
         fig.add_trace(
@@ -363,7 +363,7 @@ def create_gene_boxplot(
             y="Expression",
             color=group_column,
             color_discrete_map=color_map,
-            points="False"
+            points=False
         )
 
         fig.add_trace(
