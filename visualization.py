@@ -469,9 +469,12 @@ def create_heatmap(
     #
     if zscore_by_gene:
 
-        expr = expr.apply(
-            zscore,
-            axis=1
+        expr = expr.sub(
+            expr.mean(axis=1),
+            axis=0
+        ).div(
+            expr.std(axis=1),
+            axis=0
         )
 
         expr = expr.fillna(0)
