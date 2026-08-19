@@ -918,36 +918,42 @@ with tab_heatmap:
                 key="heatmap_height"
             )
         )
+    if len(selected_genes) == 0:
 
-    fig = create_heatmap(
-        expression_df=expr_df,
-        metadata_df=meta_df,
-        genes=selected_genes,
-        annotation_column=
-        annotation_column,
-        apply_log2=apply_log2,
-        zscore_by_gene=
-        zscore_by_gene,
-        cluster_samples=
-        cluster_samples,
-        cluster_genes=
-        cluster_genes,
-        width=heatmap_width,
-        height=heatmap_height,
-        colorscale=colorscale
-    )
+        st.info(
+            "Run DE analysis first or provide at least one gene."
+        )
 
-    st.plotly_chart(
-        fig,
-        width="content",
-        config={
-            "displaylogo": False,
-            "toImageButtonOptions": {
-                "format": "svg",
-                "filename":"expression_heatmap",
-                "width":heatmap_width,
-                "height": plot_height,
-                "scale": 1
-            }
-        }       
-    )
+    else:
+        fig = create_heatmap(
+            expression_df=expr_df,
+            metadata_df=meta_df,
+            genes=selected_genes,
+            annotation_column=
+            annotation_column,
+            apply_log2=apply_log2,
+            zscore_by_gene=
+            zscore_by_gene,
+            cluster_samples=
+            cluster_samples,
+            cluster_genes=
+            cluster_genes,
+            width=heatmap_width,
+            height=heatmap_height,
+            colorscale=colorscale
+        )
+
+        st.plotly_chart(
+            fig,
+            width="content",
+            config={
+                "displaylogo": False,
+                "toImageButtonOptions": {
+                    "format": "svg",
+                    "filename":"expression_heatmap",
+                    "width":heatmap_width,
+                    "height": plot_height,
+                    "scale": 1
+                }
+            }       
+        )
