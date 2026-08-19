@@ -670,8 +670,7 @@ with tab_box:
     )
     
     if (
-        "boxplot_gene_text"
-        not in st.session_state
+        not st.session_state.get("boxplot_gene_text",[])
     ):
 
         st.session_state[
