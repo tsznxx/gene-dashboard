@@ -961,6 +961,7 @@ with tab_heatmap:
                 height=heatmap_height,
                 colorscale=colorscale
             )
+            import pandas as pd
             if isinstance(fig,pd.DataFrame):
                 st.write(fig)
             else:
