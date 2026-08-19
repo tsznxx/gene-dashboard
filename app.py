@@ -961,18 +961,21 @@ with tab_heatmap:
                 height=heatmap_height,
                 colorscale=colorscale
             )
+            if isinstance(fig,pd.DataFrame):
+                st.write(fig)
+            else:
 
-            st.plotly_chart(
-                fig,
-                width="content",
-                config={
-                    "displaylogo": False,
-                    "toImageButtonOptions": {
-                        "format": "svg",
-                        "filename":"expression_heatmap",
-                        "width":heatmap_width,
-                        "height": plot_height,
-                        "scale": 1
-                    }
-                }       
-            )
+                st.plotly_chart(
+                    fig,
+                    width="content",
+                    config={
+                        "displaylogo": False,
+                        "toImageButtonOptions": {
+                            "format": "svg",
+                            "filename":"expression_heatmap",
+                            "width":heatmap_width,
+                            "height": plot_height,
+                            "scale": 1
+                        }
+                    }       
+                )
