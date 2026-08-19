@@ -672,6 +672,10 @@ with tab_box:
         st.session_state.get(
             "highlight_genes"
         )
+        st.session_state.get(
+            "boxplot_gene_text"
+        )
+        
     )
 
     gene_text = st.text_area(
