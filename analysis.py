@@ -142,13 +142,9 @@ def run_differential_expression(
     if apply_log2:
         expr = np.log2(expr + 1)
 
-    group1_samples = metadata_df[
-        metadata_df[group_column] == group1
-    ]index.tolist()
+    group1_samples = metadata_df[metadata_df[group_column] == group1].index.tolist()
 
-    group2_samples = metadata_df[
-        metadata_df[group_column] == group2
-    ]index.tolist()
+    group2_samples = metadata_df[metadata_df[group_column] == group2].index.tolist()
 
     results = []
 
