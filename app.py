@@ -737,16 +737,9 @@ with tab_volcano:
             "Add Gene"
         )
 
-        all_genes = sorted(
-            de_df["Gene"]
-            .astype(str)
-            .unique()
-            .tolist()
-        )
-
         gene_to_add = st.selectbox(
             "Type Gene Name",
-            options=all_genes,
+            options=st.session_state["all_genes"],
             index=None,
             placeholder="Type to search...",
             key="volcano_gene_search"
@@ -923,7 +916,7 @@ with tab_box:
         "Gene Expression Boxplots"
     )
 
-    default_genes = st.session_state.get(
+    highlight_genes = st.session_state.get(
         "highlight_genes",
         []
     )
@@ -934,7 +927,7 @@ with tab_box:
 
         st.session_state[
             "boxplot_gene_text"
-        ] = ",".join(default_genes)
+        ] = ",".join(highlight_genes)
        
 
     gene_text = st.text_area(
@@ -942,6 +935,53 @@ with tab_box:
         height=120,
         key="boxplot_gene_text"
     )
+    # --------------------------------------------------
+    # Add Gene
+    # --------------------------------------------------
+
+    st.subheader(
+        "Add Gene"
+    )
+
+    gene_to_add = st.selectbox(
+        "Type Gene Name",
+        options=st.session_state["all_genes"],
+        index=None,
+        placeholder="Type to search...",
+        key="boxplot_gene_search"
+    )
+
+    if st.button(
+        "Add Gene",
+        key="boxplot_add_gene"
+    ):
+
+        if (
+            gene_to_add
+            and gene_to_add
+            not in st.session_state[
+                "highlight_genes"
+            ]
+        ):
+
+            st.session_state[
+                "highlight_genes"
+            ] = (
+                st.session_state[
+                    "highlight_genes"
+                ]
+                + [gene_to_add]
+            )
+
+            st.rerun()
+
+    #
+    # Keep synchronized
+    #
+    st.session_state[
+        "highlight_genes"
+    ] = highlight_genes
+    
     
     selected_genes = [
 
