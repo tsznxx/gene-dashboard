@@ -742,31 +742,30 @@ with tab_volcano:
             options=st.session_state.get("all_genes",[]),
             index=None,
             placeholder="Type to search...",
-            key="boxplot_gene_search"
+            key="volcano_gene_search"
         )
 
         if st.button(
             "Add Gene",
-            key="boxplot_add_gene"
+            key="volcano_add_gene"
         ):
 
             if (
                 gene_to_add
-                and gene_to_add not in highlight_genes
+                and gene_to_add
+                not in st.session_state[
+                    "highlight_genes"
+                ]
             ):
 
-                highlight_genes = (
-                    highlight_genes
+                st.session_state[
+                    "highlight_genes"
+                ] = (
+                    st.session_state[
+                        "highlight_genes"
+                    ]
                     + [gene_to_add]
                 )
-
-                new_text = ",".join(
-                    selected_genes
-                )
-
-                st.session_state[
-                    "boxplot_gene_text"
-                ] = new_text
 
                 st.rerun()
 
@@ -936,14 +935,18 @@ with tab_box:
         height=120,
         key="boxplot_gene_text"
     )
-    # --------------------------------------------------
+    highlight_genes = [
+
+        gene.strip()
+
+        for gene in gene_text.split(",")
+
+        if gene.strip()
+    ]
+    #
     # Add Gene
-    # --------------------------------------------------
-
-    st.subheader(
-        "Add Gene"
-    )
-
+    #
+    st.subheader("Add Gene")
     gene_to_add = st.selectbox(
         "Type Gene Name",
         options=st.session_state.get("all_genes",[]),
@@ -959,20 +962,21 @@ with tab_box:
 
         if (
             gene_to_add
-            and gene_to_add
-            not in st.session_state[
-                "highlight_genes"
-            ]
+            and gene_to_add not in highlight_genes
         ):
 
-            st.session_state[
-                "highlight_genes"
-            ] = (
-                st.session_state[
-                    "highlight_genes"
-                ]
+            highlight_genes = (
+                highlight_genes
                 + [gene_to_add]
             )
+
+            new_text = ",".join(
+                highlight_genes
+            )
+
+            st.session_state[
+                "boxplot_gene_text"
+            ] = new_text
 
             st.rerun()
 
@@ -984,14 +988,7 @@ with tab_box:
     ] = highlight_genes
     
     
-    selected_genes = [
 
-        gene.strip()
-
-        for gene in gene_text.split(",")
-
-        if gene.strip()
-    ]
     
     group_column = st.selectbox(
         "Group By",
@@ -1012,12 +1009,12 @@ with tab_box:
 
     if (
         plot_mode == "Single Gene"
-        and len(selected_genes) > 0
+        and len(highlight_genes) > 0
     ):
 
         selected_gene = st.selectbox(
             "Select Gene",
-            selected_genes,
+            highlight_genes,
             index=0
         )
 
@@ -1090,7 +1087,7 @@ with tab_box:
         fig = create_gene_boxplot(
             expression_df=expr_df,
             metadata_df=meta_df,
-            genes=selected_genes,
+            genes=highlight_genes,
             group_column=group_column,
             apply_log2=apply_log2,
             plot_mode=plot_mode,
