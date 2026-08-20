@@ -1201,7 +1201,7 @@ with tab_heatmap:
         )
 
     # ----------------------------------
-    # Load Volcano Genes
+    # Load / Clear
     # ----------------------------------
 
     col1, col2 = st.columns(2)
@@ -1236,7 +1236,7 @@ with tab_heatmap:
             st.rerun()
 
     # ----------------------------------
-    # Gene Text Area
+    # Gene List
     # ----------------------------------
 
     gene_text = st.text_area(
@@ -1246,8 +1246,7 @@ with tab_heatmap:
                 "heatmap_genes"
             ]
         ),
-        height=120,
-        key='heatmap_gene_text'
+        height=120
     )
 
     selected_genes = [
@@ -1259,6 +1258,9 @@ with tab_heatmap:
         if gene.strip()
     ]
 
+    #
+    # User edits become source of truth
+    #
     st.session_state[
         "heatmap_genes"
     ] = selected_genes
@@ -1291,17 +1293,13 @@ with tab_heatmap:
 
         if (
             gene_to_add
-            and gene_to_add not in st.session_state[
-                "heatmap_genes"
-            ]
+            and gene_to_add not in selected_genes
         ):
 
             st.session_state[
                 "heatmap_genes"
             ] = (
-                st.session_state[
-                    "heatmap_genes"
-                ]
+                selected_genes
                 + [gene_to_add]
             )
 
@@ -1446,6 +1444,10 @@ with tab_heatmap:
         "Generate Heatmap",
         key="generate_heatmap"
     ):
+
+        selected_genes = st.session_state[
+            "heatmap_genes"
+        ]
 
         if len(selected_genes) == 0:
 
