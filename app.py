@@ -686,6 +686,15 @@ with tab_volcano:
                 st.session_state[
                     "highlight_genes"
                 ] = highlight_genes
+                gene_text = st.text_area(
+                    "Highlighted Genes",
+                    value=",".join(
+                        highlight_genes
+                    ),
+                    height=120,
+                    key="volcano_gene_text"
+                )
+
 
         else:
 
@@ -725,14 +734,14 @@ with tab_volcano:
                     highlight_genes
                 )
 
-        gene_text = st.text_area(
-            "Highlighted Genes",
-            value=",".join(
-                highlight_genes
-            ),
-            height=120,
-            key="volcano_gene_text"
-        )
+                gene_text = st.text_area(
+                    "Highlighted Genes",
+                    value=",".join(
+                        highlight_genes
+                    ),
+                    height=120,
+                    key="volcano_gene_text"
+                )
         st.write(highlight_genes)
         st.write(st.session_state.get("highlight_genes",[]))
     
