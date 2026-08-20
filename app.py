@@ -200,13 +200,6 @@ with st.sidebar:
 # Main
 #
 
-if not uploaded_expression or not uploaded_metadata:
-
-    st.info(
-        "Upload both expression matrix and metadata table to begin."
-    )
-
-    st.stop()
 
 # ==================================================
 # LOAD DATA
