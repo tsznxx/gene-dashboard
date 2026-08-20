@@ -974,10 +974,6 @@ with tab_box:
                 highlight_genes
             )
 
-            st.session_state[
-                "boxplot_gene_text"
-            ] = new_text
-
             st.rerun()
 
     #
