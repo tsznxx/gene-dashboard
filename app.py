@@ -954,18 +954,19 @@ with tab_box:
         if (
             gene_to_add
             and gene_to_add
-            not in boxplot_genes
+            not in st.session_state["boxplot_genes"]
         ):
 
-            boxplot_genes = boxplot_genes+[gene_to_add]
-            st.write("After Add:", boxplot_genes)
+            st.session_state["boxplot_genes"] = st.session_state["boxplot_genes"]+[gene_to_add]
+            
 
             st.rerun()
 
     #
     # Keep synchronized
     #
-    st.session_state["boxplot_genes"] = boxplot_genes
+    st.write("After Add:", st.session_state["boxplot_genes"])
+    boxplot_genes = st.session_state["boxplot_genes"] = 
     
     group_column = st.selectbox(
         "Group By",
