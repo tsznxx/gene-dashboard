@@ -608,6 +608,8 @@ with tab_volcano:
         de_df = st.session_state["de_results"]
         if not "highlight_genes" in st.session_state:
             st.session_state["highlight_genes"] = []
+        if "top_gene_signature" not in st.session_state:
+            st.session_state["top_gene_signature"] = None
         
         significance_column = st.radio(
             "Use significance metric",
@@ -651,7 +653,7 @@ with tab_volcano:
         )
         highlight_genes = st.session_state.get("highlight_genes",[])
         if "volcano_gene_text" not in st.session_state:
-            st.session_state["volcano_gene_text"] = ",".join(st.session_state["highlight_genes"])
+            st.session_state["volcano_gene_text"] = ",".join(highlight_genes)
 
         if use_top_genes:
             top_n = st.number_input(
@@ -679,11 +681,31 @@ with tab_volcano:
 
             dys_genes= sig_df['Gene'].tail(min(top_n,up_df_N)).to_list()+ sig_df['Gene'].head(min(top_n,down_df_N)).to_list()
             highlight_genes += [g for g in dys_genes if g not in highlight_genes]
+            current_signature = (
+                use_top_genes,
+                top_n,
+                significance_column,
+                significance_cutoff,
+                log2fc_cutoff
+            )
+
+            if (
+                st.session_state["top_gene_signature"]
+                != current_signature
+            ):
+
+                st.session_state[
+                    "top_gene_signature"
+                ] = current_signature
+
+                st.session_state[
+                    "highlight_genes"
+                ] = highlight_genes
 
         gene_text = st.text_area(
             "Highlighted Genes",
             value=",".join(
-                highlight_genes
+                st.session_state["highlight_genes"]
             ),
             height=120
         )
@@ -692,10 +714,11 @@ with tab_volcano:
             for g in gene_text.split(",")
             if g.strip() in st.session_state['all_genes']
         ]
-
         st.session_state[
             "highlight_genes"
         ] = highlight_genes
+        st.write("After strip",highlight_genes)
+
         # --------------------------------------------------
         # Add Gene
         # --------------------------------------------------
@@ -711,7 +734,7 @@ with tab_volcano:
             placeholder="Type to search...",
             key="volcano_gene_search"
         )
-
+        st.write("gene to add ",gene_to_add)
         if st.button(
             "Add Gene",
             key="volcano_add_gene"
@@ -722,14 +745,9 @@ with tab_volcano:
                 and gene_to_add
                 not in highlight_genes
             ):
-
-                highlight_genes = (
-                    highlight_genes
-                    + [gene_to_add]
-                )
-
+                highlight_genes + = [gene_to_add]
                 st.rerun()
-
+        st.write("After add gene",highlight_genes)
         #
         # Keep synchronized
         #
