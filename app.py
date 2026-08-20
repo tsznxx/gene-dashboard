@@ -742,30 +742,31 @@ with tab_volcano:
             options=st.session_state.get("all_genes",[]),
             index=None,
             placeholder="Type to search...",
-            key="volcano_gene_search"
+            key="boxplot_gene_search"
         )
 
         if st.button(
             "Add Gene",
-            key="volcano_add_gene"
+            key="boxplot_add_gene"
         ):
 
             if (
                 gene_to_add
-                and gene_to_add
-                not in st.session_state[
-                    "highlight_genes"
-                ]
+                and gene_to_add not in highlight_genes
             ):
 
-                st.session_state[
-                    "highlight_genes"
-                ] = (
-                    st.session_state[
-                        "highlight_genes"
-                    ]
+                highlight_genes = (
+                    highlight_genes
                     + [gene_to_add]
                 )
+
+                new_text = ",".join(
+                    selected_genes
+                )
+
+                st.session_state[
+                    "boxplot_gene_text"
+                ] = new_text
 
                 st.rerun()
 
