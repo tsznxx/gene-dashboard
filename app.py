@@ -606,6 +606,8 @@ with tab_volcano:
     else:
 
         de_df = st.session_state["de_results"]
+        if not "highlight_genes" in st.session_state:
+            st.session_state["highlight_genes"] = []
         
         significance_column = st.radio(
             "Use significance metric",
