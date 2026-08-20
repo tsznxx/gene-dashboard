@@ -894,20 +894,25 @@ with tab_box:
     st.subheader(
         "Gene Expression Boxplots"
     )
-    st.session_state["boxplot_genes"] = st.session_state.get("boxplot_genes",[])
-    if not st.session_state["boxplot_genes"]:
-        st.session_state["boxplot_genes"] = st.session_state.get("highlight_genes",[])
-    
-    st.session_state[
-        "boxplot_gene_text"
-    ] = ",".join(st.session_state["boxplot_genes"])
-       
+    default_genes = st.session_state.get(
+        "highlight_genes",
+        []
+    )
+    if (
+        not st.session_state.get("boxplot_genes",[])
+    ):
 
+        st.session_state[
+            "boxplot_genes"
+        ] = ",".join(default_genes)
+        
     gene_text = st.text_area(
         "Genes (comma separated)",
         height=120,
-        key="boxplot_gene_text"
+        key="boxplot_genes"
     )
+    
+
     boxplot_genes = [
 
         gene.strip()
