@@ -607,7 +607,13 @@ with tab_volcano:
 
         de_df = st.session_state["de_results"]
         
-
+        significance_column = st.radio(
+            "Use significance metric",
+            ["PValue", "FDR"],
+            horizontal=True,
+            key="volcano_sig_metric"
+        )
+        
         col1, col2 = st.columns(2)
 
         with col1:
