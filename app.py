@@ -732,7 +732,9 @@ with tab_volcano:
             ),
             height=120,
             key="volcano_gene_text"
-        )   
+        )
+        st.write(highlight_genes)
+        st.write(st.session_state.get("highlight_genes",[]))
     
         #
         # Figure Settings
