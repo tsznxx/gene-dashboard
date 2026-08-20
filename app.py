@@ -107,7 +107,6 @@ with st.sidebar:
             "using_example_data"
         ] = True
 
-        #st.rerun()
 
     if st.session_state.get(
         "using_example_data",
@@ -301,19 +300,6 @@ st.success(
 st.session_state["expression_df"] = expr_df
 st.session_state["metadata_df"] = meta_df
 
-#
-# Global options
-#
-
-with st.sidebar:
-
-    st.header("Global Settings")
-
-    apply_log2 = st.checkbox(
-        "Apply log2(x+1) transformation",
-        value=True,
-        help="Recommended for RNA-seq count data"
-    )
 
 #
 # Tabs
