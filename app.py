@@ -30,6 +30,11 @@ st.set_page_config(
 
 st.title("Gene Expression Dashboard")
 
+st.sidebar.image(
+    "assets/logo.png",
+    use_container_width=True
+)
+
 #
 # Sidebar
 #
