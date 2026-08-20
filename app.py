@@ -753,17 +753,11 @@ with tab_volcano:
             if (
                 gene_to_add
                 and gene_to_add
-                not in st.session_state[
-                    "highlight_genes"
-                ]
+                not in highlight_genes
             ):
 
-                st.session_state[
-                    "highlight_genes"
-                ] = (
-                    st.session_state[
-                        "highlight_genes"
-                    ]
+                highlight_genes = (
+                    highlight_genes
                     + [gene_to_add]
                 )
 
@@ -963,17 +957,11 @@ with tab_box:
         if (
             gene_to_add
             and gene_to_add
-            not in st.session_state[
-                "highlight_genes"
-            ]
+            not in highlight_genes
         ):
 
-            st.session_state[
-                "highlight_genes"
-            ] = (
-                st.session_state[
-                    "highlight_genes"
-                ]
+            highlight_genes = (
+                highlight_genes
                 + [gene_to_add]
             )
 
