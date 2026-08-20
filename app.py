@@ -942,11 +942,11 @@ with tab_box:
         key="boxplot_gene_search"
     )
     st.write("Before Add:", highlight_genes)
+    st.write("gene_to_add =", gene_to_add)
     if st.button(
         "Add Gene",
         key="boxplot_add_gene"
     ):
-        st.write("gene_to_add =", gene_to_add)
 
         if (
             gene_to_add
