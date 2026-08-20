@@ -93,9 +93,9 @@ def validate_sample_matching(expr_df, meta_df):
     expression matrix and metadata.
     """
 
-    expr_samples = set(expr_df.columns)
+    expr_samples = set(expr_df.columns.to_list())
 
-    meta_samples = set(meta_df.index)
+    meta_samples = set(meta_df.index.to_list())
 
     missing_in_metadata = expr_samples - meta_samples
     missing_in_expression = meta_samples - expr_samples
