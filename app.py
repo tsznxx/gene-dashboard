@@ -915,13 +915,9 @@ with tab_box:
         []
     )
     
-    if (
-        not st.session_state.get("boxplot_gene_text",[])
-    ):
-
-        st.session_state[
-            "boxplot_gene_text"
-        ] = ",".join(highlight_genes)
+    st.session_state[
+        "boxplot_gene_text"
+    ] = ",".join(highlight_genes)
        
 
     gene_text = st.text_area(
