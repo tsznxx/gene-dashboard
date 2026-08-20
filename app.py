@@ -732,9 +732,10 @@ with tab_volcano:
                 "highlight_genes"
             ] = highlight_genes
         else:
+            highlight_genes = st.session_state.get("highlight_genes".[])
             st.session_state[
                 "highlight_genes"
-            ] = []            
+            ] = highlight_genes
         
         # --------------------------------------------------
         # Add Gene
