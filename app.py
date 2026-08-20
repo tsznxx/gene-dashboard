@@ -606,22 +606,7 @@ with tab_volcano:
     else:
 
         de_df = st.session_state["de_results"]
-        if "highlight_genes" not in st.session_state:
-            st.session_state["highlight_genes"] = []
-
-        if "top_gene_signature" not in st.session_state:
-            st.session_state["top_gene_signature"] = None
-
-        # --------------------------------------------------
-        # Volcano Settings
-        # --------------------------------------------------
-
-        significance_column = st.radio(
-            "Use significance metric",
-            ["PValue", "FDR"],
-            horizontal=True,
-            key="volcano_sig_metric"
-        )
+        
 
         col1, col2 = st.columns(2)
 
@@ -656,17 +641,11 @@ with tab_volcano:
             value=True,
             key="volcano_use_top_genes"
         )
-
-        if "highlight_genes" not in st.session_state:
-
-            st.session_state["highlight_genes"] = []
-
+        highlight_genes = st.session_state.get("highlight_genes",[])
         if "volcano_gene_text" not in st.session_state:
-
-            st.session_state["volcano_gene_text"] = ""
+            st.session_state["volcano_gene_text"] = ",".join(st.session_state["highlight_genes"])
 
         if use_top_genes:
-
             top_n = st.number_input(
                 "Top Up/Down Genes Per Direction",
                 min_value=1,
@@ -690,39 +669,20 @@ with tab_volcano:
             up_n = min(top_n,up_df_N)
             down_n = min(top_n,down_df_N)
 
-            highlight_genes = sig_df['Gene'].tail(min(top_n,up_df_N)).to_list()+ sig_df['Gene'].head(min(top_n,down_df_N)).to_list()
-            current_signature = (
-                use_top_genes,
-                top_n,
-                significance_column,
-                significance_cutoff,
-                log2fc_cutoff
-            )
-
-            if (
-                st.session_state["top_gene_signature"]
-                != current_signature
-            ):
-
-                st.session_state[
-                    "top_gene_signature"
-                ] = current_signature
-
-                st.session_state[
-                    "highlight_genes"
-                ] = highlight_genes
+            dys_genes= sig_df['Gene'].tail(min(top_n,up_df_N)).to_list()+ sig_df['Gene'].head(min(top_n,down_df_N)).to_list()
+            highlight_genes += [g for g in dys_genes if g not in highlight_genes]
 
         gene_text = st.text_area(
             "Highlighted Genes",
             value=",".join(
-                st.session_state.get("highlight_genes",[])
+                highlight_genes
             ),
             height=120
         )
         highlight_genes = [
             g.strip()
             for g in gene_text.split(",")
-            if g.strip()
+            if g.strip() in st.session_state['all_genes']
         ]
 
         st.session_state[
@@ -870,8 +830,6 @@ with tab_volcano:
             "Generate Volcano Plot",
             key="generate_volcano_plot"
         ):
-            st.write(highlight_genes)
-            st.write(st.session_state.get("highlight_genes",[]))
             fig = create_volcano_plot(
                 de_df=de_df,
                 significance_column=significance_column,
@@ -928,7 +886,7 @@ with tab_box:
 
         for gene in gene_text.split(",")
 
-        if gene.strip() and gene in st.session_state["all_genes"]
+        if gene.strip() in st.session_state["all_genes"]
     ]
 
     #
@@ -943,8 +901,6 @@ with tab_box:
         placeholder="Type to search...",
         key="boxplot_gene_search"
     )
-    st.write("Before Add:", boxplot_genes)
-    st.write("gene_to_add =", gene_to_add)
     if st.button(
         "Add Gene",
         key="boxplot_add_gene"
@@ -953,19 +909,17 @@ with tab_box:
         if (
             gene_to_add
             and gene_to_add
-            not in st.session_state["boxplot_genes"]
+            not in boxplot_genes
         ):
 
-            st.session_state["boxplot_genes"] = st.session_state["boxplot_genes"]+[gene_to_add]
-            
-
+            boxplot_genes += [gene_to_add]
             st.rerun()
 
     #
     # Keep synchronized
     #
-    st.write("After Add:", st.session_state["boxplot_genes"])
-    boxplot_genes = st.session_state["boxplot_genes"]
+
+    st.session_state["boxplot_genes"] = boxplot_genes
     
     group_column = st.selectbox(
         "Group By",
