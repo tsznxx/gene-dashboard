@@ -966,7 +966,7 @@ with tab_box:
     # Keep synchronized
     #
     st.write("After Add:", st.session_state["boxplot_genes"])
-    boxplot_genes = st.session_state["boxplot_genes"] = 
+    boxplot_genes = st.session_state["boxplot_genes"]
     
     group_column = st.selectbox(
         "Group By",
