@@ -932,7 +932,7 @@ with tab_box:
                 []
             )
 
-            st.rerun()
+            #st.rerun()
 
     with col2:
 
@@ -945,7 +945,7 @@ with tab_box:
                 "boxplot_genes"
             ] = []
 
-            st.rerun()
+            #st.rerun()
 
     # ----------------------------------
     # Gene Text Area
@@ -961,6 +961,13 @@ with tab_box:
         height=120,
         key='boxplot_gene_text'
     )
+    st.write("boxplot_genes:",
+             st.session_state["boxplot_genes"])
+
+    st.write("boxplot_gene_text:",
+             st.session_state.get(
+                 "boxplot_gene_text"
+             ))
 
     selected_genes = [
 
@@ -1021,7 +1028,7 @@ with tab_box:
                 + [gene_to_add]
             )
 
-            st.rerun()
+            #st.rerun()
 
     # ----------------------------------
     # Grouping
