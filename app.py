@@ -691,7 +691,7 @@ with tab_volcano:
             up_n = min(top_n,up_df_N)
             down_n = min(top_n,down_df_N)
 
-            highlight_genes = sig_df['Gene'].tail(min(top_n,up_df_N)).to_list()+ sig_df['Gene'].head(min(top_n,down_df_N))
+            highlight_genes = sig_df['Gene'].tail(min(top_n,up_df_N)).to_list()+ sig_df['Gene'].head(min(top_n,down_df_N)).to_list()
             current_signature = (
                 use_top_genes,
                 top_n,
