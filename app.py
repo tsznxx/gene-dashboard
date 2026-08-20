@@ -328,6 +328,8 @@ with tab_data:
     meta_summary = summarize_metadata(
         meta_df
     )
+    all_genes = sorted(expr_df.index.astype(str).unique().tolist())
+    st.session_state["all_genes"] = all_genes
 
     c1, c2, c3 = st.columns(3)
 
@@ -569,9 +571,6 @@ with tab_de:
             st.stop()
         de_results = de_results.sort_values('log2FC')
         st.session_state["de_results"] = de_results
-        all_genes = sorted(de_results["Gene"].astype(str).unique().tolist())
-        st.session_state["all_genes"] = all_genes
-
         st.success(
             f"{len(de_results)} genes analysed."
         )
