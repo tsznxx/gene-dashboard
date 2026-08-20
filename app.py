@@ -25,6 +25,7 @@ from visualization import (
 
 st.set_page_config(
     page_title="Gene Expression Dashboard",
+    page_icon="assets/logo.png",
     layout="wide"
 )
 
@@ -32,7 +33,7 @@ st.title("Gene Expression Dashboard")
 
 st.sidebar.image(
     "assets/logo.png",
-    use_container_width=True
+    width='content'
 )
 
 #
@@ -1031,3 +1032,18 @@ with tab_heatmap:
                         }
                     }       
                 )
+                
+st.markdown("---")
+
+st.markdown(
+    """
+    <div style='text-align:center;
+                color:gray;
+                font-size:12px;'>
+    © 2026 H. Lee Moffitt Cancer Center. All rights reserved.
+    <br>
+    Gene Expression Dashboard v1.0
+    </div>
+    """,
+    unsafe_allow_html=True
+)
