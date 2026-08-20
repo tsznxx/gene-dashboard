@@ -28,11 +28,6 @@ from visualization import (
 
 st.title("Gene Expression Dashboard")
 
-st.sidebar.image(
-    "assets/logo.png",
-    width='content'
-)
-
 st.set_page_config(
     page_title="Gene Expression Dashboard",
     page_icon="assets/logo.png",
@@ -77,10 +72,6 @@ with st.sidebar:
     st.image(
         "assets/logo.png",
         use_container_width=True
-    )
-
-    st.title(
-        "Gene Expression Dashboard"
     )
 
     st.divider()
