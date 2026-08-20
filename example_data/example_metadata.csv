@@ -1,0 +1,13 @@
+Sample,Group,Batch,Age,Sex,SurvivalTime,Status
+Sample01,Tumor,Batch1,61,M,15,1
+Sample02,Tumor,Batch1,58,F,28,0
+Sample03,Tumor,Batch1,66,M,12,1
+Sample04,Tumor,Batch2,55,F,18,1
+Sample05,Tumor,Batch2,63,M,24,0
+Sample06,Tumor,Batch2,59,F,20,1
+Sample07,Normal,Batch1,62,F,60,0
+Sample08,Normal,Batch1,57,M,55,0
+Sample09,Normal,Batch1,64,F,72,0
+Sample10,Normal,Batch2,60,M,48,0
+Sample11,Normal,Batch2,56,F,65,0
+Sample12,Normal,Batch2,68,M,80,0
