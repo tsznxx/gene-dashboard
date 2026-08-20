@@ -908,15 +908,12 @@ with tab_box:
     st.subheader(
         "Gene Expression Boxplots"
     )
-
-    highlight_genes = st.session_state.get(
-        "highlight_genes",
-        []
-    )
+    if "highlight_genes" not in st.session_state:
+        st.session_state["highlight_genes"] = []
     
     st.session_state[
         "boxplot_gene_text"
-    ] = ",".join(highlight_genes)
+    ] = ",".join(st.session_state["highlight_genes"])
        
 
     gene_text = st.text_area(
@@ -930,7 +927,7 @@ with tab_box:
 
         for gene in gene_text.split(",")
 
-        if gene.strip()
+        if gene.strip() and gene in st.session_state["all_genes"]
     ]
     #
     # Add Gene
