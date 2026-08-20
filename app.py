@@ -607,6 +607,11 @@ with tab_volcano:
     else:
 
         de_df = st.session_state["de_results"]
+        if "highlight_genes" not in st.session_state:
+            st.session_state["highlight_genes"] = []
+
+        if "top_gene_signature" not in st.session_state:
+            st.session_state["top_gene_signature"] = None
 
         # --------------------------------------------------
         # Volcano Settings
@@ -687,55 +692,46 @@ with tab_volcano:
             down_n = min(top_n,down_df_N)
 
             highlight_genes = sig_df['Gene'].tail(min(top_n,up_df_N)).to_list()+ sig_df['Gene'].head(min(top_n,down_df_N))
-
-            #
-            # Update only when changed
-            #
-            new_gene_text = ",".join(
-                highlight_genes
+            current_signature = (
+                use_top_genes,
+                top_n,
+                significance_column,
+                significance_cutoff,
+                log2fc_cutoff
             )
 
             if (
-                st.session_state[
-                    "volcano_gene_text"
-                ]
-                != new_gene_text
+                st.session_state["top_gene_signature"]
+                != current_signature
             ):
+
+                st.session_state[
+                    "top_gene_signature"
+                ] = current_signature
 
                 st.session_state[
                     "highlight_genes"
                 ] = highlight_genes
 
-                st.session_state[
-                    "volcano_gene_text"
-                ] = new_gene_text
+            gene_text = st.text_area(
+                "Highlighted Genes",
+                value=",".join(
+                    st.session_state[
+                        "highlight_genes"
+                    ]
+                ),
+                height=120
+            )
+            highlight_genes = [
+                g.strip()
+                for g in gene_text.split(",")
+                if g.strip()
+            ]
 
-                st.session_state[
-                    "boxplot_gene_text"
-                ] = new_gene_text
-
-                st.session_state[
-                    "heatmap_gene_text"
-                ] = new_gene_text
-
-        #
-        # Editable Gene List
-        #
-        gene_text = st.text_area(
-            "Highlighted Genes",
-            height=120,
-            key="volcano_gene_text"
-        )
-
-        highlight_genes = [
-
-            gene.strip()
-
-            for gene in gene_text.split(",")
-
-            if gene.strip()
-        ]
-
+            st.session_state[
+                "highlight_genes"
+            ] = highlight_genes
+            
         # --------------------------------------------------
         # Add Gene
         # --------------------------------------------------
@@ -767,34 +763,19 @@ with tab_volcano:
             if (
                 gene_to_add
                 and gene_to_add
-                not in highlight_genes
+                not in st.session_state[
+                    "highlight_genes"
+                ]
             ):
-
-                highlight_genes = (
-                    highlight_genes
-                    + [gene_to_add]
-                )
-
-                new_text = ",".join(
-                    highlight_genes
-                )
 
                 st.session_state[
                     "highlight_genes"
-                ] = highlight_genes
-
-                st.session_state[
-                    "volcano_gene_text"
-                ] = new_text
-
-                st.session_state[
-                    "boxplot_gene_text"
-                ] = new_text
-
-                st.session_state[
-                    "heatmap_gene_text"
-                ] = new_text
-                st.write(highlight_genes)
+                ] = (
+                    st.session_state[
+                        "highlight_genes"
+                    ]
+                    + [gene_to_add]
+                )
 
                 st.rerun()
 
