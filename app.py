@@ -585,10 +585,10 @@ with tab_de:
         st.download_button(
             label="Download DE Results",
             data=de_results.to_csv(
-                index=False
+                index=False,sep='\t'
             ),
-            file_name="DE_results.csv",
-            mime="text/csv"
+            file_name="DE_results.tsv",
+            mime="text/tab-separated-values"
         )
 
 # ==================================================
@@ -727,6 +727,7 @@ with tab_volcano:
                 x_min = st.number_input(
                     "X-axis Min",
                     value=-5.0,
+                    step=0.1,
                     key="volcano_xmin"
                 )
 
@@ -734,6 +735,7 @@ with tab_volcano:
                 x_max = st.number_input(
                     "X-axis Max",
                     value=5.0,
+                    step=0.1,
                     key="volcano_xmax"
                 )
 
@@ -758,6 +760,7 @@ with tab_volcano:
                 y_min = st.number_input(
                     "Y-axis Min",
                     value=0.0,
+                    step=0.1,
                     key="volcano_ymin"
                 )
 
@@ -765,6 +768,7 @@ with tab_volcano:
                 y_max = st.number_input(
                     "Y-axis Max",
                     value=20.0,
+                    step=0.1,
                     key="volcano_ymax"
                 )
 
@@ -884,6 +888,7 @@ with tab_box:
         plot_width = st.number_input(
             "Figure Width (px)",
             value=1200,
+            step=50,
             key="boxplot_width"
         )
 
@@ -892,6 +897,7 @@ with tab_box:
         plot_height = st.number_input(
             "Figure Height (px)",
             value=600,
+            step=50,
             key="boxplot_height"
         )
 
@@ -912,6 +918,7 @@ with tab_box:
             y_min = st.number_input(
                 "Y-axis Minimum",
                 value=0.0,
+                step=0.1,
                 key="boxplot_ymin"
             )
 
@@ -920,6 +927,7 @@ with tab_box:
             y_max = st.number_input(
                 "Y-axis Maximum",
                 value=20.0,
+                step=0.1,
                 key="boxplot_ymax"
             )
 
