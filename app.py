@@ -68,24 +68,78 @@ st.markdown(
 # Sidebar
 #
 
+# ==================================================
+# SIDEBAR
+# ==================================================
+
 with st.sidebar:
 
-    st.header("Data Source")
+    st.image(
+        "assets/logo.png",
+        use_container_width=True
+    )
 
-    use_example = st.button(
-        "Load Example Dataset",
-        type="primary"
+    st.title(
+        "Gene Expression Dashboard"
     )
 
     st.divider()
 
+    st.header("Data Source")
+
+    #
+    # Load Example Dataset
+    #
+    if st.button(
+        "Load Example Dataset",
+        type="primary",
+        key="load_example_dataset"
+    ):
+
+        expr_df_example = pd.read_csv(
+            "example_data/example_expression.csv"
+        )
+
+        meta_df_example = pd.read_csv(
+            "example_data/example_metadata.csv"
+        )
+
+        st.session_state[
+            "expr_df"
+        ] = expr_df_example
+
+        st.session_state[
+            "meta_df"
+        ] = meta_df_example
+
+        st.session_state[
+            "using_example_data"
+        ] = True
+
+        st.rerun()
+
+    if st.session_state.get(
+        "using_example_data",
+        False
+    ):
+
+        st.success(
+            "Using example dataset"
+        )
+
+    st.divider()
+
+    #
+    # Upload Data
+    #
     uploaded_expression = st.file_uploader(
         "Expression Matrix",
         type=[
             "csv",
             "tsv",
             "txt"
-        ]
+        ],
+        key="expression_upload"
     )
 
     uploaded_metadata = st.file_uploader(
@@ -94,41 +148,33 @@ with st.sidebar:
             "csv",
             "tsv",
             "txt"
-        ]
+        ],
+        key="metadata_upload"
     )
-    
-    if use_example:
 
-        expr_df = pd.read_csv(
-            "example_data/example_expression.csv"
-        )
-
-        meta_df = pd.read_csv(
-            "example_data/example_metadata.csv"
-        )
-
-    elif (
-        uploaded_expression is not None
-        and uploaded_metadata is not None
-    ):
-
-        expr_df = load_expression_file(
-            uploaded_expression
-        )
-
-        meta_df = load_metadata_file(
-            uploaded_metadata
-        )
-
-    else:
-
-        st.info(
-            "Upload files or click 'Load Example Dataset'."
-        )
-
-        st.stop()    
-   
+    #
+    # Global Settings
+    #
     st.divider()
+
+    st.header(
+        "Global Settings"
+    )
+
+    apply_log2 = st.checkbox(
+        "Apply log2(x+1)",
+        value=True,
+        key="apply_log2"
+    )
+
+    #
+    # Example Files
+    #
+    st.divider()
+
+    st.header(
+        "Example Files"
+    )
 
     with open(
         "example_data/example_expression.csv",
@@ -137,8 +183,11 @@ with st.sidebar:
 
         st.download_button(
             "Download Example Expression",
-            f,
-            file_name="example_expression.csv"
+            data=f,
+            file_name=
+            "example_expression.csv",
+            mime="text/csv",
+            key="download_example_expr"
         )
 
     with open(
@@ -148,10 +197,14 @@ with st.sidebar:
 
         st.download_button(
             "Download Example Metadata",
-            f,
-            file_name="example_metadata.csv"
+            data=f,
+            file_name=
+            "example_metadata.csv",
+            mime="text/csv",
+            key="download_example_meta"
         )
-   
+
+        
 #
 # Main
 #
@@ -164,38 +217,57 @@ if not uploaded_expression or not uploaded_metadata:
 
     st.stop()
 
+# ==================================================
+# LOAD DATA
+# ==================================================
+
+expr_df = None
+meta_df = None
+
 #
-# load data
+# Example Dataset
 #
+if st.session_state.get(
+    "using_example_data",
+    False
+):
 
-expr_df = load_expression_file(
-    uploaded_expression
-)
+    expr_df = st.session_state[
+        "expr_df"
+    ]
 
-meta_df = load_metadata_file(
-    uploaded_metadata
-)
+    meta_df = st.session_state[
+        "meta_df"
+    ]
 
-expr_errors = validate_expression_matrix(
-    expr_df
-)
+#
+# Uploaded Dataset
+#
+elif (
+    uploaded_expression is not None
+    and uploaded_metadata is not None
+):
 
-meta_errors = validate_metadata(
-    meta_df
-)
-
-all_errors = expr_errors + meta_errors
-
-if all_errors:
-
-    st.error(
-        "Validation failed."
+    expr_df = load_expression_file(
+        uploaded_expression
     )
 
-    for err in all_errors:
-        st.write(f"• {err}")
+    meta_df = load_metadata_file(
+        uploaded_metadata
+    )
+
+#
+# Nothing Loaded Yet
+#
+else:
+
+    st.info(
+        "Upload files or click "
+        "'Load Example Dataset'."
+    )
 
     st.stop()
+
 
 #
 # sample matching
