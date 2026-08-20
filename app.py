@@ -745,7 +745,7 @@ with tab_volcano:
                 and gene_to_add
                 not in highlight_genes
             ):
-                highlight_genes + = [gene_to_add]
+                highlight_genes += [gene_to_add]
                 st.rerun()
         st.write("After add gene",highlight_genes)
         #
