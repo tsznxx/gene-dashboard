@@ -794,6 +794,7 @@ with tab_volcano:
                 st.session_state[
                     "heatmap_gene_text"
                 ] = new_text
+                st.write(highlight_genes)
 
                 st.rerun()
 
