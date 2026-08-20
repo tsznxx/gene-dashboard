@@ -945,7 +945,7 @@ with tab_box:
                 "boxplot_genes"
             ] = []
 
-            #st.rerun()
+            st.rerun()
 
     # ----------------------------------
     # Gene Text Area
@@ -961,19 +961,12 @@ with tab_box:
         height=120,
         key='boxplot_gene_text'
     )
-    st.write("boxplot_genes:",
-             st.session_state["boxplot_genes"])
-
-    st.write("boxplot_gene_text:",
-             st.session_state.get(
-                 "boxplot_gene_text"
-             ))
 
     selected_genes = [
 
         gene.strip()
 
-        for gene in gene_text.split(",")
+        for gene in st.session_state["boxplot_genes"]
 
         if gene.strip() in st.session_state['all_genes']
     ]
