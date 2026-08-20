@@ -954,11 +954,7 @@ with tab_box:
             not in st.session_state["highlight_genes"]
         ):
 
-            st.session_state["highlight_genes"] = (
-                st.session_state["highlight_genes"]
-                + [gene_to_add]
-            )
-            st.session_state["highlight_genes"] = ",".join(st.session_state["highlight_genes"])
+            st.session_state["highlight_genes"] = st.session_state["highlight_genes"]+[gene_to_add]
             st.write("After Add:", st.session_state["highlight_genes"])
 
             st.rerun()
