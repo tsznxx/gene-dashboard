@@ -12,13 +12,7 @@ def run_pca(
     apply_log2=False,
     n_components=2
 ):
-
-    gene_col = expression_df.columns[0]
-
-    #
-    # Set Gene as row index
-    #
-    expr = expression_df.set_index(gene_col)
+    expr = expression_df
 
     #
     # Force all values to numeric
@@ -138,9 +132,7 @@ def run_differential_expression(
     Welch t-test.
     """
 
-    gene_col = expression_df.columns[0]
-
-    expr = expression_df.set_index(gene_col)
+    expr = expression_df
 
     expr = expr.apply(
         pd.to_numeric,
@@ -152,11 +144,11 @@ def run_differential_expression(
 
     group1_samples = metadata_df[
         metadata_df[group_column] == group1
-    ]["Sample"].tolist()
+    ]index.tolist()
 
     group2_samples = metadata_df[
         metadata_df[group_column] == group2
-    ]["Sample"].tolist()
+    ]index.tolist()
 
     results = []
 
