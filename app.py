@@ -728,12 +728,6 @@ with tab_volcano:
                     "highlight_genes"
                 ] = highlight_genes
 
-                st.session_state[
-                    "volcano_gene_text"
-                ] = ",".join(
-                    highlight_genes
-                )
-
                 gene_text = st.text_area(
                     "Highlighted Genes",
                     value=",".join(
