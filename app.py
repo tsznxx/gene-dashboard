@@ -608,8 +608,6 @@ with tab_volcano:
         de_df = st.session_state["de_results"]
         if not "highlight_genes" in st.session_state:
             st.session_state["highlight_genes"] = []
-        if "top_gene_signature" not in st.session_state:
-            st.session_state["top_gene_signature"] = None
         
         significance_column = st.radio(
             "Use significance metric",
@@ -642,24 +640,23 @@ with tab_volcano:
         # Highlighted Genes
         # --------------------------------------------------
 
-        st.subheader(
-            "Genes to Highlight"
-        )
+        st.subheader("Genes to Highlight")
+
+        if "highlight_genes" not in st.session_state:
+            st.session_state["highlight_genes"] = []
 
         use_top_genes = st.checkbox(
             "Use Top Significant Genes",
             value=True,
             key="volcano_use_top_genes"
         )
-        highlight_genes = st.session_state.get("highlight_genes",[])
-        if "volcano_gene_text" not in st.session_state:
-            st.session_state["volcano_gene_text"] = ",".join(highlight_genes)
 
         if use_top_genes:
+
             top_n = st.number_input(
                 "Top Up/Down Genes Per Direction",
                 min_value=1,
-                max_value=20,
+                max_value=100,
                 value=5,
                 key="volcano_top_n"
             )
@@ -679,62 +676,62 @@ with tab_volcano:
             up_n = min(top_n,up_df_N)
             down_n = min(top_n,down_df_N)
 
-            dys_genes= sig_df['Gene'].tail(min(top_n,up_df_N)).to_list()+ sig_df['Gene'].head(min(top_n,down_df_N)).to_list()
-            highlight_genes += [g for g in dys_genes if g not in highlight_genes]
-            current_signature = (
-                use_top_genes,
-                top_n,
-                significance_column,
-                significance_cutoff,
-                log2fc_cutoff
+            top_gene_list = sig_df['Gene'].tail(min(top_n,up_df_N)).to_list()+ sig_df['Gene'].head(min(top_n,down_df_N)).to_list()
+
+            top_gene_list = list(
+                dict.fromkeys(
+                    top_gene_list
+                )
             )
 
-            if (
-                st.session_state["top_gene_signature"]
-                != current_signature
+            if st.button(
+                "Refresh Top Genes",
+                key="refresh_top_genes"
             ):
 
                 st.session_state[
-                    "top_gene_signature"
-                ] = current_signature
-
-                st.session_state[
                     "highlight_genes"
-                ] = highlight_genes
+                ] = top_gene_list
+
+                st.rerun()
+        # --------------------------------------------------
+        # Editable Gene List
+        # --------------------------------------------------
 
         gene_text = st.text_area(
             "Highlighted Genes",
             value=",".join(
-                st.session_state["highlight_genes"]
+                st.session_state[
+                    "highlight_genes"
+                ]
             ),
             height=120
         )
+
         highlight_genes = [
-            g.strip()
-            for g in gene_text.split(",")
-            if g.strip() in st.session_state['all_genes']
+            gene.strip()
+            for gene in gene_text.split(",")
+            if gene.strip() in st.session_state['all_genes']
         ]
+
         st.session_state[
             "highlight_genes"
         ] = highlight_genes
-        st.write("After strip",highlight_genes)
 
         # --------------------------------------------------
         # Add Gene
         # --------------------------------------------------
 
-        st.subheader(
-            "Add Gene"
-        )
+        all_genes = st.session_state["all_genes"]
 
         gene_to_add = st.selectbox(
-            "Type Gene Name",
-            options=st.session_state.get("all_genes",[]),
+            "Add Gene",
+            options=all_genes,
             index=None,
-            placeholder="Type to search...",
-            key="volcano_gene_search"
+            placeholder="Type gene name...",
+            key="volcano_add_gene_select"
         )
-        st.write("gene to add ",gene_to_add)
+
         if st.button(
             "Add Gene",
             key="volcano_add_gene"
@@ -742,12 +739,17 @@ with tab_volcano:
 
             if (
                 gene_to_add
-                and gene_to_add
-                not in highlight_genes
+                and gene_to_add not in highlight_genes
             ):
-                highlight_genes += [gene_to_add]
+
+                st.session_state[
+                    "highlight_genes"
+                ] = (
+                    highlight_genes
+                    + [gene_to_add]
+                )
+
                 st.rerun()
-        st.write("After add gene",highlight_genes)
         #
         # Keep synchronized
         #
