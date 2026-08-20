@@ -667,9 +667,25 @@ with tab_volcano:
             top_down = sig_de_df["Gene"].head(min(down_N,top_n)).tolist()
 
             highlight_genes = top_up + top_down
-            st.session_state[
-                "highlight_genes"
-            ] = highlight_genes
+            new_gene_text = ",".join(
+                highlight_genes
+            )
+
+            if (
+                st.session_state.get(
+                    "volcano_gene_text",
+                    ""
+                )
+                != new_gene_text
+            ):
+
+                st.session_state[
+                    "volcano_gene_text"
+                ] = new_gene_text
+
+                st.session_state[
+                    "highlight_genes"
+                ] = highlight_genes
 
         else:
 
@@ -677,7 +693,7 @@ with tab_volcano:
                 "highlight_genes",
                 []
             )
-            
+          
         gene_text = st.text_area(
             "Highlighted Genes",
             value=",".join(
