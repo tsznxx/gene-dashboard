@@ -900,7 +900,7 @@ with tab_box:
     )
 
     # ----------------------------------
-    # Initialize Boxplot Gene List
+    # Initialize
     # ----------------------------------
 
     if "boxplot_genes" not in st.session_state:
@@ -912,8 +912,44 @@ with tab_box:
             []
         )
 
+    if "boxplot_gene_text" not in st.session_state:
+
+        st.session_state[
+            "boxplot_gene_text"
+        ] = ",".join(
+            st.session_state[
+                "boxplot_genes"
+            ]
+        )
+
+    if "reload_boxplot_text" not in st.session_state:
+
+        st.session_state[
+            "reload_boxplot_text"
+        ] = False
+
     # ----------------------------------
-    # Load Volcano Genes
+    # Handle pending updates
+    # ----------------------------------
+
+    if st.session_state[
+        "reload_boxplot_text"
+    ]:
+
+        st.session_state[
+            "boxplot_gene_text"
+        ] = ",".join(
+            st.session_state[
+                "boxplot_genes"
+            ]
+        )
+
+        st.session_state[
+            "reload_boxplot_text"
+        ] = False
+
+    # ----------------------------------
+    # Buttons
     # ----------------------------------
 
     col1, col2 = st.columns(2)
@@ -932,6 +968,10 @@ with tab_box:
                 []
             )
 
+            st.session_state[
+                "reload_boxplot_text"
+            ] = True
+
             st.rerun()
 
     with col2:
@@ -945,38 +985,30 @@ with tab_box:
                 "boxplot_genes"
             ] = []
 
+            st.session_state[
+                "reload_boxplot_text"
+            ] = True
+
             st.rerun()
 
     # ----------------------------------
-    # Gene Text Area
+    # Text Area
     # ----------------------------------
 
     gene_text = st.text_area(
         "Genes (comma separated)",
-        value=",".join(
-            st.session_state[
-                "boxplot_genes"
-            ]
-        ),
         height=120,
-        key='boxplot_gene_text'
+        key="boxplot_gene_text"
     )
 
     selected_genes = [
 
         gene.strip()
 
-        for gene in st.session_state["boxplot_genes"]
+        for gene in gene_text.split(",")
 
-        if gene.strip() in st.session_state['all_genes']
+        if gene.strip()
     ]
-
-    #
-    # User edits become source of truth
-    #
-    st.session_state[
-        "boxplot_genes"
-    ] = selected_genes
 
     # ----------------------------------
     # Add Gene
@@ -986,14 +1018,12 @@ with tab_box:
         "Add Gene"
     )
 
-    all_genes = st.session_state.get(
-        "all_genes",
-        []
-    )
-
     gene_to_add = st.selectbox(
         "Type Gene Name",
-        options=all_genes,
+        options=st.session_state.get(
+            "all_genes",
+            []
+        ),
         index=None,
         placeholder="Type to search...",
         key="box_gene_search"
@@ -1006,22 +1036,29 @@ with tab_box:
 
         if (
             gene_to_add
-            and gene_to_add
-            not in st.session_state[
-                "boxplot_genes"
-            ]
+            and gene_to_add not in selected_genes
         ):
 
             st.session_state[
                 "boxplot_genes"
             ] = (
-                st.session_state[
-                    "boxplot_genes"
-                ]
+                selected_genes
                 + [gene_to_add]
             )
 
-            #st.rerun()
+            st.session_state[
+                "reload_boxplot_text"
+            ] = True
+
+            st.rerun()
+
+    # ----------------------------------
+    # Keep text edits
+    # ----------------------------------
+
+    st.session_state[
+        "boxplot_genes"
+    ] = selected_genes
 
     # ----------------------------------
     # Grouping
