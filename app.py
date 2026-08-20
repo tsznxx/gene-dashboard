@@ -107,7 +107,7 @@ with st.sidebar:
             "using_example_data"
         ] = True
 
-        st.rerun()
+        #st.rerun()
 
     if st.session_state.get(
         "using_example_data",
