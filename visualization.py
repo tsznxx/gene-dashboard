@@ -282,11 +282,7 @@ def create_gene_boxplot(
     y_range=None
 ):
 
-    gene_col = expression_df.columns[0]
-
-    expr = expression_df.set_index(
-        gene_col
-    )
+    expr = expression_df
 
     expr = expr.apply(
         pd.to_numeric,
@@ -435,11 +431,8 @@ def create_heatmap(
     #
     # Expression matrix
     #
-    gene_col = expression_df.columns[0]
 
-    expr = expression_df.set_index(
-        gene_col
-    )
+    expr = expression_df
 
     expr = expr.apply(
         pd.to_numeric,

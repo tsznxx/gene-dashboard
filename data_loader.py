@@ -7,25 +7,21 @@ import numpy as np
 def load_table(file):
 
     if file.name.endswith(".csv"):
-
-        return pd.read_csv(file)
-
+        df = pd.read_csv(file,index_col=0)
     elif (
         file.name.endswith(".tsv")
         or file.name.endswith(".txt")
     ):
 
-        return pd.read_csv(
-            file,
-            sep="\t"
-        )
+        df =  pd.read_csv(file,sep="\t",index_col=0)
 
     else:
 
         raise ValueError(
             "Unsupported file type."
         )
-
+    df.index = df.index.str.strip()
+    df.columns = df.columns.str.strip()    
 
 def load_expression_file(uploaded_file):
     """
@@ -62,20 +58,13 @@ def validate_expression_matrix(df):
 
     errors = []
 
-    if df.shape[1] < 2:
+    if df.shape[1] < 4:
         errors.append(
-            "Expression matrix must contain Gene column and at least one sample column."
+            "Expression matrix must contain Gene column and at least three sample columns."
         )
         return errors
 
-    gene_col = df.columns[0]
-
-    if gene_col.lower() != "gene":
-        errors.append(
-            "First column must be named 'Gene'."
-        )
-
-    if df[gene_col].duplicated().any():
+    if df.index.duplicated().any():
         errors.append(
             "Duplicate gene names detected."
         )
@@ -90,13 +79,7 @@ def validate_metadata(df):
 
     errors = []
 
-    if "Sample" not in df.columns:
-        errors.append(
-            "Metadata must contain a 'Sample' column."
-        )
-        return errors
-
-    if df["Sample"].duplicated().any():
+    if df.index.duplicated().any():
         errors.append(
             "Duplicate Sample IDs detected."
         )
@@ -110,9 +93,9 @@ def validate_sample_matching(expr_df, meta_df):
     expression matrix and metadata.
     """
 
-    expr_samples = set(expr_df.columns[1:])
+    expr_samples = set(expr_df.columns)
 
-    meta_samples = set(meta_df["Sample"])
+    meta_samples = set(meta_df.index)
 
     missing_in_metadata = expr_samples - meta_samples
     missing_in_expression = meta_samples - expr_samples
@@ -138,7 +121,7 @@ def summarize_expression(expr_df):
 
     return {
         "Genes": expr_df.shape[0],
-        "Samples": expr_df.shape[1] - 1
+        "Samples": expr_df.shape[1]
     }
 
 
@@ -164,7 +147,7 @@ def get_gene_names(expr_df):
     Return gene names.
     """
 
-    return expr_df.iloc[:, 0].tolist()
+    return expr_df.index.tolist()
 
 
 def get_sample_names(expr_df):
@@ -172,7 +155,7 @@ def get_sample_names(expr_df):
     Return sample names.
     """
 
-    return expr_df.columns[1:].tolist()
+    return expr_df.columns.tolist()
 
 
 def prepare_expression_matrix(
@@ -190,11 +173,7 @@ def prepare_expression_matrix(
     Sample2     15    22     3
     """
 
-    gene_col = expr_df.columns[0]
-
-    matrix = expr_df.set_index(
-        gene_col
-    )
+    matrix = expr_df
 
     matrix = matrix.astype(float)
 

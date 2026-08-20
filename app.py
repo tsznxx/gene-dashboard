@@ -23,9 +23,6 @@ from visualization import (
     create_heatmap
 )
 
-
-
-
 st.title("Gene Expression Dashboard")
 
 st.set_page_config(
@@ -88,11 +85,11 @@ with st.sidebar:
     ):
 
         expr_df_example = pd.read_csv(
-            "example_data/example_expression.csv"
+            "example_data/example_expression.tsv",sep='\t',index_col=0
         )
 
         meta_df_example = pd.read_csv(
-            "example_data/example_metadata.csv"
+            "example_data/example_metadata.tsv",sep='\t',index_col=0
         )
 
         st.session_state[
@@ -167,7 +164,7 @@ with st.sidebar:
     )
 
     with open(
-        "example_data/example_expression.csv",
+        "example_data/example_expression.tsv",
         "rb"
     ) as f:
 
@@ -175,13 +172,13 @@ with st.sidebar:
             "Download Example Expression",
             data=f,
             file_name=
-            "example_expression.csv",
-            mime="text/csv",
+            "example_expression.tsv",
+            mime="text/tab-separated-values",
             key="download_example_expr"
         )
 
     with open(
-        "example_data/example_metadata.csv",
+        "example_data/example_metadata.tsv",
         "rb"
     ) as f:
 
@@ -189,8 +186,8 @@ with st.sidebar:
             "Download Example Metadata",
             data=f,
             file_name=
-            "example_metadata.csv",
-            mime="text/csv",
+            "example_metadata.tsv",
+            mime="text/tab-separated-values",
             key="download_example_meta"
         )
 
@@ -391,7 +388,7 @@ with tab_pca:
 
     color_column = st.selectbox(
         "Color samples by",
-        meta_df.columns[1:],
+        meta_df.columns,
         key="pca_color_column"
     )
 
@@ -508,7 +505,7 @@ with tab_de:
 
     eligible_columns = []
 
-    for col in meta_df.columns[1:]:
+    for col in meta_df.columns:
 
         if meta_df[col].nunique() >= 2:
             eligible_columns.append(col)
@@ -570,8 +567,10 @@ with tab_de:
             )
 
             st.stop()
-        
+        de_results = de_results.sort_values('log2FC')
         st.session_state["de_results"] = de_results
+        all_genes = sorted(de_results["Gene"].astype(str).unique().tolist())
+        st.session_state["all_genes"] = all_genes
 
         st.success(
             f"{len(de_results)} genes analysed."
@@ -639,48 +638,87 @@ with tab_volcano:
             )
 
         #
-        # Default highlighted genes
+        # Highlight settings
         #
-        sorted_de_df = de_df.loc[(de_df[significance_column]<significance_cutoff)&(de_df.log2FC.abs()>log2fc_cutoff)].sort_values("log2FC",ascending=False)
-        top_up = (
-            sorted_de_df.loc[sorted_de_df.log2FC>0]
-            .sort_values(
-                "log2FC",
-                ascending=False
-            )
-            .head(5)["Gene"]
-            .tolist()
+        st.subheader("Genes to Highlight")
+
+        use_top_genes = st.checkbox(
+            "Use Top Significant Genes",
+            value=True,
+            key="volcano_use_top_genes"
         )
 
-        top_down = (
-            sorted_de_df.loc[sorted_de_df.log2FC<0]
-            .sort_values(
-                "log2FC",
-                ascending=True
+        if use_top_genes:
+
+            top_n = st.number_input(
+                "Top Up/Down Genes Per Direction",
+                min_value=1,
+                max_value=20,
+                value=5,
+                key="volcano_top_n"
             )
-            .head(5)["Gene"]
-            .tolist()
-        )
 
-        default_genes = top_up + top_down
+            sig_de_df = de_df[de_df[significance_column] <= significance_cutoff].copy()
 
+            up_N = sum(de_df["log2FC"]>= log2fc_cutoff]
+            down_N = sum(sig_de_dff[de_df["log2FC"]<= log2fc_cutoff]
+
+            top_up = sig_de_df["Gene"].tail(min(up_N,top_n)).tolist()
+            top_down = sig_de_df["Gene"].head(min(down_N,top_n)).tolist()
+
+            highlight_genes = top_up + top_down
+            st.session_state[
+                "highlight_genes"
+            ] = highlight_genes
+
+        else:
+
+            highlight_genes = st.session_state.get(
+                "highlight_genes",
+                []
+            )
+            
         gene_text = st.text_area(
-            "Genes to highlight (by default, top 5 up-/down-regulated genes)",
-            value=",".join(default_genes),
-            height=100,
+            "Highlighted Genes",
+            value=",".join(
+                highlight_genes
+            ),
+            height=120,
             key="volcano_gene_text"
         )
+        all_genes = st.session_state.get('all_genes',[])
+        gene_to_add = st.selectbox(
+            "Add Gene",
+            options=all_genes,
+            index=None,
+            placeholder="Type a gene name..."
+        )
+        if st.button(
+            "Add Gene",
+            key="volcano_add_gene"
+        ):
 
-        highlight_genes = [
-            x.strip()
-            for x in gene_text.split(",")
-            if x.strip()
-        ]
+            if (
+                gene_to_add
+                and gene_to_add not in highlight_genes
+            ):
 
-        st.session_state[
-            "highlight_genes"
-        ] = highlight_genes
+                highlight_genes.append(
+                    gene_to_add
+                )
 
+                st.session_state[
+                    "highlight_genes"
+                ] = highlight_genes
+
+                st.session_state[
+                    "volcano_gene_text"
+                ] = ",".join(
+                    highlight_genes
+                )
+
+           
+    
         #
         # Figure Settings
         #
@@ -850,7 +888,7 @@ with tab_box:
     
     group_column = st.selectbox(
         "Group By",
-        meta_df.columns[1:],
+        meta_df.columns,
         key="boxplot_group_column"
     )
 
@@ -1011,7 +1049,7 @@ with tab_heatmap:
     annotation_column = (
         st.selectbox(
             "Annotation Column",
-            meta_df.columns[1:],
+            meta_df.columns,
             index=1,
             key="heatmap_annotation"
         )
