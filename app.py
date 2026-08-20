@@ -1226,7 +1226,7 @@ with tab_heatmap:
     )
 
     # ----------------------------------
-    # Initialize Heatmap Gene List
+    # Initialize
     # ----------------------------------
 
     if "heatmap_genes" not in st.session_state:
@@ -1237,6 +1237,42 @@ with tab_heatmap:
             "highlight_genes",
             []
         )
+
+    if "heatmap_gene_text" not in st.session_state:
+
+        st.session_state[
+            "heatmap_gene_text"
+        ] = ",".join(
+            st.session_state[
+                "heatmap_genes"
+            ]
+        )
+
+    if "reload_heatmap_text" not in st.session_state:
+
+        st.session_state[
+            "reload_heatmap_text"
+        ] = False
+
+    # ----------------------------------
+    # Handle pending updates
+    # ----------------------------------
+
+    if st.session_state[
+        "reload_heatmap_text"
+    ]:
+
+        st.session_state[
+            "heatmap_gene_text"
+        ] = ",".join(
+            st.session_state[
+                "heatmap_genes"
+            ]
+        )
+
+        st.session_state[
+            "reload_heatmap_text"
+        ] = False
 
     # ----------------------------------
     # Load / Clear
@@ -1258,6 +1294,10 @@ with tab_heatmap:
                 []
             )
 
+            st.session_state[
+                "reload_heatmap_text"
+            ] = True
+
             st.rerun()
 
     with col2:
@@ -1271,6 +1311,10 @@ with tab_heatmap:
                 "heatmap_genes"
             ] = []
 
+            st.session_state[
+                "reload_heatmap_text"
+            ] = True
+
             st.rerun()
 
     # ----------------------------------
@@ -1279,13 +1323,8 @@ with tab_heatmap:
 
     gene_text = st.text_area(
         "Genes (comma separated)",
-        value=",".join(
-            st.session_state[
-                "heatmap_genes"
-            ]
-        ),
         height=120,
-        key='heatmap_gene_text'
+        key="heatmap_gene_text"
     )
 
     selected_genes = [
@@ -1294,15 +1333,8 @@ with tab_heatmap:
 
         for gene in gene_text.split(",")
 
-        if gene.strip() in st.session_state['all_genes']
+        if gene.strip()
     ]
-
-    #
-    # User edits become source of truth
-    #
-    st.session_state[
-        "heatmap_genes"
-    ] = selected_genes
 
     # ----------------------------------
     # Add Gene
@@ -1312,14 +1344,12 @@ with tab_heatmap:
         "Add Gene"
     )
 
-    all_genes = st.session_state.get(
-        "all_genes",
-        []
-    )
-
     gene_to_add = st.selectbox(
         "Type Gene Name",
-        options=all_genes,
+        options=st.session_state.get(
+            "all_genes",
+            []
+        ),
         index=None,
         placeholder="Type to search...",
         key="heatmap_gene_search"
@@ -1342,7 +1372,19 @@ with tab_heatmap:
                 + [gene_to_add]
             )
 
+            st.session_state[
+                "reload_heatmap_text"
+            ] = True
+
             st.rerun()
+
+    # ----------------------------------
+    # Save manual edits
+    # ----------------------------------
+
+    st.session_state[
+        "heatmap_genes"
+    ] = selected_genes
 
     # ----------------------------------
     # Heatmap Options
