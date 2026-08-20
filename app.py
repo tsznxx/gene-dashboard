@@ -694,14 +694,6 @@ with tab_volcano:
                 []
             )
           
-        gene_text = st.text_area(
-            "Highlighted Genes",
-            value=",".join(
-                highlight_genes
-            ),
-            height=120,
-            key="volcano_gene_text"
-        )
         all_genes = st.session_state.get('all_genes',[])
         gene_to_add = st.selectbox(
             "Add Gene",
@@ -733,7 +725,14 @@ with tab_volcano:
                     highlight_genes
                 )
 
-           
+        gene_text = st.text_area(
+            "Highlighted Genes",
+            value=",".join(
+                highlight_genes
+            ),
+            height=120,
+            key="volcano_gene_text"
+        )   
     
         #
         # Figure Settings
