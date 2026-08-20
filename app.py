@@ -713,30 +713,22 @@ with tab_volcano:
                     "highlight_genes"
                 ] = highlight_genes
 
-            gene_text = st.text_area(
-                "Highlighted Genes",
-                value=",".join(
-                    st.session_state[
-                        "highlight_genes"
-                    ]
-                ),
-                height=120
-            )
-            highlight_genes = [
-                g.strip()
-                for g in gene_text.split(",")
-                if g.strip()
-            ]
+        gene_text = st.text_area(
+            "Highlighted Genes",
+            value=",".join(
+                st.session_state.get("highlight_genes",[])
+            ),
+            height=120
+        )
+        highlight_genes = [
+            g.strip()
+            for g in gene_text.split(",")
+            if g.strip()
+        ]
 
-            st.session_state[
-                "highlight_genes"
-            ] = highlight_genes
-        else:
-            highlight_genes = st.session_state.get("highlight_genes",[])
-            st.session_state[
-                "highlight_genes"
-            ] = highlight_genes
-        
+        st.session_state[
+            "highlight_genes"
+        ] = highlight_genes
         # --------------------------------------------------
         # Add Gene
         # --------------------------------------------------
