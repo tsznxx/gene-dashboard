@@ -4,6 +4,29 @@ import pandas as pd
 import numpy as np
 
 
+def load_table(file):
+
+    if file.name.endswith(".csv"):
+
+        return pd.read_csv(file)
+
+    elif (
+        file.name.endswith(".tsv")
+        or file.name.endswith(".txt")
+    ):
+
+        return pd.read_csv(
+            file,
+            sep="\t"
+        )
+
+    else:
+
+        raise ValueError(
+            "Unsupported file type."
+        )
+
+
 def load_expression_file(uploaded_file):
     """
     Load expression matrix.
@@ -15,7 +38,7 @@ def load_expression_file(uploaded_file):
     EGFR,20,25,...
     """
 
-    return pd.read_csv(uploaded_file)
+    return load_table(uploaded_file)
 
 
 def load_metadata_file(uploaded_file):
@@ -29,7 +52,7 @@ def load_metadata_file(uploaded_file):
     Sample2,Normal,70,40,0
     """
 
-    return pd.read_csv(uploaded_file)
+    return load_table(uploaded_file)
 
 
 def validate_expression_matrix(df):

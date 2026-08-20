@@ -69,18 +69,88 @@ st.markdown(
 
 with st.sidebar:
 
-    st.header("Data Upload")
+    st.header("Data Source")
+
+    use_example = st.button(
+        "Load Example Dataset",
+        type="primary"
+    )
+
+    st.divider()
 
     uploaded_expression = st.file_uploader(
-        "Expression Matrix (CSV)",
-        type=["csv"]
+        "Expression Matrix",
+        type=[
+            "csv",
+            "tsv",
+            "txt"
+        ]
     )
 
     uploaded_metadata = st.file_uploader(
-        "Metadata Table (CSV)",
-        type=["csv"]
+        "Metadata Table",
+        type=[
+            "csv",
+            "tsv",
+            "txt"
+        ]
     )
+    
+    if use_example:
 
+        expr_df = pd.read_csv(
+            "example_data/example_expression.csv"
+        )
+
+        meta_df = pd.read_csv(
+            "example_data/example_metadata.csv"
+        )
+
+    elif (
+        uploaded_expression is not None
+        and uploaded_metadata is not None
+    ):
+
+        expr_df = load_expression_file(
+            uploaded_expression
+        )
+
+        meta_df = load_metadata_file(
+            uploaded_metadata
+        )
+
+    else:
+
+        st.info(
+            "Upload files or click 'Load Example Dataset'."
+        )
+
+        st.stop()    
+   
+    st.divider()
+
+    with open(
+        "example_data/example_expression.csv",
+        "rb"
+    ) as f:
+
+        st.download_button(
+            "Download Example Expression",
+            f,
+            file_name="example_expression.csv"
+        )
+
+    with open(
+        "example_data/example_metadata.csv",
+        "rb"
+    ) as f:
+
+        st.download_button(
+            "Download Example Metadata",
+            f,
+            file_name="example_metadata.csv"
+        )
+   
 #
 # Main
 #
