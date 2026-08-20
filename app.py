@@ -958,7 +958,8 @@ with tab_box:
                 "boxplot_genes"
             ]
         ),
-        height=120
+        height=120,
+        key='boxplot_gene_text'
     )
 
     selected_genes = [
@@ -967,7 +968,7 @@ with tab_box:
 
         for gene in gene_text.split(",")
 
-        if gene.strip()
+        if gene.strip() in st.session_state['all_genes']
     ]
 
     #
@@ -1256,7 +1257,7 @@ with tab_heatmap:
 
         for gene in gene_text.split(",")
 
-        if gene.strip()
+        if gene.strip() in st.session_state['all_genes']
     ]
 
     #
