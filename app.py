@@ -1187,100 +1187,196 @@ with tab_heatmap:
         "Expression Heatmap"
     )
 
-    default_genes = st.session_state.get(
-        "highlight_genes",
-        []
-    )
-    if (
-        not st.session_state.get("heatmap_genes",[])
-    ):
+    # ----------------------------------
+    # Initialize Heatmap Gene List
+    # ----------------------------------
+
+    if "heatmap_genes" not in st.session_state:
 
         st.session_state[
             "heatmap_genes"
-        ] = ",".join(default_genes)
-        
-    gene_text = st.text_area(
-        "Genes (comma separated)",
-        height=120,
-        key="heatmap_genes"
-    )
-
-    selected_genes = [
-
-        x.strip()
-
-        for x in gene_text.split(",")
-
-        if x.strip()
-    ]
-
-    annotation_column = (
-        st.selectbox(
-            "Annotation Column",
-            meta_df.columns,
-            index=1,
-            key="heatmap_annotation"
+        ] = st.session_state.get(
+            "highlight_genes",
+            []
         )
-    )
+
+    # ----------------------------------
+    # Load Volcano Genes
+    # ----------------------------------
 
     col1, col2 = st.columns(2)
 
     with col1:
 
-        zscore_by_gene = (
-            st.checkbox(
-                "Z-score by Gene",
-                value=True,
-                key="heatmap_zscore"
-            )
-        )
+        if st.button(
+            "Load Highlighted Genes",
+            key="heatmap_load_highlighted"
+        ):
 
-        cluster_genes = (
-            st.checkbox(
-                "Cluster Genes",
-                value=True,
-                key="heatmap_cluster_genes"
+            st.session_state[
+                "heatmap_genes"
+            ] = st.session_state.get(
+                "highlight_genes",
+                []
             )
-        )
+
+            st.rerun()
 
     with col2:
 
-        cluster_samples = (
-            st.checkbox(
-                "Cluster Samples",
-                value=True,
-                key="heatmap_cluster_samples"
+        if st.button(
+            "Clear Genes",
+            key="heatmap_clear_genes"
+        ):
+
+            st.session_state[
+                "heatmap_genes"
+            ] = []
+
+            st.rerun()
+
+    # ----------------------------------
+    # Gene Text Area
+    # ----------------------------------
+
+    gene_text = st.text_area(
+        "Genes (comma separated)",
+        value=",".join(
+            st.session_state[
+                "heatmap_genes"
+            ]
+        ),
+        height=120
+    )
+
+    selected_genes = [
+
+        gene.strip()
+
+        for gene in gene_text.split(",")
+
+        if gene.strip()
+    ]
+
+    st.session_state[
+        "heatmap_genes"
+    ] = selected_genes
+
+    # ----------------------------------
+    # Add Gene
+    # ----------------------------------
+
+    st.subheader(
+        "Add Gene"
+    )
+
+    all_genes = st.session_state.get(
+        "all_genes",
+        []
+    )
+
+    gene_to_add = st.selectbox(
+        "Type Gene Name",
+        options=all_genes,
+        index=None,
+        placeholder="Type to search...",
+        key="heatmap_gene_search"
+    )
+
+    if st.button(
+        "Add Gene",
+        key="heatmap_add_gene"
+    ):
+
+        if (
+            gene_to_add
+            and gene_to_add not in st.session_state[
+                "heatmap_genes"
+            ]
+        ):
+
+            st.session_state[
+                "heatmap_genes"
+            ] = (
+                st.session_state[
+                    "heatmap_genes"
+                ]
+                + [gene_to_add]
             )
+
+            st.rerun()
+
+    # ----------------------------------
+    # Heatmap Options
+    # ----------------------------------
+
+    annotation_column = st.selectbox(
+        "Annotation Column",
+        meta_df.columns.tolist(),
+        index=1,
+        key="heatmap_annotation"
+    )
+
+    col3, col4 = st.columns(2)
+
+    with col3:
+
+        zscore_by_gene = st.checkbox(
+            "Z-score by Gene",
+            value=True,
+            key="heatmap_zscore"
         )
 
-        colorscale = (
-            st.selectbox(
-                "Color Map",
-                [
-                    "RdBu_r",
-                    "Viridis",
-                    "Plasma",
-                    "Magma"
-                ],
-                key="heatmap_colorscale"
-            )
+        cluster_genes = st.checkbox(
+            "Cluster Genes",
+            value=True,
+            key="heatmap_cluster_genes"
         )
+
+    with col4:
+
+        cluster_samples = st.checkbox(
+            "Cluster Samples",
+            value=True,
+            key="heatmap_cluster_samples"
+        )
+
+        colorscale = st.selectbox(
+            "Color Map",
+            [
+                "RdBu_r",
+                "Viridis",
+                "Plasma",
+                "Magma"
+            ],
+            key="heatmap_colorscale"
+        )
+
+    # ----------------------------------
+    # Color Scale Settings
+    # ----------------------------------
+
+    st.divider()
+
+    st.subheader(
+        "Color Scale Settings"
+    )
 
     auto_color_scale = st.checkbox(
         "Automatic Color Scale",
         value=True,
-        key="heatmap_auto_colorscale"
+        key="heatmap_auto_scale"
     )
-    
+
     zmin = None
     zmid = None
     zmax = None
 
     if not auto_color_scale:
 
-        c3, c4, c5 = st.columns(3)
+        c1, c2, c3 = st.columns(3)
 
-        with c3:
+        with c1:
 
             zmin = st.number_input(
                 "Vmin",
@@ -1289,7 +1385,7 @@ with tab_heatmap:
                 key="heatmap_zmin"
             )
 
-        with c4:
+        with c2:
 
             zmid = st.number_input(
                 "Center",
@@ -1298,7 +1394,7 @@ with tab_heatmap:
                 key="heatmap_zmid"
             )
 
-        with c5:
+        with c3:
 
             zmax = st.number_input(
                 "Vmax",
@@ -1306,17 +1402,20 @@ with tab_heatmap:
                 step=0.1,
                 key="heatmap_zmax"
             )
-        
-        
+
+    # ----------------------------------
+    # Figure Settings
+    # ----------------------------------
+
     st.divider()
 
     st.subheader(
         "Figure Settings"
     )
 
-    c1, c2 = st.columns(2)
+    c4, c5 = st.columns(2)
 
-    with c1:
+    with c4:
 
         heatmap_width = st.number_input(
             "Figure Width (px)",
@@ -1327,39 +1426,47 @@ with tab_heatmap:
             key="heatmap_width"
         )
 
-    with c2:
+    with c5:
 
-        heatmap_height = (
-            st.number_input(
-                "Figure Height (px)",
-                value=800,
-                min_value=300,
-                max_value=4000,
-                step=100,
-                key="heatmap_height"
-            )
+        heatmap_height = st.number_input(
+            "Figure Height (px)",
+            value=800,
+            min_value=300,
+            max_value=4000,
+            step=100,
+            key="heatmap_height"
         )
-        
+
+    # ----------------------------------
+    # Generate Heatmap
+    # ----------------------------------
+
     if st.button(
         "Generate Heatmap",
         key="generate_heatmap"
     ):
+
         if len(selected_genes) == 0:
 
-            st.info(
-                "Run DE analysis first or provide at least one gene."
+            st.warning(
+                "Please specify at least one gene."
             )
 
         else:
+
             fig = create_heatmap(
                 expression_df=expr_df,
                 metadata_df=meta_df,
                 genes=selected_genes,
-                annotation_column=annotation_column,
+                annotation_column=
+                annotation_column,
                 apply_log2=apply_log2,
-                zscore_by_gene=zscore_by_gene,
-                cluster_samples=cluster_samples,
-                cluster_genes=cluster_genes,
+                zscore_by_gene=
+                zscore_by_gene,
+                cluster_samples=
+                cluster_samples,
+                cluster_genes=
+                cluster_genes,
                 width=heatmap_width,
                 height=heatmap_height,
                 colorscale=colorscale,
@@ -1367,24 +1474,21 @@ with tab_heatmap:
                 zmid=zmid,
                 zmax=zmax
             )
-            import plotly
-            if not isinstance(fig,plotly.graph_objs.Figure):
-                st.write(fig)
-                st.write(type(fig))
-            else:
 
-                st.plotly_chart(
-                    fig,
-                    width="content",
-                    config={
-                        "displaylogo": False,
-                        "toImageButtonOptions": {
-                            "format": "svg",
-                            "filename":"expression_heatmap",
-                            "width":heatmap_width,
-                            "height": plot_height,
-                            "scale": 1
-                        }
-                    }       
-                )
-                
+            st.plotly_chart(
+                fig,
+                width="content",
+                config={
+                    "displaylogo": False,
+                    "toImageButtonOptions": {
+                        "format": "svg",
+                        "filename":
+                        "expression_heatmap",
+                        "width":
+                        heatmap_width,
+                        "height":
+                        heatmap_height,
+                        "scale": 1
+                    }
+                }
+            )
