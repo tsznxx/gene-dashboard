@@ -660,8 +660,8 @@ with tab_volcano:
 
             sig_de_df = de_df[de_df[significance_column] <= significance_cutoff].copy()
 
-            up_N = sum(de_df["log2FC"]>= log2fc_cutoff]
-            down_N = sum(sig_de_dff[de_df["log2FC"]<= log2fc_cutoff]
+            up_N = sum(de_df["log2FC"]>= log2fc_cutoff])
+            down_N = sum(sig_de_dff[de_df["log2FC"]<= log2fc_cutoff])
 
             top_up = sig_de_df["Gene"].tail(min(up_N,top_n)).tolist()
             top_down = sig_de_df["Gene"].head(min(down_N,top_n)).tolist()
