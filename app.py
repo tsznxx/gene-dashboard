@@ -908,10 +908,9 @@ with tab_box:
     st.subheader(
         "Gene Expression Boxplots"
     )
-    if "highlight_genes" in st.session_state:
-        st.session_state["boxplot_genes"] = st.session_state["highlight_genes"]
-    else:
-        st.session_state["boxplot_genes"] = []
+    st.session_state["boxplot_genes"] = st.session_state.get("boxplot_genes",[])
+    if not st.session_state["boxplot_genes"]:
+        st.session_state["boxplot_genes"] = st.session_state.get("highlight_genes",[])
     
     st.session_state[
         "boxplot_gene_text"
