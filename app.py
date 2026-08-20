@@ -932,7 +932,7 @@ with tab_box:
                 []
             )
 
-            #st.rerun()
+            st.rerun()
 
     with col2:
 
