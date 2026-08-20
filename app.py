@@ -954,27 +954,24 @@ with tab_box:
         if (
             gene_to_add
             and gene_to_add
-            not in highlight_genes
+            not in st.session_state["highlight_genes"]
         ):
 
-            highlight_genes = (
-                highlight_genes
+            st.session_state["highlight_genes"] = (
+                st.session_state["highlight_genes"]
                 + [gene_to_add]
             )
-            st.session_state["boxplot_gene_text"] = ",".join(highlight_genes)
-            st.write("After Add:", highlight_genes)
+            st.session_state["highlight_genes"] = ",".join(st.session_state["highlight_genes"])
+            st.write("After Add:", st.session_state["highlight_genes"])
 
             st.rerun()
 
     #
     # Keep synchronized
     #
-    st.session_state[
+    highlight_genes = st.session_state[
         "highlight_genes"
-    ] = highlight_genes
-    
-    
-
+    ]
     
     group_column = st.selectbox(
         "Group By",
