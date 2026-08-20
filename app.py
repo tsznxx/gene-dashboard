@@ -420,7 +420,7 @@ with tab_pca:
             "Figure Height (px)",
             min_value=300,
             max_value=1200,
-            value=500,
+            value=450,
             step=50,
             key="pca_height"
         )
@@ -641,8 +641,9 @@ with tab_volcano:
         #
         # Default highlighted genes
         #
+        sorted_de_df = de_df.loc[(de_df[significance_column]<significance_cutoff)&(de_df.log2FC.abs()>log2fc_cutoff)].sort_values("log2FC",ascending=False)
         top_up = (
-            de_df
+            sorted_de_df.loc[sorted_de_df.log2FC>0]
             .sort_values(
                 "log2FC",
                 ascending=False
@@ -652,7 +653,7 @@ with tab_volcano:
         )
 
         top_down = (
-            de_df
+            sorted_de_df.loc[sorted_de_df.log2FC<0]
             .sort_values(
                 "log2FC",
                 ascending=True
@@ -664,7 +665,7 @@ with tab_volcano:
         default_genes = top_up + top_down
 
         gene_text = st.text_area(
-            "Genes to highlight",
+            "Genes to highlight (by default, top 5 up-/down-regulated genes)",
             value=",".join(default_genes),
             height=100,
             key="volcano_gene_text"
