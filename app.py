@@ -68,7 +68,7 @@ with st.sidebar:
 
     st.image(
         "assets/logo.png",
-        use_container_width=True
+        width='content'
     )
 
     st.divider()
@@ -360,7 +360,7 @@ with tab_data:
 
     st.dataframe(
         expr_df.head(20),
-        use_container_width=True
+        width='content'
     )
 
     st.subheader(
@@ -369,7 +369,7 @@ with tab_data:
 
     st.dataframe(
         meta_df.head(20),
-        use_container_width=True
+        width='content'
     )
 
 #
@@ -486,7 +486,7 @@ with tab_pca:
 
             st.dataframe(
                 pca_df,
-                use_container_width=True
+                width='content'
             )
 
         except Exception as e:
@@ -578,7 +578,7 @@ with tab_de:
 
         st.dataframe(
             de_results,
-            use_container_width=True
+            width='content'
         )
 
         st.download_button(
@@ -835,6 +835,7 @@ with tab_volcano:
             "Generate Volcano Plot",
             key="generate_volcano_plot"
         ):
+            st.write(highlight_genes)
             fig = create_volcano_plot(
                 de_df=de_df,
                 significance_column=significance_column,
