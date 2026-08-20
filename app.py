@@ -739,7 +739,7 @@ with tab_volcano:
 
         gene_to_add = st.selectbox(
             "Type Gene Name",
-            options=st.session_state["all_genes"],
+            options=st.session_state.get("all_genes",[]),
             index=None,
             placeholder="Type to search...",
             key="volcano_gene_search"
@@ -945,7 +945,7 @@ with tab_box:
 
     gene_to_add = st.selectbox(
         "Type Gene Name",
-        options=st.session_state["all_genes"],
+        options=st.session_state.get("all_genes",[]),
         index=None,
         placeholder="Type to search...",
         key="boxplot_gene_search"
