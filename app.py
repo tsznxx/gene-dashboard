@@ -1246,7 +1246,8 @@ with tab_heatmap:
                 "heatmap_genes"
             ]
         ),
-        height=120
+        height=120,
+        key='heatmap_gene_text'
     )
 
     selected_genes = [
