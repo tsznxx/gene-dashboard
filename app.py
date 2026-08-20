@@ -962,16 +962,19 @@ with tab_box:
 
         if (
             gene_to_add
-            and gene_to_add not in highlight_genes
+            and gene_to_add
+            not in st.session_state[
+                "highlight_genes"
+            ]
         ):
 
-            highlight_genes = (
-                highlight_genes
+            st.session_state[
+                "highlight_genes"
+            ] = (
+                st.session_state[
+                    "highlight_genes"
+                ]
                 + [gene_to_add]
-            )
-
-            new_text = ",".join(
-                highlight_genes
             )
 
             st.rerun()
