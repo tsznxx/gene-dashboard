@@ -908,12 +908,14 @@ with tab_box:
     st.subheader(
         "Gene Expression Boxplots"
     )
-    if "highlight_genes" not in st.session_state:
-        st.session_state["highlight_genes"] = []
+    if "highlight_genes" in st.session_state:
+        st.session_state["boxplot_genes"] = st.session_state["highlight_genes"]
+    else:
+        st.session_state["boxplot_genes"] = []
     
     st.session_state[
         "boxplot_gene_text"
-    ] = ",".join(st.session_state["highlight_genes"])
+    ] = ",".join(st.session_state["boxplot_genes"])
        
 
     gene_text = st.text_area(
@@ -921,7 +923,7 @@ with tab_box:
         height=120,
         key="boxplot_gene_text"
     )
-    highlight_genes = [
+    boxplot_genes = [
 
         gene.strip()
 
@@ -929,6 +931,7 @@ with tab_box:
 
         if gene.strip() and gene in st.session_state["all_genes"]
     ]
+
     #
     # Add Gene
     #
@@ -941,7 +944,7 @@ with tab_box:
         placeholder="Type to search...",
         key="boxplot_gene_search"
     )
-    st.write("Before Add:", highlight_genes)
+    st.write("Before Add:", boxplot_genes)
     st.write("gene_to_add =", gene_to_add)
     if st.button(
         "Add Gene",
@@ -951,20 +954,18 @@ with tab_box:
         if (
             gene_to_add
             and gene_to_add
-            not in st.session_state["highlight_genes"]
+            not in boxplot_genes
         ):
 
-            st.session_state["highlight_genes"] = st.session_state["highlight_genes"]+[gene_to_add]
-            st.write("After Add:", st.session_state["highlight_genes"])
+            boxplot_genes = boxplot_genes+[gene_to_add]
+            st.write("After Add:", boxplot_genes)
 
             st.rerun()
 
     #
     # Keep synchronized
     #
-    highlight_genes = st.session_state[
-        "highlight_genes"
-    ]
+    st.session_state["boxplot_genes"] = boxplot_genes
     
     group_column = st.selectbox(
         "Group By",
@@ -985,12 +986,12 @@ with tab_box:
 
     if (
         plot_mode == "Single Gene"
-        and len(highlight_genes) > 0
+        and len(boxplot_genes) > 0
     ):
 
         selected_gene = st.selectbox(
             "Select Gene",
-            highlight_genes,
+            boxplot_genes,
             index=0
         )
 
@@ -1063,7 +1064,7 @@ with tab_box:
         fig = create_gene_boxplot(
             expression_df=expr_df,
             metadata_df=meta_df,
-            genes=highlight_genes,
+            genes=boxplot_genes,
             group_column=group_column,
             apply_log2=apply_log2,
             plot_mode=plot_mode,
