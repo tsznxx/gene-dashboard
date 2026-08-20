@@ -608,9 +608,10 @@ with tab_volcano:
 
         de_df = st.session_state["de_results"]
 
-        #
+        # --------------------------------------------------
         # Volcano Settings
-        #
+        # --------------------------------------------------
+
         significance_column = st.radio(
             "Use significance metric",
             ["PValue", "FDR"],
@@ -621,6 +622,7 @@ with tab_volcano:
         col1, col2 = st.columns(2)
 
         with col1:
+
             log2fc_cutoff = st.number_input(
                 "Absolute log2FC cutoff",
                 value=1.0,
@@ -629,24 +631,35 @@ with tab_volcano:
             )
 
         with col2:
+
             significance_cutoff = st.number_input(
                 f"{significance_column} cutoff",
                 value=0.05,
                 step=0.01,
-                format="%.3f",
                 key="volcano_sig_cutoff"
             )
 
-        #
-        # Highlight settings
-        #
-        st.subheader("Genes to Highlight")
+        # --------------------------------------------------
+        # Highlighted Genes
+        # --------------------------------------------------
+
+        st.subheader(
+            "Genes to Highlight"
+        )
 
         use_top_genes = st.checkbox(
             "Use Top Significant Genes",
             value=True,
             key="volcano_use_top_genes"
         )
+
+        if "highlight_genes" not in st.session_state:
+
+            st.session_state["highlight_genes"] = []
+
+        if "volcano_gene_text" not in st.session_state:
+
+            st.session_state["volcano_gene_text"] = ""
 
         if use_top_genes:
 
@@ -658,58 +671,94 @@ with tab_volcano:
                 key="volcano_top_n"
             )
 
-            sig_de_df = de_df[de_df[significance_column] <= significance_cutoff].copy()
+            #
+            # Significant genes only
+            #
+            sig_df = de_df[
+                de_df[significance_column]
+                <= significance_cutoff
+            ].copy()
 
-            up_N = sum(de_df["log2FC"]>= log2fc_cutoff)
-            down_N = sum(de_df["log2FC"]<= log2fc_cutoff)
+            up_df_N = sum(sig_df["log2FC"]>= log2fc_cutoff)
+            down_df_N = sum(sig_df["log2FC"]<= log2fc_cutoff)
 
-            top_up = sig_de_df["Gene"].tail(min(up_N,top_n)).tolist()
-            top_down = sig_de_df["Gene"].head(min(down_N,top_n)).tolist()
 
-            highlight_genes = top_up + top_down
+            up_n = min(top_n,up_df_N)
+            down_n = min(top_n,down_df_N)
+
+            highlight_genes = sig_df['Gene'].tail(min(top_n,up_df_N)).to_list()+ sig_df['Gene'].head(min(top_n,down_df_N))
+
+            #
+            # Update only when changed
+            #
             new_gene_text = ",".join(
                 highlight_genes
             )
 
             if (
-                st.session_state.get(
-                    "volcano_gene_text",
-                    ""
-                )
+                st.session_state[
+                    "volcano_gene_text"
+                ]
                 != new_gene_text
             ):
+
+                st.session_state[
+                    "highlight_genes"
+                ] = highlight_genes
 
                 st.session_state[
                     "volcano_gene_text"
                 ] = new_gene_text
 
                 st.session_state[
-                    "highlight_genes"
-                ] = highlight_genes
-                gene_text = st.text_area(
-                    "Highlighted Genes",
-                    value=",".join(
-                        highlight_genes
-                    ),
-                    height=120,
-                    key="volcano_gene_text"
-                )
+                    "boxplot_gene_text"
+                ] = new_gene_text
 
+                st.session_state[
+                    "heatmap_gene_text"
+                ] = new_gene_text
 
-        else:
+        #
+        # Editable Gene List
+        #
+        gene_text = st.text_area(
+            "Highlighted Genes",
+            height=120,
+            key="volcano_gene_text"
+        )
 
-            highlight_genes = st.session_state.get(
-                "highlight_genes",
-                []
-            )
-          
-        all_genes = st.session_state.get('all_genes',[])
+        highlight_genes = [
+
+            gene.strip()
+
+            for gene in gene_text.split(",")
+
+            if gene.strip()
+        ]
+
+        # --------------------------------------------------
+        # Add Gene
+        # --------------------------------------------------
+
+        st.subheader(
+            "Add Gene"
+        )
+
+        all_genes = sorted(
+            de_df["Gene"]
+            .astype(str)
+            .unique()
+            .tolist()
+        )
+
         gene_to_add = st.selectbox(
-            "Add Gene",
+            "Type Gene Name",
             options=all_genes,
             index=None,
-            placeholder="Type a gene name..."
+            placeholder="Type to search...",
+            key="volcano_gene_search"
         )
+
         if st.button(
             "Add Gene",
             key="volcano_add_gene"
@@ -717,28 +766,44 @@ with tab_volcano:
 
             if (
                 gene_to_add
-                and gene_to_add not in highlight_genes
+                and gene_to_add
+                not in highlight_genes
             ):
 
-                highlight_genes.append(
-                    gene_to_add
+                highlight_genes = (
+                    highlight_genes
+                    + [gene_to_add]
+                )
+
+                new_text = ",".join(
+                    highlight_genes
                 )
 
                 st.session_state[
                     "highlight_genes"
                 ] = highlight_genes
 
-                gene_text = st.text_area(
-                    "Highlighted Genes",
-                    value=",".join(
-                        highlight_genes
-                    ),
-                    height=120,
-                    key="volcano_gene_text"
-                )
-        st.write(highlight_genes)
-        st.write(st.session_state.get("highlight_genes",[]))
-    
+                st.session_state[
+                    "volcano_gene_text"
+                ] = new_text
+
+                st.session_state[
+                    "boxplot_gene_text"
+                ] = new_text
+
+                st.session_state[
+                    "heatmap_gene_text"
+                ] = new_text
+
+                st.rerun()
+
+        #
+        # Keep synchronized
+        #
+        st.session_state[
+            "highlight_genes"
+        ] = highlight_genes
+  
         #
         # Figure Settings
         #
