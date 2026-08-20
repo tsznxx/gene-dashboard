@@ -836,6 +836,7 @@ with tab_volcano:
             key="generate_volcano_plot"
         ):
             st.write(highlight_genes)
+            st.write(st.session_state.get("highlight_genes",[]))
             fig = create_volcano_plot(
                 de_df=de_df,
                 significance_column=significance_column,
