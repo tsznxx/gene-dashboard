@@ -935,6 +935,7 @@ with tab_box:
     #
     # Add Gene
     #
+    
     st.subheader("Add Gene")
     gene_to_add = st.selectbox(
         "Type Gene Name",
@@ -943,11 +944,12 @@ with tab_box:
         placeholder="Type to search...",
         key="boxplot_gene_search"
     )
-
+    st.write("Before Add:", highlight_genes)
     if st.button(
         "Add Gene",
         key="boxplot_add_gene"
     ):
+        st.write("gene_to_add =", gene_to_add)
 
         if (
             gene_to_add
@@ -959,6 +961,8 @@ with tab_box:
                 highlight_genes
                 + [gene_to_add]
             )
+            st.session_state["boxplot_gene_text"] = ",".join(highlight_genes)
+            st.write("After Add:", highlight_genes)
 
             st.rerun()
 
