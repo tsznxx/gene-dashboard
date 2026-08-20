@@ -23,17 +23,44 @@ from visualization import (
 )
 
 
-st.set_page_config(
-    page_title="Gene Expression Dashboard",
-    page_icon="assets/logo.png",
-    layout="wide"
-)
+
 
 st.title("Gene Expression Dashboard")
 
 st.sidebar.image(
     "assets/logo.png",
     width='content'
+)
+
+st.set_page_config(
+    page_title="Gene Expression Dashboard",
+    page_icon="assets/logo.png",
+    layout="wide"
+)
+
+st.markdown(
+    """
+    <style>
+    .footer {
+        position: fixed;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        background-color: white;
+        color: gray;
+        text-align: center;
+        font-size: 12px;
+        padding: 5px;
+        border-top: 1px solid #dddddd;
+        z-index: 999;
+    }
+    </style>
+
+    <div class="footer">
+        © 2026 H. Lee Moffitt Cancer Center | Gene Expression Dashboard
+    </div>
+    """,
+    unsafe_allow_html=True
 )
 
 #
@@ -1033,17 +1060,3 @@ with tab_heatmap:
                     }       
                 )
                 
-st.markdown("---")
-
-st.markdown(
-    """
-    <div style='text-align:center;
-                color:gray;
-                font-size:12px;'>
-    © 2026 H. Lee Moffitt Cancer Center. All rights reserved.
-    <br>
-    Gene Expression Dashboard v1.0
-    </div>
-    """,
-    unsafe_allow_html=True
-)
