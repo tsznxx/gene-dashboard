@@ -899,27 +899,66 @@ with tab_box:
         "Gene Expression Boxplots"
     )
 
-    #
-    # Initialize gene text
-    #
-    if "boxplot_gene_text" not in st.session_state:
+    # ----------------------------------
+    # Initialize Boxplot Gene List
+    # ----------------------------------
 
-        default_genes = st.session_state.get(
+    if "boxplot_genes" not in st.session_state:
+
+        st.session_state[
+            "boxplot_genes"
+        ] = st.session_state.get(
             "highlight_genes",
             []
         )
 
-        st.session_state[
-            "boxplot_gene_text"
-        ] = ",".join(default_genes)
+    # ----------------------------------
+    # Load Volcano Genes
+    # ----------------------------------
 
-    #
-    # Gene List
-    #
+    col1, col2 = st.columns(2)
+
+    with col1:
+
+        if st.button(
+            "Load Highlighted Genes",
+            key="box_load_highlighted"
+        ):
+
+            st.session_state[
+                "boxplot_genes"
+            ] = st.session_state.get(
+                "highlight_genes",
+                []
+            )
+
+            st.rerun()
+
+    with col2:
+
+        if st.button(
+            "Clear Genes",
+            key="box_clear_genes"
+        ):
+
+            st.session_state[
+                "boxplot_genes"
+            ] = []
+
+            st.rerun()
+
+    # ----------------------------------
+    # Gene Text Area
+    # ----------------------------------
+
     gene_text = st.text_area(
         "Genes (comma separated)",
-        height=120,
-        key="boxplot_gene_text"
+        value=",".join(
+            st.session_state[
+                "boxplot_genes"
+            ]
+        ),
+        height=120
     )
 
     selected_genes = [
@@ -932,45 +971,19 @@ with tab_box:
     ]
 
     #
-    # Load Volcano Genes
+    # User edits become source of truth
     #
-    col_load, col_clear = st.columns(2)
+    st.session_state[
+        "boxplot_genes"
+    ] = selected_genes
 
-    with col_load:
-
-        if st.button(
-            "Load Highlighted Genes",
-            key="box_load_highlight"
-        ):
-
-            st.session_state[
-                "boxplot_gene_text"
-            ] = ",".join(
-                st.session_state.get(
-                    "highlight_genes",
-                    []
-                )
-            )
-
-            st.rerun()
-
-    with col_clear:
-
-        if st.button(
-            "Clear Genes",
-            key="box_clear_genes"
-        ):
-
-            st.session_state[
-                "boxplot_gene_text"
-            ] = ""
-
-            st.rerun()
-
-    #
+    # ----------------------------------
     # Add Gene
-    #
-    st.subheader("Add Gene")
+    # ----------------------------------
+
+    st.subheader(
+        "Add Gene"
+    )
 
     all_genes = st.session_state.get(
         "all_genes",
@@ -982,44 +995,47 @@ with tab_box:
         options=all_genes,
         index=None,
         placeholder="Type to search...",
-        key="boxplot_gene_search"
+        key="box_gene_search"
     )
 
     if st.button(
         "Add Gene",
-        key="boxplot_add_gene"
+        key="box_add_gene"
     ):
 
         if (
             gene_to_add
-            and gene_to_add not in selected_genes
+            and gene_to_add
+            not in st.session_state[
+                "boxplot_genes"
+            ]
         ):
 
-            selected_genes = (
-                selected_genes
-                + [gene_to_add]
-            )
-
             st.session_state[
-                "boxplot_gene_text"
-            ] = ",".join(
-                selected_genes
+                "boxplot_genes"
+            ] = (
+                st.session_state[
+                    "boxplot_genes"
+                ]
+                + [gene_to_add]
             )
 
             st.rerun()
 
-    #
+    # ----------------------------------
     # Grouping
-    #
+    # ----------------------------------
+
     group_column = st.selectbox(
         "Group By",
         meta_df.columns.tolist(),
         key="boxplot_group"
     )
 
-    #
+    # ----------------------------------
     # Plot Mode
-    #
+    # ----------------------------------
+
     plot_mode = st.radio(
         "Plot Mode",
         [
@@ -1040,8 +1056,12 @@ with tab_box:
             "Select Gene",
             selected_genes,
             index=0,
-            key="boxplot_selected_gene"
+            key="box_selected_gene"
         )
+
+    # ----------------------------------
+    # Figure Settings
+    # ----------------------------------
 
     st.divider()
 
@@ -1049,23 +1069,27 @@ with tab_box:
         "Figure Settings"
     )
 
-    col1, col2 = st.columns(2)
+    col3, col4 = st.columns(2)
 
-    with col1:
+    with col3:
 
         plot_width = st.number_input(
             "Figure Width (px)",
             value=1200,
-            step=50,
+            min_value=400,
+            max_value=4000,
+            step=100,
             key="boxplot_width"
         )
 
-    with col2:
+    with col4:
 
         plot_height = st.number_input(
             "Figure Height (px)",
             value=600,
-            step=50,
+            min_value=300,
+            max_value=4000,
+            step=100,
             key="boxplot_height"
         )
 
@@ -1079,23 +1103,21 @@ with tab_box:
 
     if not auto_y:
 
-        col3, col4 = st.columns(2)
+        col5, col6 = st.columns(2)
 
-        with col3:
+        with col5:
 
             y_min = st.number_input(
                 "Y-axis Minimum",
                 value=0.0,
-                step=0.1,
                 key="boxplot_ymin"
             )
 
-        with col4:
+        with col6:
 
             y_max = st.number_input(
                 "Y-axis Maximum",
                 value=20.0,
-                step=0.1,
                 key="boxplot_ymax"
             )
 
@@ -1104,39 +1126,56 @@ with tab_box:
             y_max
         ]
 
+    # ----------------------------------
+    # Generate Plot
+    # ----------------------------------
+
     if st.button(
         "Generate Boxplot",
         key="generate_boxplot"
     ):
 
-        fig = create_gene_boxplot(
-            expression_df=expr_df,
-            metadata_df=meta_df,
-            genes=boxplot_genes,
-            group_column=group_column,
-            apply_log2=apply_log2,
-            plot_mode=plot_mode,
-            selected_gene=selected_gene,
-            width=plot_width,
-            height=plot_height,
-            y_range=y_range
-        )
+        if len(selected_genes) == 0:
 
-        st.plotly_chart(
-            fig,
-            width='content',
-            config={
-                "displaylogo": False,
-                "toImageButtonOptions": {
-                    "format": "svg",
-                    "filename": "gene_boxplot",
-                    "width": plot_width,
-                    "height": plot_height,
-                    "scale": 1
+            st.warning(
+                "Please specify at least one gene."
+            )
+
+        else:
+
+            fig = create_gene_boxplot(
+                expression_df=expr_df,
+                metadata_df=meta_df,
+                genes=selected_genes,
+                group_column=group_column,
+                apply_log2=apply_log2,
+                plot_mode=plot_mode,
+                selected_gene=selected_gene,
+                width=plot_width,
+                height=plot_height,
+                y_range=y_range
+            )
+
+            filename = (
+                "combined_boxplot"
+                if plot_mode == "Combined"
+                else f"{selected_gene}_boxplot"
+            )
+
+            st.plotly_chart(
+                fig,
+                width="content",
+                config={
+                    "displaylogo": False,
+                    "toImageButtonOptions": {
+                        "format": "svg",
+                        "filename": filename,
+                        "width": plot_width,
+                        "height": plot_height,
+                        "scale": 1
+                    }
                 }
-            }
-            
-        )
+            )
         
 # ==================================================
 # HEATMAP TAB
