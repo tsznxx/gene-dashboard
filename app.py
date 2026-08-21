@@ -56,10 +56,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-#
-# Sidebar
-#
-
 # ==================================================
 # SIDEBAR
 # ==================================================
@@ -68,11 +64,10 @@ with st.sidebar:
 
     st.image(
         "assets/logo.png",
-        width='content'
+        use_container_width=True
     )
 
     st.divider()
-
     st.header("Data Source")
 
     #
@@ -87,18 +82,6 @@ with st.sidebar:
             "Dataset Loaded"
         )
 
-        st.write(
-            f"Expression: "
-            f"{st.session_state['expr_df'].shape[0]} genes × "
-            f"{st.session_state['expr_df'].shape[1]} samples"
-        )
-
-        st.write(
-            f"Metadata: "
-            f"{st.session_state['meta_df'].shape[0]} samples × "
-            f"{st.session_state['meta_df'].shape[1]} columns"
-        )
-
         if st.button(
             "Start Over",
             type="primary",
@@ -106,12 +89,12 @@ with st.sidebar:
         ):
 
             #
-            # Clear all state
+            # Clear entire session
             #
-            for k in list(
+            for key in list(
                 st.session_state.keys()
             ):
-                del st.session_state[k]
+                del st.session_state[key]
 
             st.rerun()
 
@@ -120,47 +103,48 @@ with st.sidebar:
     #
     else:
 
+        st.header(
+            "Load Dataset"
+        )
+
+        # ----------------------
+        # Example Data
+        # ----------------------
+
         if st.button(
             "Load Example Dataset",
             type="primary",
             key="load_example_dataset"
         ):
 
-            expr_df_example = pd.read_csv(
-                "example_data/example_expression.tsv",sep='\t',index_col=0
+            expr_df = load_expression_file(
+                "example_data/example_expression.tsv"
             )
 
-            meta_df_example = pd.read_csv(
-                "example_data/example_metadata.tsv",sep='\t',index_col=0
+            meta_df = load_metadata_file(
+                "example_data/example_metadata.tsv"
             )
 
             st.session_state[
                 "expr_df"
-            ] = expr_df_example
+            ] = expr_df
 
             st.session_state[
                 "meta_df"
-            ] = meta_df_example
+            ] = meta_df
 
             st.session_state[
-                "using_example_data"
+                "data_loaded"
             ] = True
 
-
-        if st.session_state.get(
-            "using_example_data",
-            False
-        ):
-
-            st.success(
-                "Using example dataset"
-            )
+            st.rerun()
 
         st.divider()
 
-        #
+        # ----------------------
         # Upload Data
-        #
+        # ----------------------
+
         uploaded_expression = st.file_uploader(
             "Expression Matrix",
             type=[
@@ -180,8 +164,34 @@ with st.sidebar:
             ],
             key="metadata_upload"
         )
-        st.session_state["data_loaded"] = True
-        st.rerun()
+
+        if (
+            uploaded_expression is not None
+            and uploaded_metadata is not None
+        ):
+
+            expr_df = load_expression_file(
+                uploaded_expression
+            )
+
+            meta_df = load_metadata_file(
+                uploaded_metadata
+            )
+
+            st.session_state[
+                "expr_df"
+            ] = expr_df
+
+            st.session_state[
+                "meta_df"
+            ] = meta_df
+
+            st.session_state[
+                "data_loaded"
+            ] = True
+
+            st.rerun()
+
 
     #
     # Global Settings
@@ -240,58 +250,65 @@ with st.sidebar:
 # Main
 #
 
-
 # ==================================================
 # LOAD DATA
 # ==================================================
 
-expr_df = None
-meta_df = None
-
-#
-# Example Dataset
-#
-if st.session_state.get(
-    "using_example_data",
+if not st.session_state.get(
+    "data_loaded",
     False
 ):
 
-    expr_df = st.session_state[
-        "expr_df"
-    ]
-
-    meta_df = st.session_state[
-        "meta_df"
-    ]
-
-#
-# Uploaded Dataset
-#
-elif (
-    uploaded_expression is not None
-    and uploaded_metadata is not None
-):
-
-    expr_df = load_expression_file(
-        uploaded_expression
-    )
-
-    meta_df = load_metadata_file(
-        uploaded_metadata
-    )
-
-#
-# Nothing Loaded Yet
-#
-else:
-
     st.info(
-        "Upload files or click "
-        "'Load Example Dataset'."
+        "Load the example dataset or upload your own dataset."
     )
 
     st.stop()
 
+#
+# Get data
+#
+expr_df = st.session_state[
+    "expr_df"
+]
+
+meta_df = st.session_state[
+    "meta_df"
+]
+
+#
+# Validate expression matrix
+#
+expr_validation = (
+    validate_expression_matrix(
+        expr_df
+    )
+)
+
+if not expr_validation["success"]:
+
+    st.error(
+        expr_validation["message"]
+    )
+
+    st.stop()
+
+#
+# Validate metadata
+#
+meta_validation = (
+    validate_metadata(
+        meta_df
+    )
+)
+
+if not meta_validation["success"]:
+
+    st.error(
+        meta_validation["message"]
+    )
+
+    st.stop()
 
 #
 # sample matching
@@ -340,6 +357,7 @@ st.success(
 
 st.session_state["expression_df"] = expr_df
 st.session_state["metadata_df"] = meta_df
+st.session_state["all_genes"] = expr_df.index.unique().astype(str).tolist()
 
 
 #
@@ -372,8 +390,6 @@ with tab_data:
     meta_summary = summarize_metadata(
         meta_df
     )
-    all_genes = sorted(expr_df.index.astype(str).unique().tolist())
-    st.session_state["all_genes"] = all_genes
 
     c1, c2, c3 = st.columns(3)
 
@@ -417,10 +433,6 @@ with tab_data:
         meta_df.head(20),
         width='content'
     )
-
-#
-# PCA Tab
-#
 
 # ==================================================
 # PCA TAB
