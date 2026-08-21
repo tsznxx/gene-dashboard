@@ -181,9 +181,10 @@ with st.sidebar:
             st.rerun()
 
 
-    #
-    # Global Settings
-    #
+    # ==================================================
+    # GLOBAL SETTINGS
+    # ==================================================
+
     st.divider()
 
     st.header(
@@ -195,6 +196,56 @@ with st.sidebar:
         value=True,
         key="apply_log2"
     )
+
+    apply_batch_correction = st.checkbox(
+        "Apply Batch Correction",
+        value=False,
+        key="apply_batch_correction"
+    )
+
+    batch_column = None
+
+    #
+    # Only show batch options after data loaded
+    #
+    if (
+        st.session_state.get(
+            "data_loaded",
+            False
+        )
+        and apply_batch_correction
+    ):
+
+        batch_candidates = [
+
+            col
+
+            for col in st.session_state[
+                "meta_df"
+            ].columns
+
+            if col != "Sample"
+        ]
+
+        if batch_candidates:
+
+            batch_column = st.selectbox(
+                "Batch Column",
+                batch_candidates,
+                key="batch_column"
+            )
+
+            batch_method = st.selectbox(
+                "Method",
+                ["ComBat"],
+                key="batch_method"
+            )
+
+        else:
+
+            st.warning(
+                "No metadata columns available."
+            )
 
     #
     # Example Files
