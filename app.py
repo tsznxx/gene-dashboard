@@ -237,12 +237,6 @@ with st.sidebar:
         # Run Preprocessing
         # --------------------------------------
 
-        if st.button("Apply Preprocessing", type="primary", key="run_preprocessing"):
-
-            st.session_state["preprocessing_requested"] = True
-
-            st.rerun()
-
     #
     # Example Files
     #
@@ -343,47 +337,36 @@ if not matching_result["matching"]:
 
 st.success("Data loaded successfully.")
 
+st.session_state["processed_expr_df"] = expr_df
+
+processed_expr_df = expr_df.copy()
+
 #
-# Run preprocessing only when requested
+# Log2
 #
-if st.session_state.get("preprocessing_requested", False):
+if st.session_state["apply_log2"]:
 
-    processed_expr_df = expr_df.copy()
+    processed_expr_df = np.log2(processed_expr_df + 1)
 
-    #
-    # Log2
-    #
-    if st.session_state["apply_log2"]:
+#
+# ComBat
+#
+if st.session_state["apply_batch_correction"]:
 
-        processed_expr_df = np.log2(processed_expr_df + 1)
+    batch_column = st.session_state["batch_column"]
 
-    #
-    # ComBat
-    #
-    if st.session_state["apply_batch_correction"]:
+    processed_expr_df = apply_combat(processed_expr_df, meta_df, batch_column)
 
-        batch_column = st.session_state["batch_column"]
+#
+# Store processed matrix
+#
+st.session_state["processed_expr_df"] = processed_expr_df
 
-        processed_expr_df = apply_combat(processed_expr_df, meta_df, batch_column)
+st.session_state["active_preprocessing"] = (
+    " → ".join(preprocessing_steps) if preprocessing_steps else "Raw"
+)
 
-    #
-    # Store processed matrix
-    #
-    st.session_state["processed_expr_df"] = processed_expr_df
-
-    st.session_state["active_preprocessing"] = (
-        " → ".join(preprocessing_steps) if preprocessing_steps else "Raw"
-    )
-    st.session_state['preprocessing_history'] = st.session_state.get('preprocessing_history',[])
-    st.session_state['preprocessing_history'].append(st.session_state["active_preprocessing"])
-    for pro_his in st.session_state['preprocessing_history']:
-        st.success(f"Preprocessing completed: {pro_his}")
-
-else:
-
-    if "processed_expr_df" not in st.session_state:
-
-        st.session_state["processed_expr_df"] = expr_df
+st.success(f"Preprocessing completed: {st.session_state["active_preprocessing"]}")
 
 
 st.session_state["expression_df"] = expr_df
