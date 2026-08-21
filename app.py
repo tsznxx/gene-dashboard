@@ -61,12 +61,13 @@ with st.sidebar:
     st.image("assets/logo.png", width="content")
 
     st.divider()
+    st.header("Load Dataset")
 
     #
     # DATA ALREADY LOADED
     #
     if st.session_state.get("data_loaded", False):
-        st.header("Load Dataset")
+        
 
         if st.button("Start Over", type="primary", key="start_over"):
 
@@ -318,10 +319,11 @@ with st.sidebar:
         #
         # Initialize preprocessing cache
         #
+        expr_df = st.session_state['expr_df']
         if "expr_versions" not in st.session_state:
 
             st.session_state["expr_versions"] = {
-                "raw": expr_df.copy()
+                "raw": expr_df
             }
 
         #
