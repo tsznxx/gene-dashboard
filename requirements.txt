@@ -1,12 +1,15 @@
-streamlit>=1.35.0
+streamlit==1.49.1
 
-pandas>=2.2.0
-numpy>=1.26.0
+numpy==2.3.2
+pandas==2.3.2
 
-plotly>=5.20.0
+plotly==6.3.0
+scikit-learn==1.7.1
 
-scikit-learn>=1.5.0
+scipy==1.16.1
+statsmodels==0.14.5
 
-scipy
-statsmodels
-kaleido==0.2.1
+pycombat==0.20
+
+lifelines==0.30.0
+openpyxl==3.1.5
