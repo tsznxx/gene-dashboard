@@ -283,6 +283,68 @@ with st.sidebar:
                 ):
 
                     if (
+                        col.lower()
+                        == "batch"
+                    ):
+
+                        default_index = idx
+                        break
+
+                batch_column = st.selectbox(
+                    "Batch Column",
+                    batch_candidates,
+                    index=default_index,
+                    key="batch_column"
+                )
+
+            else:
+
+                st.warning(
+                    "No metadata columns available "
+                    "for batch correction."
+                )
+
+        #
+        # Active preprocessing
+        #
+        st.caption(
+            "Active preprocessing"
+        )
+
+        preprocessing_steps = []
+
+        if st.session_state[
+            "apply_log2"
+        ]:
+
+            preprocessing_steps.append(
+                "log2(x+1)"
+            )
+
+        if (
+            st.session_state[
+                "apply_batch_correction"
+            ]
+            and batch_column
+        ):
+
+            preprocessing_steps.append(
+                f"ComBat ({batch_column})"
+            )
+
+        if len(preprocessing_steps):
+
+            st.success(
+                " → ".join(
+                    preprocessing_steps
+                )
+            )
+
+        else:
+
+            st.info(
+                "Raw expression matrix"
+            )
 
     #
     # Example Files
