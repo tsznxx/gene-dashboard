@@ -65,7 +65,7 @@ with st.sidebar:
 
     st.image(
         "assets/logo.png",
-        use_container_width=True
+        width='content'
     )
 
     st.divider()
@@ -346,21 +346,21 @@ with st.sidebar:
             st.info(
                 "Raw expression matrix"
             )
-    # --------------------------------------
-    # Run Preprocessing
-    # --------------------------------------
+        # --------------------------------------
+        # Run Preprocessing
+        # --------------------------------------
 
-    if st.button(
-        "Apply Preprocessing",
-        type="primary",
-        key="run_preprocessing"
-    ):
+        if st.button(
+            "Apply Preprocessing",
+            type="primary",
+            key="run_preprocessing"
+        ):
 
-        st.session_state[
-            "preprocessing_requested"
-        ] = True
+            st.session_state[
+                "preprocessing_requested"
+            ] = True
 
-        st.rerun()
+            st.rerun()
         
     #
     # Example Files
