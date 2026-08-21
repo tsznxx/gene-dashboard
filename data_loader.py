@@ -5,12 +5,15 @@ import numpy as np
 
 
 def load_table(file):
-
-    if file.name.endswith(".csv"):
+    if isinstance(file,str):
+        filename = file
+    else:
+        filename = file.name
+    if filename.endswith(".csv"):
         df = pd.read_csv(file,index_col=0)
     elif (
-        file.name.endswith(".tsv")
-        or file.name.endswith(".txt")
+        filename.endswith(".tsv")
+        or filename.endswith(".txt")
     ):
 
         df =  pd.read_csv(file,sep="\t",index_col=0)

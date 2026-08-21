@@ -68,7 +68,6 @@ with st.sidebar:
     )
 
     st.divider()
-    st.header("Data Source")
 
     #
     # DATA ALREADY LOADED
