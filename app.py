@@ -185,161 +185,104 @@ with st.sidebar:
     # GLOBAL SETTINGS
     # ==================================================
 
-    st.divider()
-
-    st.header(
-        "Global Settings"
-    )
-
-    #
-    # Initialize
-    #
-    if "apply_log2" not in st.session_state:
-        st.session_state["apply_log2"] = True
-
-    if "apply_batch_correction" not in st.session_state:
-        st.session_state["apply_batch_correction"] = False
-
-    #
-    # Log2
-    #
-    apply_log2 = st.checkbox(
-        "Apply log2(x+1)",
-        key="apply_log2"
-    )
-
-    #
-    # If user turns off log2,
-    # automatically disable batch correction
-    #
-    if (
-        not st.session_state["apply_log2"]
-        and st.session_state["apply_batch_correction"]
+    if st.session_state.get(
+        "data_loaded",
+        False
     ):
 
-        st.session_state[
-            "apply_batch_correction"
-        ] = False
+        st.divider()
 
-    #
-    # Batch Correction
-    #
-    apply_batch_correction = st.checkbox(
-        "Apply Batch Correction",
-        key="apply_batch_correction"
-    )
-
-    #
-    # If batch correction is enabled,
-    # automatically enable log2
-    #
-    if (
-        st.session_state[
-            "apply_batch_correction"
-        ]
-        and
-        not st.session_state[
-            "apply_log2"
-        ]
-    ):
-
-        st.session_state[
-            "apply_log2"
-        ] = True
-
-        st.rerun()
-
-    #
-    # Batch options only after data loaded
-    #
-    batch_column = None
-    batch_method = None
-
-    if (
-        st.session_state.get(
-            "data_loaded",
-            False
-        )
-        and
-        st.session_state[
-            "apply_batch_correction"
-        ]
-    ):
-
-        batch_candidates = [
-
-            col
-
-            for col in st.session_state[
-                "meta_df"
-            ].columns
-
-            if col != "Sample"
-        ]
-
-        if len(batch_candidates):
-
-            #
-            # Prefer columns named Batch
-            #
-            default_index = 0
-
-            for idx, col in enumerate(
-                batch_candidates
-            ):
-
-                if col.lower() == "batch":
-
-                    default_index = idx
-                    break
-
-            batch_column = st.selectbox(
-                "Batch Column",
-                batch_candidates,
-                index=default_index,
-                key="batch_column"
-            )
-
-
-    #
-    # Active preprocessing summary
-    #
-    st.caption(
-        "Active preprocessing"
-    )
-
-    steps = []
-
-    if st.session_state["apply_log2"]:
-        steps.append("log2(x+1)")
-
-    if st.session_state[
-        "apply_batch_correction"
-    ]:
-
-        if batch_column:
-
-            steps.append(
-                f"ComBat({batch_column})"
-            )
-
-        else:
-
-            steps.append(
-                "Batch Correction"
-            )
-
-    if len(steps):
-
-        st.success(
-            " → ".join(steps)
+        st.header(
+            "Global Settings"
         )
 
-    else:
+        #
+        # Initialize
+        #
+        if "apply_log2" not in st.session_state:
 
-        st.info(
-            "Raw expression matrix"
+            st.session_state[
+                "apply_log2"
+            ] = True
+
+        if (
+            "apply_batch_correction"
+            not in st.session_state
+        ):
+
+            st.session_state[
+                "apply_batch_correction"
+            ] = False
+
+        #
+        # Log2
+        #
+        apply_log2 = st.checkbox(
+            "Apply log2(x+1)",
+            key="apply_log2"
         )
+
+        #
+        # If log2 is disabled,
+        # disable batch correction
+        #
+        if (
+            not st.session_state[
+                "apply_log2"
+            ]
+            and
+            st.session_state[
+                "apply_batch_correction"
+            ]
+        ):
+
+            st.session_state[
+                "apply_batch_correction"
+            ] = False
+
+        #
+        # Batch Correction
+        #
+        apply_batch_correction = st.checkbox(
+            "Apply Batch Correction (ComBat)",
+            key="apply_batch_correction",
+            disabled=not st.session_state[
+                "apply_log2"
+            ]
+        )
+
+        #
+        # Batch column
+        #
+        batch_column = None
+
+        if st.session_state[
+            "apply_batch_correction"
+        ]:
+
+            batch_candidates = [
+
+                col
+
+                for col in st.session_state[
+                    "meta_df"
+                ].columns
+
+                if col != "Sample"
+            ]
+
+            if len(batch_candidates):
+
+                #
+                # Prefer a column named Batch
+                #
+                default_index = 0
+
+                for idx, col in enumerate(
+                    batch_candidates
+                ):
+
+                    if (
 
     #
     # Example Files
