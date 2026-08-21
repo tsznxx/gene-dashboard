@@ -191,29 +191,79 @@ with st.sidebar:
         "Global Settings"
     )
 
+    #
+    # Initialize
+    #
+    if "apply_log2" not in st.session_state:
+        st.session_state["apply_log2"] = True
+
+    if "apply_batch_correction" not in st.session_state:
+        st.session_state["apply_batch_correction"] = False
+
+    #
+    # Log2
+    #
     apply_log2 = st.checkbox(
         "Apply log2(x+1)",
-        value=True,
         key="apply_log2"
     )
 
+    #
+    # If user turns off log2,
+    # automatically disable batch correction
+    #
+    if (
+        not st.session_state["apply_log2"]
+        and st.session_state["apply_batch_correction"]
+    ):
+
+        st.session_state[
+            "apply_batch_correction"
+        ] = False
+
+    #
+    # Batch Correction
+    #
     apply_batch_correction = st.checkbox(
         "Apply Batch Correction",
-        value=False,
         key="apply_batch_correction"
     )
 
-    batch_column = None
+    #
+    # If batch correction is enabled,
+    # automatically enable log2
+    #
+    if (
+        st.session_state[
+            "apply_batch_correction"
+        ]
+        and
+        not st.session_state[
+            "apply_log2"
+        ]
+    ):
+
+        st.session_state[
+            "apply_log2"
+        ] = True
+
+        st.rerun()
 
     #
-    # Only show batch options after data loaded
+    # Batch options only after data loaded
     #
+    batch_column = None
+    batch_method = None
+
     if (
         st.session_state.get(
             "data_loaded",
             False
         )
-        and apply_batch_correction
+        and
+        st.session_state[
+            "apply_batch_correction"
+        ]
     ):
 
         batch_candidates = [
@@ -227,25 +277,69 @@ with st.sidebar:
             if col != "Sample"
         ]
 
-        if batch_candidates:
+        if len(batch_candidates):
+
+            #
+            # Prefer columns named Batch
+            #
+            default_index = 0
+
+            for idx, col in enumerate(
+                batch_candidates
+            ):
+
+                if col.lower() == "batch":
+
+                    default_index = idx
+                    break
 
             batch_column = st.selectbox(
                 "Batch Column",
                 batch_candidates,
+                index=default_index,
                 key="batch_column"
             )
 
-            batch_method = st.selectbox(
-                "Method",
-                ["ComBat"],
-                key="batch_method"
+
+    #
+    # Active preprocessing summary
+    #
+    st.caption(
+        "Active preprocessing"
+    )
+
+    steps = []
+
+    if st.session_state["apply_log2"]:
+        steps.append("log2(x+1)")
+
+    if st.session_state[
+        "apply_batch_correction"
+    ]:
+
+        if batch_column:
+
+            steps.append(
+                f"ComBat({batch_column})"
             )
 
         else:
 
-            st.warning(
-                "No metadata columns available."
+            steps.append(
+                "Batch Correction"
             )
+
+    if len(steps):
+
+        st.success(
+            " → ".join(steps)
+        )
+
+    else:
+
+        st.info(
+            "Raw expression matrix"
+        )
 
     #
     # Example Files
