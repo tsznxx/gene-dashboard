@@ -20,7 +20,8 @@ def load_table(file):
             "Unsupported file type."
         )
     df.index = df.index.str.strip()
-    df.columns = df.columns.str.strip()    
+    df.columns = df.columns.str.strip()
+    return df
 
 def load_expression_file(uploaded_file):
     """

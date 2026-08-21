@@ -172,10 +172,6 @@ with st.sidebar:
             meta_df = load_metadata_file(
                 uploaded_metadata
             )
-            st.write(uploaded_expression)
-            st.write(uploaded_metadata)
-            st.write(expr_df)
-            st.write(meta_df)
 
             st.session_state[
                 "expr_df"
@@ -189,7 +185,7 @@ with st.sidebar:
                 "data_loaded"
             ] = True
 
-            #st.rerun()
+            st.rerun()
 
 
     #
