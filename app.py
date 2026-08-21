@@ -180,6 +180,8 @@ with st.sidebar:
             ],
             key="metadata_upload"
         )
+        st.session_state["data_loaded"] = True
+        st.rerun()
 
     #
     # Global Settings
