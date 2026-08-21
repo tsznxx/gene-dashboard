@@ -289,11 +289,6 @@ with st.sidebar:
 
         if needs_update:
 
-            st.warning(
-                "Preprocessing settings differ "
-                "from current analysis matrix."
-            )
-
             if st.button(
                 "Apply Preprocessing",
                 type="primary",
@@ -306,11 +301,13 @@ with st.sidebar:
 
                 st.rerun()
 
-        else:
-
-            st.info(
-                "Analysis matrix is up to date."
-            )
+        needs_update = (
+            requested_key
+            !=
+            st.session_state[
+                "current_preprocessing"
+            ]
+        )
 
         # ==================================================
         # PREPROCESSING
@@ -471,27 +468,7 @@ with st.sidebar:
         expr_df = st.session_state[
             "active_expr_df"
         ]
-        if needs_update:
 
-            if st.button(
-                "Apply Preprocessing",
-                type="primary",
-                key="apply_preprocessing"
-            ):
-
-                st.session_state[
-                    "run_preprocessing"
-                ] = True
-
-                st.rerun()
-
-        needs_update = (
-            requested_key
-            !=
-            st.session_state[
-                "current_preprocessing"
-            ]
-        )
 
 
     #
