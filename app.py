@@ -133,69 +133,89 @@ with st.sidebar:
     # GLOBAL SETTINGS
     # ==================================================
 
-    if st.session_state.get("data_loaded", False):
+    if st.session_state.get(
+        "data_loaded",
+        False
+    ):
 
         st.divider()
 
-        st.header("Global Settings")
-
-        #
-        # Initialize
-        #
-        if "apply_log2" not in st.session_state:
-
-            st.session_state["apply_log2"] = True
-
-        if "apply_batch_correction" not in st.session_state:
-
-            st.session_state["apply_batch_correction"] = False
-
-        #
-        # Log2
-        #
-        apply_log2 = st.checkbox("Apply log2(x+1)", key="apply_log2")
-
-        #
-        # If log2 is disabled,
-        # disable batch correction
-        #
-        if (
-            not st.session_state["apply_log2"]
-            and st.session_state["apply_batch_correction"]
-        ):
-
-            st.session_state["apply_batch_correction"] = False
-
-        #
-        # Batch Correction
-        #
-        apply_batch_correction = st.checkbox(
-            "Apply Batch Correction (ComBat)",
-            key="apply_batch_correction",
-            disabled=not st.session_state["apply_log2"],
+        st.header(
+            "Global Settings"
         )
 
-        #
-        # Batch column
-        #
+        # ----------------------------------
+        # Initialize
+        # ----------------------------------
+
+        if "apply_log2" not in st.session_state:
+
+            st.session_state[
+                "apply_log2"
+            ] = False
+
+        if (
+            "apply_batch_correction"
+            not in st.session_state
+        ):
+
+            st.session_state[
+                "apply_batch_correction"
+            ] = False
+
+        if (
+            "current_preprocessing"
+            not in st.session_state
+        ):
+
+            st.session_state[
+                "current_preprocessing"
+            ] = "raw"
+
+        # ----------------------------------
+        # User Requested Settings
+        # ----------------------------------
+
+        apply_log2 = st.checkbox(
+            "Apply log2(x+1)",
+            key="apply_log2"
+        )
+
+        apply_batch_correction = st.checkbox(
+            "Apply Batch Correction (ComBat)",
+            key="apply_batch_correction"
+        )
+
         batch_column = None
 
-        if st.session_state["apply_batch_correction"]:
+        if apply_batch_correction:
 
             batch_candidates = [
-                col for col in st.session_state["meta_df"].columns if col != "Sample"
+
+                col
+
+                for col in st.session_state[
+                    "meta_df"
+                ].columns
+
             ]
 
+            #
+            # meta_df already uses sample IDs
+            # as index
+            #
             if len(batch_candidates):
 
-                #
-                # Prefer a column named Batch
-                #
                 default_index = 0
 
-                for idx, col in enumerate(batch_candidates):
+                for idx, col in enumerate(
+                    batch_candidates
+                ):
 
-                    if col.lower() == "batch":
+                    if (
+                        col.lower()
+                        == "batch"
+                    ):
 
                         default_index = idx
                         break
@@ -204,38 +224,273 @@ with st.sidebar:
                     "Batch Column",
                     batch_candidates,
                     index=default_index,
-                    key="batch_column",
+                    key="batch_column"
                 )
 
-            else:
+        # ----------------------------------
+        # Build requested key
+        # ----------------------------------
 
-                st.warning("No metadata columns available " "for batch correction.")
+        requested_steps = []
 
-        #
-        # Active preprocessing
-        #
-        st.caption("Active preprocessing")
+        if apply_log2:
 
-        preprocessing_steps = []
+            requested_steps.append(
+                "log2"
+            )
 
-        if st.session_state["apply_log2"]:
+        if (
+            apply_batch_correction
+            and batch_column
+        ):
 
-            preprocessing_steps.append("log2(x+1)")
+            requested_steps.append(
+                f"combat({batch_column})"
+            )
 
-        if st.session_state["apply_batch_correction"] and batch_column:
+        requested_key = (
+            "->".join(
+                requested_steps
+            )
+            if requested_steps
+            else "raw"
+        )
 
-            preprocessing_steps.append(f"ComBat ({batch_column})")
+        # ----------------------------------
+        # Current Status
+        # ----------------------------------
 
-        if len(preprocessing_steps):
+        st.caption(
+            "Current analysis matrix"
+        )
 
-            st.success(" → ".join(preprocessing_steps))
+        st.success(
+            st.session_state[
+                "current_preprocessing"
+            ]
+        )
+
+        # ----------------------------------
+        # Determine Whether Update Needed
+        # ----------------------------------
+
+        needs_update = (
+            requested_key
+            !=
+            st.session_state[
+                "current_preprocessing"
+            ]
+        )
+
+        # ----------------------------------
+        # Apply Button
+        # ----------------------------------
+
+        if needs_update:
+
+            st.warning(
+                "Preprocessing settings differ "
+                "from current analysis matrix."
+            )
+
+            if st.button(
+                "Apply Preprocessing",
+                type="primary",
+                key="apply_preprocessing"
+            ):
+
+                st.session_state[
+                    "run_preprocessing"
+                ] = True
+
+                st.rerun()
 
         else:
 
-            st.info("Raw expression matrix")
-        # --------------------------------------
-        # Run Preprocessing
-        # --------------------------------------
+            st.info(
+                "Analysis matrix is up to date."
+            )
+
+        # ==================================================
+        # PREPROCESSING
+        # ==================================================
+
+        #
+        # Initialize preprocessing cache
+        #
+        if "expr_versions" not in st.session_state:
+
+            st.session_state["expr_versions"] = {
+                "raw": expr_df.copy()
+            }
+
+        #
+        # Initialize active dataset
+        #
+        if "active_expr_df" not in st.session_state:
+
+            st.session_state[
+                "active_expr_df"
+            ] = expr_df.copy()
+
+        #
+        # Initialize current status
+        #
+        if "current_preprocessing" not in st.session_state:
+
+            st.session_state[
+                "current_preprocessing"
+            ] = "raw"
+
+        #
+        # Build requested preprocessing key
+        #
+        preprocessing_steps = []
+
+        if st.session_state.get(
+            "apply_log2",
+            False
+        ):
+
+            preprocessing_steps.append(
+                "log2"
+            )
+
+        if (
+            st.session_state.get(
+                "apply_batch_correction",
+                False
+            )
+        ):
+
+            batch_column = st.session_state.get(
+                "batch_column"
+            )
+
+            if batch_column:
+
+                preprocessing_steps.append(
+                    f"combat({batch_column})"
+                )
+
+        requested_key = (
+            "->".join(
+                preprocessing_steps
+            )
+            if len(preprocessing_steps)
+            else "raw"
+        )
+
+        #
+        # Run preprocessing
+        #
+        if st.session_state.get(
+            "run_preprocessing",
+            False
+        ):
+
+            #
+            # Use cached version if available
+            #
+            if (
+                requested_key
+                not in st.session_state[
+                    "expr_versions"
+                ]
+            ):
+
+                processed_df = expr_df.copy()
+
+                # --------------------------
+                # Log2
+                # --------------------------
+
+                if st.session_state.get(
+                    "apply_log2",
+                    False
+                ):
+
+                    processed_df = np.log2(
+                        processed_df + 1
+                    )
+
+                # --------------------------
+                # ComBat
+                # --------------------------
+
+                if st.session_state.get(
+                    "apply_batch_correction",
+                    False
+                ):
+
+                    batch_column = st.session_state[
+                        "batch_column"
+                    ]
+
+                    processed_df = apply_combat(
+                        processed_df,
+                        meta_df,
+                        batch_column
+                    )
+
+                #
+                # Cache result
+                #
+                st.session_state[
+                    "expr_versions"
+                ][requested_key] = processed_df
+
+            #
+            # Activate dataset
+            #
+            st.session_state[
+                "active_expr_df"
+            ] = st.session_state[
+                "expr_versions"
+            ][requested_key]
+
+            #
+            # Update current status
+            #
+            st.session_state[
+                "current_preprocessing"
+            ] = requested_key
+
+            #
+            # Reset flag
+            #
+            st.session_state[
+                "run_preprocessing"
+            ] = False
+
+        #
+        # Dataset used by all analyses
+        #
+        expr_df = st.session_state[
+            "active_expr_df"
+        ]
+        if needs_update:
+
+            if st.button(
+                "Apply Preprocessing",
+                type="primary",
+                key="apply_preprocessing"
+            ):
+
+                st.session_state[
+                    "run_preprocessing"
+                ] = True
+
+                st.rerun()
+
+        needs_update = (
+            requested_key
+            !=
+            st.session_state[
+                "current_preprocessing"
+            ]
+        )
+
 
     #
     # Example Files
