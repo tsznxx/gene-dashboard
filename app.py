@@ -355,6 +355,10 @@ if not st.session_state.get(
 
     st.stop()
 
+
+expr_df = st.session_state["expr_df"]
+meta_df = st.session_state["meta_df"]
+
 #
 # Validate expression matrix
 #
@@ -370,10 +374,6 @@ if expr_validation:
 #
 # Validate metadata
 #
-
-expr_df = st.session_state["expr_df"]
-meta_df = st.session_state["meta_df"]#
-
 
 meta_validation = validate_metadata(meta_df)
 
