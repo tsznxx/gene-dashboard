@@ -274,7 +274,7 @@ meta_df = st.session_state[
 #
 # Validate expression matrix
 #
-expr_validation = validate_expression_matrix(expr_df))
+expr_validation = validate_expression_matrix(expr_df)
 
 
 if not expr_validation:
@@ -288,11 +288,8 @@ if not expr_validation:
 #
 # Validate metadata
 #
-meta_validation = (
-    validate_metadata(
-        meta_df
-    )
-)
+meta_validation = validate_metadata(meta_df)
+
 
 if not meta_validation:
 
