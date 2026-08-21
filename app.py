@@ -355,7 +355,7 @@ if st.session_state.get("preprocessing_requested", False):
     #
     if st.session_state["apply_log2"]:
 
-        processed_expr_df.iloc[:, 1:] = np.log2(processed_expr_df.iloc[:, 1:] + 1)
+        processed_expr_df = np.log2(processed_expr_df + 1)
 
     #
     # ComBat
@@ -374,8 +374,10 @@ if st.session_state.get("preprocessing_requested", False):
     st.session_state["active_preprocessing"] = (
         " → ".join(preprocessing_steps) if preprocessing_steps else "Raw"
     )
-
-    st.success("Preprocessing completed.")
+    st.session_state['preprocessing_history'] = st.session_state.get('preprocessing_history',[])
+    st.session_state['preprocessing_history'].append(st.session_state["active_preprocessing"])
+    for pro_his in st.session_state['preprocessing_history']:
+        st.success(f"Preprocessing completed: {pro_his}")
 
 else:
 
