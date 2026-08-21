@@ -58,13 +58,12 @@ def apply_combat(expr_df, meta_df, batch_column):
     # ComBat expects:
     # samples x genes
     #
-    expr_t = expr_mat.T
 
     combat = Combat()
     st.write(expr_t.shape)
     st.write(batches)
 
-    corrected = combat.fit_transform(expr_mat, batches)
+    corrected = combat.fit_transform(expr_mat.T, batches.tolist())
 
     #
     # Back to:
