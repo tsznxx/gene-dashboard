@@ -116,13 +116,8 @@ with st.sidebar:
             key="load_example_dataset"
         ):
 
-            expr_df = load_expression_file(
-                "example_data/example_expression.tsv"
-            )
-
-            meta_df = load_metadata_file(
-                "example_data/example_metadata.tsv"
-            )
+            expr_df = pd.read_csv("example_data/example_expression.tsv",sep='\t',index_col=0)               
+            meta_df = pd.read_csv("example_data/example_metadata.tsv",,sep='\t',index_col=0)  
 
             st.session_state[
                 "expr_df"
