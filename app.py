@@ -66,7 +66,9 @@ with st.sidebar:
         "assets/logo.png",
         use_container_width=True
     )
-
+    st.header(
+        "Load Dataset"
+    )
     st.divider()
 
     #
@@ -76,10 +78,6 @@ with st.sidebar:
         "data_loaded",
         False
     ):
-
-        st.success(
-            "Dataset Loaded"
-        )
 
         if st.button(
             "Start Over",
@@ -101,17 +99,12 @@ with st.sidebar:
     # NO DATA LOADED
     #
     else:
-
-        st.header(
-            "Load Dataset"
-        )
-
         # ----------------------
         # Example Data
         # ----------------------
 
         if st.button(
-            "Load Example Dataset",
+            "Example Dataset",
             type="primary",
             key="load_example_dataset"
         ):
