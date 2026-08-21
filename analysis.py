@@ -47,7 +47,7 @@ def apply_combat(expr_df, meta_df, batch_column):
     #
     # Reorder metadata
     #
-    meta_ordered = meta_df.loc[expr_mat.columns]
+    meta_ordered = meta_df.reindex(index=expr_mat.columns)
 
     batches = meta_ordered[batch_column]
 
@@ -69,9 +69,7 @@ def apply_combat(expr_df, meta_df, batch_column):
 
     corrected_df = pd.DataFrame(
         corrected, index=expr_mat.index, columns=expr_mat.columns
-    ).reset_index()
-
-    corrected_df.rename(columns={"index": gene_col}, inplace=True)
+    )
 
     return corrected_df
 
