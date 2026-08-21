@@ -64,7 +64,7 @@ def apply_combat(expr_df, meta_df, batch_column):
     st.write(expr_t.shape)
     st.write(batches)
 
-    corrected = combat.fit_transform(expr_t, batches)
+    corrected = combat.fit_transform(expr_mat, batches)
 
     #
     # Back to:
