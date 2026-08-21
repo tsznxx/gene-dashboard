@@ -267,6 +267,8 @@ if not st.session_state.get(
 #
 # Get data
 #
+st.write(type(expr_df))
+st.write(type(meta_df))
 expr_df = st.session_state[
     "expr_df"
 ]
