@@ -317,6 +317,7 @@ with st.sidebar:
         # Initialize preprocessing cache
         #
         expr_df = st.session_state['expr_df']
+        meta_df = st.session_state['meta_df']
         if "expr_versions" not in st.session_state:
 
             st.session_state["expr_versions"] = {
