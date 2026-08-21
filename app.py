@@ -9,28 +9,22 @@ from data_loader import (
     validate_metadata,
     validate_sample_matching,
     summarize_expression,
-    summarize_metadata
+    summarize_metadata,
 )
 
-from analysis import (
-    apply_combat,
-    run_pca,
-    run_differential_expression
-)
+from analysis import apply_combat, run_pca, run_differential_expression
 
 from visualization import (
     create_pca_plot,
     create_volcano_plot,
     create_gene_boxplot,
-    create_heatmap
+    create_heatmap,
 )
 
 st.title("Gene Expression Dashboard")
 
 st.set_page_config(
-    page_title="Gene Expression Dashboard",
-    page_icon="assets/logo.png",
-    layout="wide"
+    page_title="Gene Expression Dashboard", page_icon="assets/logo.png", layout="wide"
 )
 
 st.markdown(
@@ -55,7 +49,7 @@ st.markdown(
         © 2026 H. Lee Moffitt Cancer Center | Gene Expression Dashboard
     </div>
     """,
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
 
 # ==================================================
@@ -64,37 +58,22 @@ st.markdown(
 
 with st.sidebar:
 
-    st.image(
-        "assets/logo.png",
-        width='content'
-    )
+    st.image("assets/logo.png", width="content")
 
     st.divider()
-
 
     #
     # DATA ALREADY LOADED
     #
-    if st.session_state.get(
-        "data_loaded",
-        False
-    ):
-        st.header(
-            "Load Dataset"
-        )    
+    if st.session_state.get("data_loaded", False):
+        st.header("Load Dataset")
 
-        if st.button(
-            "Start Over",
-            type="primary",
-            key="start_over"
-        ):
+        if st.button("Start Over", type="primary", key="start_over"):
 
             #
             # Clear entire session
             #
-            for key in list(
-                st.session_state.keys()
-            ):
+            for key in list(st.session_state.keys()):
                 del st.session_state[key]
 
             st.rerun()
@@ -107,26 +86,20 @@ with st.sidebar:
         # Example Data
         # ----------------------
 
-        if st.button(
-            "Example Dataset",
-            type="primary",
-            key="load_example_dataset"
-        ):
+        if st.button("Example Dataset", type="primary", key="load_example_dataset"):
 
-            expr_df = pd.read_csv("example_data/example_expression.tsv",sep='\t',index_col=0)               
-            meta_df = pd.read_csv("example_data/example_metadata.tsv",sep='\t',index_col=0)  
+            expr_df = pd.read_csv(
+                "example_data/example_expression.tsv", sep="\t", index_col=0
+            )
+            meta_df = pd.read_csv(
+                "example_data/example_metadata.tsv", sep="\t", index_col=0
+            )
 
-            st.session_state[
-                "expr_df"
-            ] = expr_df
+            st.session_state["expr_df"] = expr_df
 
-            st.session_state[
-                "meta_df"
-            ] = meta_df
+            st.session_state["meta_df"] = meta_df
 
-            st.session_state[
-                "data_loaded"
-            ] = True
+            st.session_state["data_loaded"] = True
 
             st.rerun()
 
@@ -135,112 +108,63 @@ with st.sidebar:
         # ----------------------
 
         uploaded_expression = st.file_uploader(
-            "Expression Matrix",
-            type=[
-                "csv",
-                "tsv",
-                "txt"
-            ],
-            key="expression_upload"
+            "Expression Matrix", type=["csv", "tsv", "txt"], key="expression_upload"
         )
 
         uploaded_metadata = st.file_uploader(
-            "Metadata Table",
-            type=[
-                "csv",
-                "tsv",
-                "txt"
-            ],
-            key="metadata_upload"
+            "Metadata Table", type=["csv", "tsv", "txt"], key="metadata_upload"
         )
 
-        if (
-            uploaded_expression is not None
-            and uploaded_metadata is not None
-        ):
+        if uploaded_expression is not None and uploaded_metadata is not None:
 
+            expr_df = load_expression_file(uploaded_expression)
 
-            expr_df = load_expression_file(
-                uploaded_expression
-            )
+            meta_df = load_metadata_file(uploaded_metadata)
 
-            meta_df = load_metadata_file(
-                uploaded_metadata
-            )
+            st.session_state["expr_df"] = expr_df
 
-            st.session_state[
-                "expr_df"
-            ] = expr_df
+            st.session_state["meta_df"] = meta_df
 
-            st.session_state[
-                "meta_df"
-            ] = meta_df
-
-            st.session_state[
-                "data_loaded"
-            ] = True
+            st.session_state["data_loaded"] = True
 
             st.rerun()
-
 
     # ==================================================
     # GLOBAL SETTINGS
     # ==================================================
 
-    if st.session_state.get(
-        "data_loaded",
-        False
-    ):
+    if st.session_state.get("data_loaded", False):
 
         st.divider()
 
-        st.header(
-            "Global Settings"
-        )
+        st.header("Global Settings")
 
         #
         # Initialize
         #
         if "apply_log2" not in st.session_state:
 
-            st.session_state[
-                "apply_log2"
-            ] = True
+            st.session_state["apply_log2"] = True
 
-        if (
-            "apply_batch_correction"
-            not in st.session_state
-        ):
+        if "apply_batch_correction" not in st.session_state:
 
-            st.session_state[
-                "apply_batch_correction"
-            ] = False
+            st.session_state["apply_batch_correction"] = False
 
         #
         # Log2
         #
-        apply_log2 = st.checkbox(
-            "Apply log2(x+1)",
-            key="apply_log2"
-        )
+        apply_log2 = st.checkbox("Apply log2(x+1)", key="apply_log2")
 
         #
         # If log2 is disabled,
         # disable batch correction
         #
         if (
-            not st.session_state[
-                "apply_log2"
-            ]
-            and
-            st.session_state[
-                "apply_batch_correction"
-            ]
+            not st.session_state["apply_log2"]
+            and st.session_state["apply_batch_correction"]
         ):
 
-            st.session_state[
-                "apply_batch_correction"
-            ] = False
+            st.session_state["apply_batch_correction"] = False
 
         #
         # Batch Correction
@@ -248,9 +172,7 @@ with st.sidebar:
         apply_batch_correction = st.checkbox(
             "Apply Batch Correction (ComBat)",
             key="apply_batch_correction",
-            disabled=not st.session_state[
-                "apply_log2"
-            ]
+            disabled=not st.session_state["apply_log2"],
         )
 
         #
@@ -258,19 +180,10 @@ with st.sidebar:
         #
         batch_column = None
 
-        if st.session_state[
-            "apply_batch_correction"
-        ]:
+        if st.session_state["apply_batch_correction"]:
 
             batch_candidates = [
-
-                col
-
-                for col in st.session_state[
-                    "meta_df"
-                ].columns
-
-                if col != "Sample"
+                col for col in st.session_state["meta_df"].columns if col != "Sample"
             ]
 
             if len(batch_candidates):
@@ -280,14 +193,9 @@ with st.sidebar:
                 #
                 default_index = 0
 
-                for idx, col in enumerate(
-                    batch_candidates
-                ):
+                for idx, col in enumerate(batch_candidates):
 
-                    if (
-                        col.lower()
-                        == "batch"
-                    ):
+                    if col.lower() == "batch":
 
                         default_index = idx
                         break
@@ -296,111 +204,73 @@ with st.sidebar:
                     "Batch Column",
                     batch_candidates,
                     index=default_index,
-                    key="batch_column"
+                    key="batch_column",
                 )
 
             else:
 
-                st.warning(
-                    "No metadata columns available "
-                    "for batch correction."
-                )
+                st.warning("No metadata columns available " "for batch correction.")
 
         #
         # Active preprocessing
         #
-        st.caption(
-            "Active preprocessing"
-        )
+        st.caption("Active preprocessing")
 
         preprocessing_steps = []
 
-        if st.session_state[
-            "apply_log2"
-        ]:
+        if st.session_state["apply_log2"]:
 
-            preprocessing_steps.append(
-                "log2(x+1)"
-            )
+            preprocessing_steps.append("log2(x+1)")
 
-        if (
-            st.session_state[
-                "apply_batch_correction"
-            ]
-            and batch_column
-        ):
+        if st.session_state["apply_batch_correction"] and batch_column:
 
-            preprocessing_steps.append(
-                f"ComBat ({batch_column})"
-            )
+            preprocessing_steps.append(f"ComBat ({batch_column})")
 
         if len(preprocessing_steps):
 
-            st.success(
-                " → ".join(
-                    preprocessing_steps
-                )
-            )
+            st.success(" → ".join(preprocessing_steps))
 
         else:
 
-            st.info(
-                "Raw expression matrix"
-            )
+            st.info("Raw expression matrix")
         # --------------------------------------
         # Run Preprocessing
         # --------------------------------------
 
-        if st.button(
-            "Apply Preprocessing",
-            type="primary",
-            key="run_preprocessing"
-        ):
+        if st.button("Apply Preprocessing", type="primary", key="run_preprocessing"):
 
-            st.session_state[
-                "preprocessing_requested"
-            ] = True
+            st.session_state["preprocessing_requested"] = True
 
             st.rerun()
-        
+
     #
     # Example Files
     #
     st.divider()
 
-    st.header(
-        "Example Files"
-    )
+    st.header("Example Files")
 
-    with open(
-        "example_data/example_expression.tsv",
-        "rb"
-    ) as f:
+    with open("example_data/example_expression.tsv", "rb") as f:
 
         st.download_button(
             "Download Example Expression",
             data=f,
-            file_name=
-            "example_expression.tsv",
+            file_name="example_expression.tsv",
             mime="text/tab-separated-values",
-            key="download_example_expr"
+            key="download_example_expr",
         )
 
-    with open(
-        "example_data/example_metadata.tsv",
-        "rb"
-    ) as f:
+    with open("example_data/example_metadata.tsv", "rb") as f:
 
         st.download_button(
             "Download Example Metadata",
             data=f,
-            file_name=
-            "example_metadata.tsv",
+            file_name="example_metadata.tsv",
             mime="text/tab-separated-values",
-            key="download_example_meta"
+            key="download_example_meta",
         )
 
-        
+
 #
 # Main
 #
@@ -409,14 +279,9 @@ with st.sidebar:
 # LOAD DATA
 # ==================================================
 
-if not st.session_state.get(
-    "data_loaded",
-    False
-):
+if not st.session_state.get("data_loaded", False):
 
-    st.info(
-        "Load the example dataset or upload your own dataset."
-    )
+    st.info("Load the example dataset or upload your own dataset.")
 
     st.stop()
 
@@ -424,13 +289,9 @@ if not st.session_state.get(
 # Get data
 #
 
-expr_df = st.session_state[
-    "expr_df"
-]
+expr_df = st.session_state["expr_df"]
 
-meta_df = st.session_state[
-    "meta_df"
-]
+meta_df = st.session_state["meta_df"]
 
 #
 # Validate expression matrix
@@ -440,9 +301,7 @@ expr_validation = validate_expression_matrix(expr_df)
 
 if expr_validation:
 
-    st.error(
-        expr_validation
-    )
+    st.error(expr_validation)
 
     st.stop()
 
@@ -454,9 +313,7 @@ meta_validation = validate_metadata(meta_df)
 
 if meta_validation:
 
-    st.error(
-        meta_validation
-    )
+    st.error(meta_validation)
 
     st.stop()
 
@@ -464,112 +321,67 @@ if meta_validation:
 # sample matching
 #
 
-matching_result = validate_sample_matching(
-    expr_df,
-    meta_df
-)
+matching_result = validate_sample_matching(expr_df, meta_df)
 
 if not matching_result["matching"]:
 
-    st.error(
-        "Sample mismatch detected."
-    )
+    st.error("Sample mismatch detected.")
 
     if matching_result["missing_in_metadata"]:
 
-        st.write(
-            "Missing in metadata:"
-        )
+        st.write("Missing in metadata:")
 
-        st.write(
-            matching_result["missing_in_metadata"]
-        )
+        st.write(matching_result["missing_in_metadata"])
 
     if matching_result["missing_in_expression"]:
 
-        st.write(
-            "Missing in expression matrix:"
-        )
+        st.write("Missing in expression matrix:")
 
-        st.write(
-            matching_result["missing_in_expression"]
-        )
+        st.write(matching_result["missing_in_expression"])
 
     st.stop()
 
-st.success(
-    "Data loaded successfully."
-)
+st.success("Data loaded successfully.")
 
 #
 # Run preprocessing only when requested
 #
-if st.session_state.get(
-    "preprocessing_requested",
-    False
-):
+if st.session_state.get("preprocessing_requested", False):
 
     processed_expr_df = expr_df.copy()
 
     #
     # Log2
     #
-    if st.session_state[
-        "apply_log2"
-    ]:
+    if st.session_state["apply_log2"]:
 
-        processed_expr_df.iloc[:, 1:] = np.log2(
-            processed_expr_df.iloc[:, 1:] + 1
-        )
+        processed_expr_df.iloc[:, 1:] = np.log2(processed_expr_df.iloc[:, 1:] + 1)
 
     #
     # ComBat
     #
-    if st.session_state[
-        "apply_batch_correction"
-    ]:
+    if st.session_state["apply_batch_correction"]:
 
-        batch_column = st.session_state[
-            "batch_column"
-        ]
+        batch_column = st.session_state["batch_column"]
 
-        processed_expr_df = apply_combat(
-            processed_expr_df,
-            meta_df,
-            batch_column
-        )
+        processed_expr_df = apply_combat(processed_expr_df, meta_df, batch_column)
 
     #
     # Store processed matrix
     #
-    st.session_state[
-        "processed_expr_df"
-    ] = processed_expr_df
+    st.session_state["processed_expr_df"] = processed_expr_df
 
-    st.session_state[
-        "active_preprocessing"
-    ] = (
-        " → ".join(
-            preprocessing_steps
-        )
-        if preprocessing_steps
-        else "Raw"
+    st.session_state["active_preprocessing"] = (
+        " → ".join(preprocessing_steps) if preprocessing_steps else "Raw"
     )
 
-    st.success(
-        "Preprocessing completed."
-    )
+    st.success("Preprocessing completed.")
 
 else:
 
-    if (
-        "processed_expr_df"
-        not in st.session_state
-    ):
+    if "processed_expr_df" not in st.session_state:
 
-        st.session_state[
-            "processed_expr_df"
-        ] = expr_df
+        st.session_state["processed_expr_df"] = expr_df
 
 
 st.session_state["expression_df"] = expr_df
@@ -582,14 +394,7 @@ st.session_state["all_genes"] = expr_df.index.unique().astype(str).tolist()
 #
 
 tab_data, tab_pca, tab_de, tab_volcano, tab_box, tab_heatmap = st.tabs(
-    [
-        "Data",
-        "PCA",
-        "DE Analysis",
-        "Volcano Plot",
-        "Gene Boxplot",
-        "Heatmap"
-    ]
+    ["Data", "PCA", "DE Analysis", "Volcano Plot", "Gene Boxplot", "Heatmap"]
 )
 
 #
@@ -600,56 +405,30 @@ with tab_data:
 
     st.subheader("Dataset Summary")
 
-    expr_summary = summarize_expression(
-        expr_df
-    )
+    expr_summary = summarize_expression(expr_df)
 
-    meta_summary = summarize_metadata(
-        meta_df
-    )
+    meta_summary = summarize_metadata(meta_df)
 
     c1, c2, c3 = st.columns(3)
 
     with c1:
-        st.metric(
-            "Genes",
-            expr_summary["Genes"]
-        )
+        st.metric("Genes", expr_summary["Genes"])
 
     with c2:
-        st.metric(
-            "Samples",
-            expr_summary["Samples"]
-        )
+        st.metric("Samples", expr_summary["Samples"])
 
     with c3:
-        st.metric(
-            "Groups",
-            meta_summary.get(
-                "Groups",
-                "NA"
-            )
-        )
+        st.metric("Groups", meta_summary.get("Groups", "NA"))
 
     st.divider()
 
-    st.subheader(
-        "Expression Matrix Preview"
-    )
+    st.subheader("Expression Matrix Preview")
 
-    st.dataframe(
-        expr_df.head(20),
-        width='content'
-    )
+    st.dataframe(expr_df.head(20), width="content")
 
-    st.subheader(
-        "Metadata Preview"
-    )
+    st.subheader("Metadata Preview")
 
-    st.dataframe(
-        meta_df.head(20),
-        width='content'
-    )
+    st.dataframe(meta_df.head(20), width="content")
 
 # ==================================================
 # PCA TAB
@@ -657,21 +436,15 @@ with tab_data:
 
 with tab_pca:
 
-    st.subheader(
-        "Principal Component Analysis"
-    )
+    st.subheader("Principal Component Analysis")
 
     color_column = st.selectbox(
-        "Color samples by",
-        meta_df.columns,
-        key="pca_color_column"
+        "Color samples by", meta_df.columns, key="pca_color_column"
     )
 
     st.divider()
 
-    st.subheader(
-        "Figure Settings"
-    )
+    st.subheader("Figure Settings")
 
     col1, col2 = st.columns(2)
 
@@ -683,7 +456,7 @@ with tab_pca:
             max_value=1200,
             value=500,
             step=50,
-            key="pca_width"
+            key="pca_width",
         )
 
     with col2:
@@ -694,33 +467,23 @@ with tab_pca:
             max_value=1200,
             value=450,
             step=50,
-            key="pca_height"
+            key="pca_height",
         )
 
-    if st.button(
-        "Run PCA",
-        key="run_pca_button"
-    ):
+    if st.button("Run PCA", key="run_pca_button"):
 
         try:
 
-            pca_df, variance = run_pca(
-                expr_df,
-                apply_log2=apply_log2
-            )
+            pca_df, variance = run_pca(expr_df, apply_log2=apply_log2)
 
-            pca_df = pca_df.merge(
-                meta_df,
-                on="Sample",
-                how="left"
-            )
+            pca_df = pca_df.merge(meta_df, on="Sample", how="left")
 
             fig = create_pca_plot(
                 pca_df=pca_df,
                 color_column=color_column,
                 explained_variance=variance,
                 width=pca_width,
-                height=pca_height
+                height=pca_height,
             )
 
             st.plotly_chart(
@@ -733,50 +496,33 @@ with tab_pca:
                         "filename": "PCA_plot",
                         "width": pca_width,
                         "height": pca_height,
-                        "scale": 1
-                    }
-                }
+                        "scale": 1,
+                    },
+                },
             )
 
-            st.subheader(
-                "Explained Variance"
-            )
+            st.subheader("Explained Variance")
 
             st.write(
                 {
-                    "PC1 (%)": round(
-                        variance[0] * 100,
-                        2
-                    ),
-                    "PC2 (%)": round(
-                        variance[1] * 100,
-                        2
-                    )
+                    "PC1 (%)": round(variance[0] * 100, 2),
+                    "PC2 (%)": round(variance[1] * 100, 2),
                 }
             )
 
-            st.subheader(
-                "PCA Coordinates"
-            )
+            st.subheader("PCA Coordinates")
 
-            st.dataframe(
-                pca_df,
-                width='content'
-            )
+            st.dataframe(pca_df, width="content")
 
         except Exception as e:
 
-            st.error(
-                str(e)
-            )
-        
-        
-# DE Tab        
+            st.error(str(e))
+
+
+# DE Tab
 with tab_de:
 
-    st.subheader(
-        "Differential Expression Analysis"
-    )
+    st.subheader("Differential Expression Analysis")
 
     eligible_columns = []
 
@@ -786,45 +532,24 @@ with tab_de:
             eligible_columns.append(col)
 
     group_column = st.selectbox(
-        "Grouping Column",
-        eligible_columns,
-        key="de_group_column"
+        "Grouping Column", eligible_columns, key="de_group_column"
     )
 
-    groups = sorted(
-        meta_df[group_column]
-        .dropna()
-        .unique()
-        .tolist()
-    )
+    groups = sorted(meta_df[group_column].dropna().unique().tolist())
 
     col1, col2 = st.columns(2)
 
     with col1:
 
-        group1 = st.selectbox(
-            "Group 1",
-            groups,
-            key="group1"
-        )
+        group1 = st.selectbox("Group 1", groups, key="group1")
 
     with col2:
 
-        remaining = [
-            g for g in groups
-            if g != group1
-        ]
+        remaining = [g for g in groups if g != group1]
 
-        group2 = st.selectbox(
-            "Group 2",
-            remaining,
-            key="group2"
-        )
+        group2 = st.selectbox("Group 2", remaining, key="group2")
 
-    if st.button(
-        "Run Differential Expression",
-        type="primary"
-    ):
+    if st.button("Run Differential Expression", type="primary"):
 
         de_results = run_differential_expression(
             expression_df=expr_df,
@@ -832,34 +557,25 @@ with tab_de:
             group_column=group_column,
             group1=group1,
             group2=group2,
-            apply_log2=apply_log2
+            apply_log2=apply_log2,
         )
 
         if de_results.empty:
 
-            st.error(
-                "No genes available for differential expression analysis."
-            )
+            st.error("No genes available for differential expression analysis.")
 
             st.stop()
-        de_results = de_results.sort_values('log2FC')
+        de_results = de_results.sort_values("log2FC")
         st.session_state["de_results"] = de_results
-        st.success(
-            f"{len(de_results)} genes analysed."
-        )
+        st.success(f"{len(de_results)} genes analysed.")
 
-        st.dataframe(
-            de_results,
-            width='content'
-        )
+        st.dataframe(de_results, width="content")
 
         st.download_button(
             label="Download DE Results",
-            data=de_results.to_csv(
-                index=False,sep='\t'
-            ),
+            data=de_results.to_csv(index=False, sep="\t"),
             file_name="DE_results.tsv",
-            mime="text/tab-separated-values"
+            mime="text/tab-separated-values",
         )
 
 # ==================================================
@@ -872,32 +588,27 @@ with tab_volcano:
 
     if "de_results" not in st.session_state:
 
-        st.info(
-            "Run Differential Expression first."
-        )
+        st.info("Run Differential Expression first.")
 
     else:
 
         de_df = st.session_state["de_results"]
         if not "highlight_genes" in st.session_state:
             st.session_state["highlight_genes"] = []
-        
+
         significance_column = st.radio(
             "Use significance metric",
             ["PValue", "FDR"],
             horizontal=True,
-            key="volcano_sig_metric"
+            key="volcano_sig_metric",
         )
-        
+
         col1, col2 = st.columns(2)
 
         with col1:
 
             log2fc_cutoff = st.number_input(
-                "Absolute log2FC cutoff",
-                value=1.0,
-                step=0.1,
-                key="volcano_fc_cutoff"
+                "Absolute log2FC cutoff", value=1.0, step=0.1, key="volcano_fc_cutoff"
             )
 
         with col2:
@@ -906,7 +617,7 @@ with tab_volcano:
                 f"{significance_column} cutoff",
                 value=0.05,
                 step=0.01,
-                key="volcano_sig_cutoff"
+                key="volcano_sig_cutoff",
             )
 
         # --------------------------------------------------
@@ -919,9 +630,7 @@ with tab_volcano:
             st.session_state["highlight_genes"] = []
 
         use_top_genes = st.checkbox(
-            "Use Top Significant Genes",
-            value=True,
-            key="volcano_use_top_genes"
+            "Use Top Significant Genes", value=True, key="volcano_use_top_genes"
         )
 
         if use_top_genes:
@@ -931,40 +640,30 @@ with tab_volcano:
                 min_value=1,
                 max_value=100,
                 value=5,
-                key="volcano_top_n"
+                key="volcano_top_n",
             )
 
             #
             # Significant genes only
             #
-            sig_df = de_df[
-                de_df[significance_column]
-                <= significance_cutoff
-            ].copy()
+            sig_df = de_df[de_df[significance_column] <= significance_cutoff].copy()
 
-            up_df_N = sum(sig_df["log2FC"]>= log2fc_cutoff)
-            down_df_N = sum(sig_df["log2FC"]<= log2fc_cutoff)
+            up_df_N = sum(sig_df["log2FC"] >= log2fc_cutoff)
+            down_df_N = sum(sig_df["log2FC"] <= log2fc_cutoff)
 
+            up_n = min(top_n, up_df_N)
+            down_n = min(top_n, down_df_N)
 
-            up_n = min(top_n,up_df_N)
-            down_n = min(top_n,down_df_N)
-
-            top_gene_list = sig_df['Gene'].tail(min(top_n,up_df_N)).to_list()+ sig_df['Gene'].head(min(top_n,down_df_N)).to_list()
-
-            top_gene_list = list(
-                dict.fromkeys(
-                    top_gene_list
-                )
+            top_gene_list = (
+                sig_df["Gene"].tail(min(top_n, up_df_N)).to_list()
+                + sig_df["Gene"].head(min(top_n, down_df_N)).to_list()
             )
 
-            if st.button(
-                "Refresh Top Genes",
-                key="refresh_top_genes"
-            ):
+            top_gene_list = list(dict.fromkeys(top_gene_list))
 
-                st.session_state[
-                    "highlight_genes"
-                ] = top_gene_list
+            if st.button("Refresh Top Genes", key="refresh_top_genes"):
+
+                st.session_state["highlight_genes"] = top_gene_list
 
                 st.rerun()
         # --------------------------------------------------
@@ -973,23 +672,17 @@ with tab_volcano:
 
         gene_text = st.text_area(
             "Highlighted Genes",
-            value=",".join(
-                st.session_state[
-                    "highlight_genes"
-                ]
-            ),
-            height=120
+            value=",".join(st.session_state["highlight_genes"]),
+            height=120,
         )
 
         highlight_genes = [
             gene.strip()
             for gene in gene_text.split(",")
-            if gene.strip() in st.session_state['all_genes']
+            if gene.strip() in st.session_state["all_genes"]
         ]
 
-        st.session_state[
-            "highlight_genes"
-        ] = highlight_genes
+        st.session_state["highlight_genes"] = highlight_genes
 
         # --------------------------------------------------
         # Add Gene
@@ -1002,34 +695,21 @@ with tab_volcano:
             options=all_genes,
             index=None,
             placeholder="Type gene name...",
-            key="volcano_add_gene_select"
+            key="volcano_add_gene_select",
         )
 
-        if st.button(
-            "Add Gene",
-            key="volcano_add_gene"
-        ):
+        if st.button("Add Gene", key="volcano_add_gene"):
 
-            if (
-                gene_to_add
-                and gene_to_add not in highlight_genes
-            ):
+            if gene_to_add and gene_to_add not in highlight_genes:
 
-                st.session_state[
-                    "highlight_genes"
-                ] = (
-                    highlight_genes
-                    + [gene_to_add]
-                )
+                st.session_state["highlight_genes"] = highlight_genes + [gene_to_add]
 
                 st.rerun()
         #
         # Keep synchronized
         #
-        st.session_state[
-            "highlight_genes"
-        ] = highlight_genes
-  
+        st.session_state["highlight_genes"] = highlight_genes
+
         #
         # Figure Settings
         #
@@ -1045,7 +725,7 @@ with tab_volcano:
                 min_value=200,
                 max_value=2000,
                 step=100,
-                key="volcano_width"
+                key="volcano_width",
             )
 
         with col4:
@@ -1055,17 +735,13 @@ with tab_volcano:
                 min_value=200,
                 max_value=1500,
                 step=100,
-                key="volcano_height"
+                key="volcano_height",
             )
 
         #
         # X-axis
         #
-        auto_x = st.checkbox(
-            "Automatic X-axis",
-            value=True,
-            key="volcano_auto_x"
-        )
+        auto_x = st.checkbox("Automatic X-axis", value=True, key="volcano_auto_x")
 
         x_range = None
 
@@ -1075,18 +751,12 @@ with tab_volcano:
 
             with c5:
                 x_min = st.number_input(
-                    "X-axis Min",
-                    value=-5.0,
-                    step=0.1,
-                    key="volcano_xmin"
+                    "X-axis Min", value=-5.0, step=0.1, key="volcano_xmin"
                 )
 
             with c6:
                 x_max = st.number_input(
-                    "X-axis Max",
-                    value=5.0,
-                    step=0.1,
-                    key="volcano_xmax"
+                    "X-axis Max", value=5.0, step=0.1, key="volcano_xmax"
                 )
 
             x_range = [x_min, x_max]
@@ -1094,11 +764,7 @@ with tab_volcano:
         #
         # Y-axis
         #
-        auto_y = st.checkbox(
-            "Automatic Y-axis",
-            value=True,
-            key="volcano_auto_y"
-        )
+        auto_y = st.checkbox("Automatic Y-axis", value=True, key="volcano_auto_y")
 
         y_range = None
 
@@ -1108,18 +774,12 @@ with tab_volcano:
 
             with c7:
                 y_min = st.number_input(
-                    "Y-axis Min",
-                    value=0.0,
-                    step=0.1,
-                    key="volcano_ymin"
+                    "Y-axis Min", value=0.0, step=0.1, key="volcano_ymin"
                 )
 
             with c8:
                 y_max = st.number_input(
-                    "Y-axis Max",
-                    value=20.0,
-                    step=0.1,
-                    key="volcano_ymax"
+                    "Y-axis Max", value=20.0, step=0.1, key="volcano_ymax"
                 )
 
             y_range = [y_min, y_max]
@@ -1127,10 +787,7 @@ with tab_volcano:
         #
         # Create Figure
         #
-        if st.button(
-            "Generate Volcano Plot",
-            key="generate_volcano_plot"
-        ):
+        if st.button("Generate Volcano Plot", key="generate_volcano_plot"):
             fig = create_volcano_plot(
                 de_df=de_df,
                 significance_column=significance_column,
@@ -1140,7 +797,7 @@ with tab_volcano:
                 width=volcano_width,
                 height=volcano_height,
                 x_range=x_range,
-                y_range=y_range
+                y_range=y_range,
             )
 
             #
@@ -1148,7 +805,7 @@ with tab_volcano:
             #
             st.plotly_chart(
                 fig,
-                width='content',
+                width="content",
                 config={
                     "displaylogo": False,
                     "toImageButtonOptions": {
@@ -1156,21 +813,19 @@ with tab_volcano:
                         "filename": "volcano_plot",
                         "width": volcano_width,
                         "height": volcano_height,
-                        "scale": 1
-                    }
-                }
+                        "scale": 1,
+                    },
+                },
             )
-        
-        
+
+
 # ==================================================
 # BOXPLOT TAB
 # ==================================================
 
 with tab_box:
 
-    st.subheader(
-        "Gene Expression Boxplots"
-    )
+    st.subheader("Gene Expression Boxplots")
 
     # ----------------------------------
     # Initialize
@@ -1178,48 +833,29 @@ with tab_box:
 
     if "boxplot_genes" not in st.session_state:
 
-        st.session_state[
-            "boxplot_genes"
-        ] = st.session_state.get(
-            "highlight_genes",
-            []
-        )
+        st.session_state["boxplot_genes"] = st.session_state.get("highlight_genes", [])
 
     if "boxplot_gene_text" not in st.session_state:
 
-        st.session_state[
-            "boxplot_gene_text"
-        ] = ",".join(
-            st.session_state[
-                "boxplot_genes"
-            ]
+        st.session_state["boxplot_gene_text"] = ",".join(
+            st.session_state["boxplot_genes"]
         )
 
     if "reload_boxplot_text" not in st.session_state:
 
-        st.session_state[
-            "reload_boxplot_text"
-        ] = False
+        st.session_state["reload_boxplot_text"] = False
 
     # ----------------------------------
     # Handle pending updates
     # ----------------------------------
 
-    if st.session_state[
-        "reload_boxplot_text"
-    ]:
+    if st.session_state["reload_boxplot_text"]:
 
-        st.session_state[
-            "boxplot_gene_text"
-        ] = ",".join(
-            st.session_state[
-                "boxplot_genes"
-            ]
+        st.session_state["boxplot_gene_text"] = ",".join(
+            st.session_state["boxplot_genes"]
         )
 
-        st.session_state[
-            "reload_boxplot_text"
-        ] = False
+        st.session_state["reload_boxplot_text"] = False
 
     # ----------------------------------
     # Buttons
@@ -1229,38 +865,23 @@ with tab_box:
 
     with col1:
 
-        if st.button(
-            "Load Highlighted Genes",
-            key="box_load_highlighted"
-        ):
+        if st.button("Load Highlighted Genes", key="box_load_highlighted"):
 
-            st.session_state[
-                "boxplot_genes"
-            ] = st.session_state.get(
-                "highlight_genes",
-                []
+            st.session_state["boxplot_genes"] = st.session_state.get(
+                "highlight_genes", []
             )
 
-            st.session_state[
-                "reload_boxplot_text"
-            ] = True
+            st.session_state["reload_boxplot_text"] = True
 
             st.rerun()
 
     with col2:
 
-        if st.button(
-            "Clear Genes",
-            key="box_clear_genes"
-        ):
+        if st.button("Clear Genes", key="box_clear_genes"):
 
-            st.session_state[
-                "boxplot_genes"
-            ] = []
+            st.session_state["boxplot_genes"] = []
 
-            st.session_state[
-                "reload_boxplot_text"
-            ] = True
+            st.session_state["reload_boxplot_text"] = True
 
             st.rerun()
 
@@ -1269,59 +890,32 @@ with tab_box:
     # ----------------------------------
 
     gene_text = st.text_area(
-        "Genes (comma separated)",
-        height=120,
-        key="boxplot_gene_text"
+        "Genes (comma separated)", height=120, key="boxplot_gene_text"
     )
 
-    selected_genes = [
-
-        gene.strip()
-
-        for gene in gene_text.split(",")
-
-        if gene.strip()
-    ]
+    selected_genes = [gene.strip() for gene in gene_text.split(",") if gene.strip()]
 
     # ----------------------------------
     # Add Gene
     # ----------------------------------
 
-    st.subheader(
-        "Add Gene"
-    )
+    st.subheader("Add Gene")
 
     gene_to_add = st.selectbox(
         "Type Gene Name",
-        options=st.session_state.get(
-            "all_genes",
-            []
-        ),
+        options=st.session_state.get("all_genes", []),
         index=None,
         placeholder="Type to search...",
-        key="box_gene_search"
+        key="box_gene_search",
     )
 
-    if st.button(
-        "Add Gene",
-        key="box_add_gene"
-    ):
+    if st.button("Add Gene", key="box_add_gene"):
 
-        if (
-            gene_to_add
-            and gene_to_add not in selected_genes
-        ):
+        if gene_to_add and gene_to_add not in selected_genes:
 
-            st.session_state[
-                "boxplot_genes"
-            ] = (
-                selected_genes
-                + [gene_to_add]
-            )
+            st.session_state["boxplot_genes"] = selected_genes + [gene_to_add]
 
-            st.session_state[
-                "reload_boxplot_text"
-            ] = True
+            st.session_state["reload_boxplot_text"] = True
 
             st.rerun()
 
@@ -1329,45 +923,28 @@ with tab_box:
     # Keep text edits
     # ----------------------------------
 
-    st.session_state[
-        "boxplot_genes"
-    ] = selected_genes
+    st.session_state["boxplot_genes"] = selected_genes
 
     # ----------------------------------
     # Grouping
     # ----------------------------------
 
     group_column = st.selectbox(
-        "Group By",
-        meta_df.columns.tolist(),
-        key="boxplot_group"
+        "Group By", meta_df.columns.tolist(), key="boxplot_group"
     )
 
     # ----------------------------------
     # Plot Mode
     # ----------------------------------
 
-    plot_mode = st.radio(
-        "Plot Mode",
-        [
-            "Combined",
-            "Single Gene"
-        ],
-        horizontal=True
-    )
+    plot_mode = st.radio("Plot Mode", ["Combined", "Single Gene"], horizontal=True)
 
     selected_gene = None
 
-    if (
-        plot_mode == "Single Gene"
-        and len(selected_genes) > 0
-    ):
+    if plot_mode == "Single Gene" and len(selected_genes) > 0:
 
         selected_gene = st.selectbox(
-            "Select Gene",
-            selected_genes,
-            index=0,
-            key="box_selected_gene"
+            "Select Gene", selected_genes, index=0, key="box_selected_gene"
         )
 
     # ----------------------------------
@@ -1376,9 +953,7 @@ with tab_box:
 
     st.divider()
 
-    st.subheader(
-        "Figure Settings"
-    )
+    st.subheader("Figure Settings")
 
     col3, col4 = st.columns(2)
 
@@ -1390,7 +965,7 @@ with tab_box:
             min_value=400,
             max_value=4000,
             step=100,
-            key="boxplot_width"
+            key="boxplot_width",
         )
 
     with col4:
@@ -1401,14 +976,10 @@ with tab_box:
             min_value=300,
             max_value=4000,
             step=100,
-            key="boxplot_height"
+            key="boxplot_height",
         )
 
-    auto_y = st.checkbox(
-        "Automatic Y-axis",
-        value=True,
-        key="boxplot_auto_y"
-    )
+    auto_y = st.checkbox("Automatic Y-axis", value=True, key="boxplot_auto_y")
 
     y_range = None
 
@@ -1418,39 +989,23 @@ with tab_box:
 
         with col5:
 
-            y_min = st.number_input(
-                "Y-axis Minimum",
-                value=0.0,
-                key="boxplot_ymin"
-            )
+            y_min = st.number_input("Y-axis Minimum", value=0.0, key="boxplot_ymin")
 
         with col6:
 
-            y_max = st.number_input(
-                "Y-axis Maximum",
-                value=20.0,
-                key="boxplot_ymax"
-            )
+            y_max = st.number_input("Y-axis Maximum", value=20.0, key="boxplot_ymax")
 
-        y_range = [
-            y_min,
-            y_max
-        ]
+        y_range = [y_min, y_max]
 
     # ----------------------------------
     # Generate Plot
     # ----------------------------------
 
-    if st.button(
-        "Generate Boxplot",
-        key="generate_boxplot"
-    ):
+    if st.button("Generate Boxplot", key="generate_boxplot"):
 
         if len(selected_genes) == 0:
 
-            st.warning(
-                "Please specify at least one gene."
-            )
+            st.warning("Please specify at least one gene.")
 
         else:
 
@@ -1464,7 +1019,7 @@ with tab_box:
                 selected_gene=selected_gene,
                 width=plot_width,
                 height=plot_height,
-                y_range=y_range
+                y_range=y_range,
             )
 
             filename = (
@@ -1483,20 +1038,18 @@ with tab_box:
                         "filename": filename,
                         "width": plot_width,
                         "height": plot_height,
-                        "scale": 1
-                    }
-                }
+                        "scale": 1,
+                    },
+                },
             )
-        
+
 # ==================================================
 # HEATMAP TAB
 # ==================================================
 
 with tab_heatmap:
 
-    st.subheader(
-        "Expression Heatmap"
-    )
+    st.subheader("Expression Heatmap")
 
     # ----------------------------------
     # Initialize
@@ -1504,48 +1057,29 @@ with tab_heatmap:
 
     if "heatmap_genes" not in st.session_state:
 
-        st.session_state[
-            "heatmap_genes"
-        ] = st.session_state.get(
-            "highlight_genes",
-            []
-        )
+        st.session_state["heatmap_genes"] = st.session_state.get("highlight_genes", [])
 
     if "heatmap_gene_text" not in st.session_state:
 
-        st.session_state[
-            "heatmap_gene_text"
-        ] = ",".join(
-            st.session_state[
-                "heatmap_genes"
-            ]
+        st.session_state["heatmap_gene_text"] = ",".join(
+            st.session_state["heatmap_genes"]
         )
 
     if "reload_heatmap_text" not in st.session_state:
 
-        st.session_state[
-            "reload_heatmap_text"
-        ] = False
+        st.session_state["reload_heatmap_text"] = False
 
     # ----------------------------------
     # Handle pending updates
     # ----------------------------------
 
-    if st.session_state[
-        "reload_heatmap_text"
-    ]:
+    if st.session_state["reload_heatmap_text"]:
 
-        st.session_state[
-            "heatmap_gene_text"
-        ] = ",".join(
-            st.session_state[
-                "heatmap_genes"
-            ]
+        st.session_state["heatmap_gene_text"] = ",".join(
+            st.session_state["heatmap_genes"]
         )
 
-        st.session_state[
-            "reload_heatmap_text"
-        ] = False
+        st.session_state["reload_heatmap_text"] = False
 
     # ----------------------------------
     # Load / Clear
@@ -1555,38 +1089,23 @@ with tab_heatmap:
 
     with col1:
 
-        if st.button(
-            "Load Highlighted Genes",
-            key="heatmap_load_highlighted"
-        ):
+        if st.button("Load Highlighted Genes", key="heatmap_load_highlighted"):
 
-            st.session_state[
-                "heatmap_genes"
-            ] = st.session_state.get(
-                "highlight_genes",
-                []
+            st.session_state["heatmap_genes"] = st.session_state.get(
+                "highlight_genes", []
             )
 
-            st.session_state[
-                "reload_heatmap_text"
-            ] = True
+            st.session_state["reload_heatmap_text"] = True
 
             st.rerun()
 
     with col2:
 
-        if st.button(
-            "Clear Genes",
-            key="heatmap_clear_genes"
-        ):
+        if st.button("Clear Genes", key="heatmap_clear_genes"):
 
-            st.session_state[
-                "heatmap_genes"
-            ] = []
+            st.session_state["heatmap_genes"] = []
 
-            st.session_state[
-                "reload_heatmap_text"
-            ] = True
+            st.session_state["reload_heatmap_text"] = True
 
             st.rerun()
 
@@ -1595,59 +1114,32 @@ with tab_heatmap:
     # ----------------------------------
 
     gene_text = st.text_area(
-        "Genes (comma separated)",
-        height=120,
-        key="heatmap_gene_text"
+        "Genes (comma separated)", height=120, key="heatmap_gene_text"
     )
 
-    selected_genes = [
-
-        gene.strip()
-
-        for gene in gene_text.split(",")
-
-        if gene.strip()
-    ]
+    selected_genes = [gene.strip() for gene in gene_text.split(",") if gene.strip()]
 
     # ----------------------------------
     # Add Gene
     # ----------------------------------
 
-    st.subheader(
-        "Add Gene"
-    )
+    st.subheader("Add Gene")
 
     gene_to_add = st.selectbox(
         "Type Gene Name",
-        options=st.session_state.get(
-            "all_genes",
-            []
-        ),
+        options=st.session_state.get("all_genes", []),
         index=None,
         placeholder="Type to search...",
-        key="heatmap_gene_search"
+        key="heatmap_gene_search",
     )
 
-    if st.button(
-        "Add Gene",
-        key="heatmap_add_gene"
-    ):
+    if st.button("Add Gene", key="heatmap_add_gene"):
 
-        if (
-            gene_to_add
-            and gene_to_add not in selected_genes
-        ):
+        if gene_to_add and gene_to_add not in selected_genes:
 
-            st.session_state[
-                "heatmap_genes"
-            ] = (
-                selected_genes
-                + [gene_to_add]
-            )
+            st.session_state["heatmap_genes"] = selected_genes + [gene_to_add]
 
-            st.session_state[
-                "reload_heatmap_text"
-            ] = True
+            st.session_state["reload_heatmap_text"] = True
 
             st.rerun()
 
@@ -1655,19 +1147,14 @@ with tab_heatmap:
     # Save manual edits
     # ----------------------------------
 
-    st.session_state[
-        "heatmap_genes"
-    ] = selected_genes
+    st.session_state["heatmap_genes"] = selected_genes
 
     # ----------------------------------
     # Heatmap Options
     # ----------------------------------
 
     annotation_column = st.selectbox(
-        "Annotation Column",
-        meta_df.columns.tolist(),
-        index=1,
-        key="heatmap_annotation"
+        "Annotation Column", meta_df.columns.tolist(), index=1, key="heatmap_annotation"
     )
 
     col3, col4 = st.columns(2)
@@ -1675,34 +1162,23 @@ with tab_heatmap:
     with col3:
 
         zscore_by_gene = st.checkbox(
-            "Z-score by Gene",
-            value=True,
-            key="heatmap_zscore"
+            "Z-score by Gene", value=True, key="heatmap_zscore"
         )
 
         cluster_genes = st.checkbox(
-            "Cluster Genes",
-            value=True,
-            key="heatmap_cluster_genes"
+            "Cluster Genes", value=True, key="heatmap_cluster_genes"
         )
 
     with col4:
 
         cluster_samples = st.checkbox(
-            "Cluster Samples",
-            value=True,
-            key="heatmap_cluster_samples"
+            "Cluster Samples", value=True, key="heatmap_cluster_samples"
         )
 
         colorscale = st.selectbox(
             "Color Map",
-            [
-                "RdBu_r",
-                "Viridis",
-                "Plasma",
-                "Magma"
-            ],
-            key="heatmap_colorscale"
+            ["RdBu_r", "Viridis", "Plasma", "Magma"],
+            key="heatmap_colorscale",
         )
 
     # ----------------------------------
@@ -1711,14 +1187,10 @@ with tab_heatmap:
 
     st.divider()
 
-    st.subheader(
-        "Color Scale Settings"
-    )
+    st.subheader("Color Scale Settings")
 
     auto_color_scale = st.checkbox(
-        "Automatic Color Scale",
-        value=True,
-        key="heatmap_auto_scale"
+        "Automatic Color Scale", value=True, key="heatmap_auto_scale"
     )
 
     zmin = None
@@ -1731,30 +1203,15 @@ with tab_heatmap:
 
         with c1:
 
-            zmin = st.number_input(
-                "Vmin",
-                value=-2.0,
-                step=0.1,
-                key="heatmap_zmin"
-            )
+            zmin = st.number_input("Vmin", value=-2.0, step=0.1, key="heatmap_zmin")
 
         with c2:
 
-            zmid = st.number_input(
-                "Center",
-                value=0.0,
-                step=0.1,
-                key="heatmap_zmid"
-            )
+            zmid = st.number_input("Center", value=0.0, step=0.1, key="heatmap_zmid")
 
         with c3:
 
-            zmax = st.number_input(
-                "Vmax",
-                value=2.0,
-                step=0.1,
-                key="heatmap_zmax"
-            )
+            zmax = st.number_input("Vmax", value=2.0, step=0.1, key="heatmap_zmax")
 
     # ----------------------------------
     # Figure Settings
@@ -1762,9 +1219,7 @@ with tab_heatmap:
 
     st.divider()
 
-    st.subheader(
-        "Figure Settings"
-    )
+    st.subheader("Figure Settings")
 
     c4, c5 = st.columns(2)
 
@@ -1776,7 +1231,7 @@ with tab_heatmap:
             min_value=300,
             max_value=4000,
             step=100,
-            key="heatmap_width"
+            key="heatmap_width",
         )
 
     with c5:
@@ -1787,27 +1242,20 @@ with tab_heatmap:
             min_value=300,
             max_value=4000,
             step=100,
-            key="heatmap_height"
+            key="heatmap_height",
         )
 
     # ----------------------------------
     # Generate Heatmap
     # ----------------------------------
 
-    if st.button(
-        "Generate Heatmap",
-        key="generate_heatmap"
-    ):
+    if st.button("Generate Heatmap", key="generate_heatmap"):
 
-        selected_genes = st.session_state[
-            "heatmap_genes"
-        ]
+        selected_genes = st.session_state["heatmap_genes"]
 
         if len(selected_genes) == 0:
 
-            st.warning(
-                "Please specify at least one gene."
-            )
+            st.warning("Please specify at least one gene.")
 
         else:
 
@@ -1815,21 +1263,17 @@ with tab_heatmap:
                 expression_df=expr_df,
                 metadata_df=meta_df,
                 genes=selected_genes,
-                annotation_column=
-                annotation_column,
+                annotation_column=annotation_column,
                 apply_log2=apply_log2,
-                zscore_by_gene=
-                zscore_by_gene,
-                cluster_samples=
-                cluster_samples,
-                cluster_genes=
-                cluster_genes,
+                zscore_by_gene=zscore_by_gene,
+                cluster_samples=cluster_samples,
+                cluster_genes=cluster_genes,
                 width=heatmap_width,
                 height=heatmap_height,
                 colorscale=colorscale,
                 zmin=zmin,
                 zmid=zmid,
-                zmax=zmax
+                zmax=zmax,
             )
 
             st.plotly_chart(
@@ -1839,13 +1283,10 @@ with tab_heatmap:
                     "displaylogo": False,
                     "toImageButtonOptions": {
                         "format": "svg",
-                        "filename":
-                        "expression_heatmap",
-                        "width":
-                        heatmap_width,
-                        "height":
-                        heatmap_height,
-                        "scale": 1
-                    }
-                }
+                        "filename": "expression_heatmap",
+                        "width": heatmap_width,
+                        "height": heatmap_height,
+                        "scale": 1,
+                    },
+                },
             )
