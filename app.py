@@ -270,22 +270,17 @@ expr_df = st.session_state[
 meta_df = st.session_state[
     "meta_df"
 ]
-st.write(type(expr_df))
-st.write(type(meta_df))
 
 #
 # Validate expression matrix
 #
-expr_validation = (
-    validate_expression_matrix(
-        expr_df
-    )
-)
+expr_validation = validate_expression_matrix(expr_df))
 
-if not expr_validation["success"]:
+
+if not expr_validation:
 
     st.error(
-        expr_validation["message"]
+        expr_validation
     )
 
     st.stop()
@@ -299,10 +294,10 @@ meta_validation = (
     )
 )
 
-if not meta_validation["success"]:
+if not meta_validation:
 
     st.error(
-        meta_validation["message"]
+        meta_validation
     )
 
     st.stop()
