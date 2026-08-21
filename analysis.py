@@ -1,5 +1,8 @@
 # analysis.py
 
+# for test
+import streamlit as st
+
 import numpy as np
 import pandas as pd
 from pycombat import Combat
@@ -58,6 +61,8 @@ def apply_combat(expr_df, meta_df, batch_column):
     expr_t = expr_mat.T
 
     combat = Combat()
+    st.write(expr_t_.shape)
+    st.write(batches)
 
     corrected = combat.fit_transform(expr_t, batches)
 
