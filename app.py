@@ -117,7 +117,7 @@ with st.sidebar:
         ):
 
             expr_df = pd.read_csv("example_data/example_expression.tsv",sep='\t',index_col=0)               
-            meta_df = pd.read_csv("example_data/example_metadata.tsv",,sep='\t',index_col=0)  
+            meta_df = pd.read_csv("example_data/example_metadata.tsv",sep='\t',index_col=0)  
 
             st.session_state[
                 "expr_df"
