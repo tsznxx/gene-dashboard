@@ -60,136 +60,141 @@ st.markdown(
 # Sidebar
 #
 
-# ==================================================
-# SIDEBAR
-# ==================================================
-
 with st.sidebar:
-
-    st.image(
-        "assets/logo.png",
-        width='content'
-    )
-
-    st.divider()
 
     st.header("Data Source")
 
     #
-    # Load Example Dataset
+    # DATA ALREADY LOADED
     #
-    if st.button(
-        "Load Example Dataset",
-        type="primary",
-        key="load_example_dataset"
-    ):
-
-        expr_df_example = pd.read_csv(
-            "example_data/example_expression.tsv",sep='\t',index_col=0
-        )
-
-        meta_df_example = pd.read_csv(
-            "example_data/example_metadata.tsv",sep='\t',index_col=0
-        )
-
-        st.session_state[
-            "expr_df"
-        ] = expr_df_example
-
-        st.session_state[
-            "meta_df"
-        ] = meta_df_example
-
-        st.session_state[
-            "using_example_data"
-        ] = True
-
-
     if st.session_state.get(
-        "using_example_data",
+        "data_loaded",
         False
     ):
 
         st.success(
-            "Using example dataset"
+            "Dataset Loaded"
         )
 
-    st.divider()
-
-    #
-    # Upload Data
-    #
-    uploaded_expression = st.file_uploader(
-        "Expression Matrix",
-        type=[
-            "csv",
-            "tsv",
-            "txt"
-        ],
-        key="expression_upload"
-    )
-
-    uploaded_metadata = st.file_uploader(
-        "Metadata Table",
-        type=[
-            "csv",
-            "tsv",
-            "txt"
-        ],
-        key="metadata_upload"
-    )
-
-    #
-    # Global Settings
-    #
-    st.divider()
-
-    st.header(
-        "Global Settings"
-    )
-
-    apply_log2 = st.checkbox(
-        "Apply log2(x+1)",
-        value=True,
-        key="apply_log2"
-    )
-
-    #
-    # Example Files
-    #
-    st.divider()
-
-    st.header(
-        "Example Files"
-    )
-
-    with open(
-        "example_data/example_expression.tsv",
-        "rb"
-    ) as f:
-
-        st.download_button(
-            "Download Example Expression",
-            data=f,
-            file_name=
-            "example_expression.tsv",
-            mime="text/tab-separated-values",
-            key="download_example_expr"
+        st.write(
+            f"Expression: "
+            f"{st.session_state['expr_df'].shape[0]} genes × "
+            f"{st.session_state['expr_df'].shape[1]-1} samples"
         )
 
-    with open(
-        "example_data/example_metadata.tsv",
-        "rb"
-    ) as f:
-
-        st.download_button(
-            "Download Example Metadata",
-            data=f,
-            file_name=
-            "example_metadata.tsv",
-            mime="text/tab-separated-values",
-            key="download_example_meta"
+        st.write(
+            f"Metadata: "
+            f"{st.session_state['meta_df'].shape[0]} samples × "
+            f"{st.session_state['meta_df'].shape[1]} columns"
         )
+
+        if st.button(
+            "Start Over",
+            type="primary",
+            key="start_over"
+        ):
+
+            #
+            # Clear all state
+            #
+            for k in list(
+                st.session_state.keys()
+            ):
+                del st.session_state[k]
+
+            st.rerun()
+
+    #
+    # NO DATA LOADED
+    #
+    else:
+
+        if st.button(
+            "Load Example Dataset",
+            type="primary",
+            key="load_example_data"
+        ):
+
+            expr_df = pd.read_csv(
+                "example_data/example_expression.tsv",
+                sep="\t"
+            )
+
+            meta_df = pd.read_csv(
+                "example_data/example_metadata.tsv",
+                sep="\t"
+            )
+
+            st.session_state[
+                "expr_df"
+            ] = expr_df
+
+            st.session_state[
+                "meta_df"
+            ] = meta_df
+
+            st.session_state[
+                "all_genes"
+            ] = (
+                expr_df.iloc[:, 0]
+                .astype(str)
+                .tolist()
+            )
+
+            st.session_state[
+                "data_loaded"
+            ] = True
+
+            st.rerun()
+
+        st.divider()
+
+        uploaded_expression = st.file_uploader(
+            "Expression Matrix",
+            type=["csv", "tsv", "txt"],
+            key="expression_upload"
+        )
+
+        uploaded_metadata = st.file_uploader(
+            "Metadata Table",
+            type=["csv", "tsv", "txt"],
+            key="metadata_upload"
+        )
+
+        if (
+            uploaded_expression is not None
+            and uploaded_metadata is not None
+        ):
+
+            expr_df = load_expression_file(
+                uploaded_expression
+            )
+
+            meta_df = load_metadata_file(
+                uploaded_metadata
+            )
+
+            st.session_state[
+                "expr_df"
+            ] = expr_df
+
+            st.session_state[
+                "meta_df"
+            ] = meta_df
+
+            st.session_state[
+                "all_genes"
+            ] = (
+                expr_df.iloc[:, 0]
+                .astype(str)
+                .tolist()
+            )
+
+            st.session_state[
+                "data_loaded"
+            ] = True
+
+            st.rerun()
 
         
 #
@@ -201,53 +206,24 @@ with st.sidebar:
 # LOAD DATA
 # ==================================================
 
-expr_df = None
-meta_df = None
-
-#
-# Example Dataset
-#
-if st.session_state.get(
-    "using_example_data",
+if not st.session_state.get(
+    "data_loaded",
     False
 ):
 
-    expr_df = st.session_state[
-        "expr_df"
-    ]
-
-    meta_df = st.session_state[
-        "meta_df"
-    ]
-
-#
-# Uploaded Dataset
-#
-elif (
-    uploaded_expression is not None
-    and uploaded_metadata is not None
-):
-
-    expr_df = load_expression_file(
-        uploaded_expression
-    )
-
-    meta_df = load_metadata_file(
-        uploaded_metadata
-    )
-
-#
-# Nothing Loaded Yet
-#
-else:
-
     st.info(
-        "Upload files or click "
-        "'Load Example Dataset'."
+        "Load the example dataset or upload your own data."
     )
 
     st.stop()
 
+expr_df = st.session_state[
+    "expr_df"
+]
+
+meta_df = st.session_state[
+    "meta_df"
+]
 
 #
 # sample matching
