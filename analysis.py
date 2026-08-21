@@ -2,9 +2,106 @@
 
 import numpy as np
 import pandas as pd
-
+from pycombat import Combat
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
+
+
+# ==================================================
+# Batch Correction
+# ==================================================
+
+
+def apply_combat(
+    expr_df,
+    meta_df,
+    batch_column
+):
+    """
+    Apply ComBat batch correction.
+
+    Parameters
+    ----------
+    expr_df : pd.DataFrame
+
+        Format:
+        Gene    Sample1 Sample2 ...
+
+    meta_df : pd.DataFrame
+
+        Must contain:
+        Sample
+        batch_column
+
+    batch_column : str
+
+        Metadata column defining batch.
+
+    Returns
+    -------
+    pd.DataFrame
+        Batch-corrected expression matrix
+        in the same format as input.
+    """
+
+    gene_col = expr_df.columns[0]
+
+    #
+    # Expression matrix
+    #
+    expr_mat = expr_df.set_index(
+        gene_col
+    )
+
+    #
+    # Reorder metadata
+    #
+    meta_ordered = meta_df.set_index(
+        "Sample"
+    ).loc[
+        expr_mat.columns
+    ]
+
+    batches = meta_ordered[
+        batch_column
+    ]
+
+    #
+    # ComBat expects:
+    # samples x genes
+    #
+    expr_t = expr_mat.T
+
+    combat = Combat()
+
+    corrected = combat.fit_transform(
+        expr_t,
+        batches
+    )
+
+    #
+    # Back to:
+    # genes x samples
+    #
+    corrected = corrected.T
+
+    corrected_df = (
+        pd.DataFrame(
+            corrected,
+            index=expr_mat.index,
+            columns=expr_mat.columns
+        )
+        .reset_index()
+    )
+
+    corrected_df.rename(
+        columns={
+            "index": gene_col
+        },
+        inplace=True
+    )
+
+    return corrected_df
 
 
 def run_pca(

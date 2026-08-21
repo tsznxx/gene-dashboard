@@ -12,6 +12,7 @@ from data_loader import (
 )
 
 from analysis import (
+    apply_combat,
     run_pca,
     run_differential_expression
 )
@@ -66,10 +67,9 @@ with st.sidebar:
         "assets/logo.png",
         use_container_width=True
     )
-    st.header(
-        "Load Dataset"
-    )
+
     st.divider()
+
 
     #
     # DATA ALREADY LOADED
@@ -78,6 +78,9 @@ with st.sidebar:
         "data_loaded",
         False
     ):
+        st.header(
+            "Load Dataset"
+        )    
 
         if st.button(
             "Start Over",
@@ -125,8 +128,6 @@ with st.sidebar:
             ] = True
 
             st.rerun()
-
-        st.divider()
 
         # ----------------------
         # Upload Data
@@ -345,7 +346,22 @@ with st.sidebar:
             st.info(
                 "Raw expression matrix"
             )
+    # --------------------------------------
+    # Run Preprocessing
+    # --------------------------------------
 
+    if st.button(
+        "Apply Preprocessing",
+        type="primary",
+        key="run_preprocessing"
+    ):
+
+        st.session_state[
+            "preprocessing_requested"
+        ] = True
+
+        st.rerun()
+        
     #
     # Example Files
     #
@@ -485,8 +501,75 @@ st.success(
 )
 
 #
-# save to session state
+# Run preprocessing only when requested
 #
+if st.session_state.get(
+    "preprocessing_requested",
+    False
+):
+
+    processed_expr_df = expr_df.copy()
+
+    #
+    # Log2
+    #
+    if st.session_state[
+        "apply_log2"
+    ]:
+
+        processed_expr_df.iloc[:, 1:] = np.log2(
+            processed_expr_df.iloc[:, 1:] + 1
+        )
+
+    #
+    # ComBat
+    #
+    if st.session_state[
+        "apply_batch_correction"
+    ]:
+
+        batch_column = st.session_state[
+            "batch_column"
+        ]
+
+        processed_expr_df = apply_combat(
+            processed_expr_df,
+            meta_df,
+            batch_column
+        )
+
+    #
+    # Store processed matrix
+    #
+    st.session_state[
+        "processed_expr_df"
+    ] = processed_expr_df
+
+    st.session_state[
+        "active_preprocessing"
+    ] = (
+        " → ".join(
+            preprocessing_steps
+        )
+        if preprocessing_steps
+        else "Raw"
+    )
+
+    st.success(
+        "Preprocessing completed."
+    )
+
+else:
+
+    if (
+        "processed_expr_df"
+        not in st.session_state
+    ):
+
+        st.session_state[
+            "processed_expr_df"
+        ] = expr_df
+
 
 st.session_state["expression_df"] = expr_df
 st.session_state["metadata_df"] = meta_df
