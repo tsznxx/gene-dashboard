@@ -309,169 +309,6 @@ with st.sidebar:
             ]
         )
 
-        # ==================================================
-        # PREPROCESSING
-        # ==================================================
-
-        #
-        # Initialize preprocessing cache
-        #
-        expr_df = st.session_state['expr_df']
-        meta_df = st.session_state['meta_df']
-        if "expr_versions" not in st.session_state:
-
-            st.session_state["expr_versions"] = {
-                "raw": expr_df
-            }
-
-        #
-        # Initialize active dataset
-        #
-        if "active_expr_df" not in st.session_state:
-
-            st.session_state[
-                "active_expr_df"
-            ] = expr_df.copy()
-
-        #
-        # Initialize current status
-        #
-        if "current_preprocessing" not in st.session_state:
-
-            st.session_state[
-                "current_preprocessing"
-            ] = "raw"
-
-        #
-        # Build requested preprocessing key
-        #
-        preprocessing_steps = []
-
-        if st.session_state.get(
-            "apply_log2",
-            False
-        ):
-
-            preprocessing_steps.append(
-                "log2"
-            )
-
-        if (
-            st.session_state.get(
-                "apply_batch_correction",
-                False
-            )
-        ):
-
-            batch_column = st.session_state.get(
-                "batch_column"
-            )
-
-            if batch_column:
-
-                preprocessing_steps.append(
-                    f"combat({batch_column})"
-                )
-
-        requested_key = (
-            "->".join(
-                preprocessing_steps
-            )
-            if len(preprocessing_steps)
-            else "raw"
-        )
-
-        #
-        # Run preprocessing
-        #
-        if st.session_state.get(
-            "run_preprocessing",
-            False
-        ):
-
-            #
-            # Use cached version if available
-            #
-            if (
-                requested_key
-                not in st.session_state[
-                    "expr_versions"
-                ]
-            ):
-
-                processed_df = expr_df.copy()
-
-                # --------------------------
-                # Log2
-                # --------------------------
-
-                if st.session_state.get(
-                    "apply_log2",
-                    False
-                ):
-
-                    processed_df = np.log2(
-                        processed_df + 1
-                    )
-
-                # --------------------------
-                # ComBat
-                # --------------------------
-
-                if st.session_state.get(
-                    "apply_batch_correction",
-                    False
-                ):
-
-                    batch_column = st.session_state[
-                        "batch_column"
-                    ]
-
-                    processed_df = apply_combat(
-                        processed_df,
-                        meta_df,
-                        batch_column
-                    )
-
-                #
-                # Cache result
-                #
-                st.session_state[
-                    "expr_versions"
-                ][requested_key] = processed_df
-
-            #
-            # Activate dataset
-            #
-            st.session_state[
-                "active_expr_df"
-            ] = st.session_state[
-                "expr_versions"
-            ][requested_key]
-
-            #
-            # Update current status
-            #
-            st.session_state[
-                "current_preprocessing"
-            ] = requested_key
-
-            #
-            # Reset flag
-            #
-            st.session_state[
-                "run_preprocessing"
-            ] = False
-
-        #
-        # Dataset used by all analyses
-        #
-        expr_df = st.session_state[
-            "active_expr_df"
-        ]
-
-
-
     #
     # Example Files
     #
@@ -503,24 +340,20 @@ with st.sidebar:
 #
 # Main
 #
-
 # ==================================================
 # LOAD DATA
 # ==================================================
 
-if not st.session_state.get("data_loaded", False):
+if not st.session_state.get(
+    "data_loaded",
+    False
+):
 
-    st.info("Load the example dataset or upload your own dataset.")
+    st.info(
+        "Load the example dataset or upload your own dataset."
+    )
 
     st.stop()
-
-#
-# Get data
-#
-
-expr_df = st.session_state["expr_df"]
-
-meta_df = st.session_state["meta_df"]
 
 #
 # Validate expression matrix
@@ -537,6 +370,11 @@ if expr_validation:
 #
 # Validate metadata
 #
+
+expr_df = st.session_state["expr_df"]
+meta_df = st.session_state["meta_df"]#
+
+
 meta_validation = validate_metadata(meta_df)
 
 
@@ -572,41 +410,178 @@ if not matching_result["matching"]:
 
 st.success("Data loaded successfully.")
 
-st.session_state["processed_expr_df"] = expr_df
-
-processed_expr_df = expr_df.copy()
 
 #
-# Log2
+# Cache all genes
 #
-if st.session_state["apply_log2"]:
+if "all_genes" not in st.session_state:
 
-    processed_expr_df = np.log2(processed_expr_df + 1)
+    st.session_state["all_genes"] = (
+        expr_df.index.unique().astype(str)
+        .tolist()
+    )
 
-#
-# ComBat
-#
-if st.session_state["apply_batch_correction"]:
-
-    batch_column = st.session_state["batch_column"]
-
-    processed_expr_df = apply_combat(processed_expr_df, meta_df, batch_column)
+# ==================================================
+# PREPROCESSING SETUP
+# ==================================================
 
 #
-# Store processed matrix
+# Store raw matrix once
 #
-st.session_state["processed_expr_df"] = processed_expr_df
+if "expr_versions" not in st.session_state:
 
-st.session_state["active_preprocessing"] = (
-    " → ".join(preprocessing_steps) if preprocessing_steps else "Raw"
+    st.session_state["expr_versions"] = {
+        "raw": expr_df
+    }
+
+#
+# First run
+#
+if "active_expr_df" not in st.session_state:
+
+    st.session_state[
+        "active_expr_df"
+    ] = expr_df
+
+if "current_preprocessing" not in st.session_state:
+
+    st.session_state[
+        "current_preprocessing"
+    ] = "raw"
+
+if "run_preprocessing" not in st.session_state:
+
+    st.session_state[
+        "run_preprocessing"
+    ] = False
+
+# ==================================================
+# BUILD REQUESTED STATUS
+# ==================================================
+
+requested_steps = []
+
+apply_log2 = st.session_state.get(
+    "apply_log2",
+    False
 )
 
-st.success(f"Preprocessing completed: {st.session_state["active_preprocessing"]}")
+apply_batch_correction = st.session_state.get(
+    "apply_batch_correction",
+    False
+)
 
+batch_column = st.session_state.get(
+    "batch_column"
+)
 
-st.session_state["expression_df"] = expr_df
-st.session_state["metadata_df"] = meta_df
-st.session_state["all_genes"] = expr_df.index.unique().astype(str).tolist()
+if apply_log2:
+
+    requested_steps.append(
+        "log2"
+    )
+
+if (
+    apply_batch_correction
+    and batch_column
+):
+
+    requested_steps.append(
+        f"combat({batch_column})"
+    )
+
+requested_key = (
+    "->".join(
+        requested_steps
+    )
+    if requested_steps
+    else "raw"
+)
+
+# ==================================================
+# RUN PREPROCESSING
+# ==================================================
+
+if st.session_state["run_preprocessing"]:
+
+    #
+    # Use cache if available
+    #
+    if (
+        requested_key
+        not in st.session_state[
+            "expr_versions"
+        ]
+    ):
+
+        with st.spinner(
+            f"Generating {requested_key}..."
+        ):
+
+            processed_df = expr_df.copy()
+
+            # --------------------------
+            # log2 transform
+            # --------------------------
+
+            if apply_log2:
+
+                processed_df = np.log2(
+                    processed_df + 1
+                )
+
+            # --------------------------
+            # ComBat
+            # --------------------------
+
+            if (
+                apply_batch_correction
+                and batch_column
+            ):
+
+                processed_df = apply_combat(
+                    processed_df,
+                    meta_df,
+                    batch_column
+                )
+
+            #
+            # Cache result
+            #
+            st.session_state[
+                "expr_versions"
+            ][requested_key] = processed_df
+
+    #
+    # Activate matrix
+    #
+    st.session_state[
+        "active_expr_df"
+    ] = st.session_state[
+        "expr_versions"
+    ][requested_key]
+
+    #
+    # Update current status
+    #
+    st.session_state[
+        "current_preprocessing"
+    ] = requested_key
+
+    #
+    # Reset flag
+    #
+    st.session_state[
+        "run_preprocessing"
+    ] = False
+
+# ==================================================
+# ACTIVE MATRIX FOR ANALYSIS
+# ==================================================
+
+expr_df = st.session_state[
+    "active_expr_df"
+]
 
 
 #
