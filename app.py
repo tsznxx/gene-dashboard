@@ -163,8 +163,7 @@ with st.sidebar:
             uploaded_expression is not None
             and uploaded_metadata is not None
         ):
-            st.write(uploaded_expression)
-            st.write(uploaded_metadata)
+
 
             expr_df = load_expression_file(
                 uploaded_expression
@@ -173,6 +172,8 @@ with st.sidebar:
             meta_df = load_metadata_file(
                 uploaded_metadata
             )
+            st.write(uploaded_expression)
+            st.write(uploaded_metadata)
 
             st.session_state[
                 "expr_df"
@@ -186,7 +187,7 @@ with st.sidebar:
                 "data_loaded"
             ] = True
 
-            st.rerun()
+            #st.rerun()
 
 
     #
