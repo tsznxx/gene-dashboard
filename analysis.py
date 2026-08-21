@@ -44,21 +44,17 @@ def apply_combat(
         in the same format as input.
     """
 
-    gene_col = expr_df.columns[0]
 
     #
     # Expression matrix
     #
-    expr_mat = expr_df.set_index(
-        gene_col
-    )
+    expr_mat = expr_df
 
     #
     # Reorder metadata
     #
-    meta_ordered = meta_df.set_index(
-        "Sample"
-    ).loc[
+    meta_ordered = meta_df
+    .loc[
         expr_mat.columns
     ]
 
