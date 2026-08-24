@@ -906,16 +906,16 @@ with tab_volcano:
                 options=st.session_state.get("all_genes", []),
                 index=None,
                 placeholder="Type to search...",
-                key="heatmap_gene_search",
+                key="volcano_gene_search",
             )
         with colag2:
             if st.button("Add Gene", key="heatmap_add_gene"):
 
                 if gene_to_add and gene_to_add not in selected_genes:
 
-                    st.session_state["heatmap_genes"] = selected_genes + [gene_to_add]
+                    st.session_state["highlight_genes"] = selected_genes + [gene_to_add]
 
-                    st.session_state["reload_heatmap_text"] = True
+                    st.session_state["reload_volcano_text"] = True
 
                     st.rerun()
                 
@@ -1089,6 +1089,15 @@ with tab_box:
         )
 
         st.session_state["reload_boxplot_text"] = False
+    # ----------------------------------
+    # Text Area
+    # ----------------------------------
+
+    gene_text = st.text_area(
+        "Genes (comma separated)", height=120, key="boxplot_gene_text"
+    )
+
+    selected_genes = [gene.strip() for gene in gene_text.split(",") if gene.strip()]
 
     # ----------------------------------
     # Buttons
@@ -1116,16 +1125,6 @@ with tab_box:
             st.rerun()
 
     # ----------------------------------
-    # Text Area
-    # ----------------------------------
-
-    gene_text = st.text_area(
-        "Genes (comma separated)", height=120, key="boxplot_gene_text"
-    )
-
-    selected_genes = [gene.strip() for gene in gene_text.split(",") if gene.strip()]
-
-    # ----------------------------------
     # Add Gene
     # ----------------------------------
 
@@ -1136,16 +1135,16 @@ with tab_box:
             options=st.session_state.get("all_genes", []),
             index=None,
             placeholder="Type to search...",
-            key="heatmap_gene_search",
+            key="boxplot_gene_search",
         )
     with colag2:
         if st.button("Add Gene", key="heatmap_add_gene"):
 
             if gene_to_add and gene_to_add not in selected_genes:
 
-                st.session_state["heatmap_genes"] = selected_genes + [gene_to_add]
+                st.session_state["boxplot_genes"] = selected_genes + [gene_to_add]
 
-                st.session_state["reload_heatmap_text"] = True
+                st.session_state["reload_boxplot_text"] = True
 
                 st.rerun()
 
@@ -1312,6 +1311,16 @@ with tab_heatmap:
         st.session_state["reload_heatmap_text"] = False
 
     # ----------------------------------
+    # Gene List
+    # ----------------------------------
+
+    gene_text = st.text_area(
+        "Genes (comma separated)", height=120, key="heatmap_gene_text"
+    )
+
+    selected_genes = [gene.strip() for gene in gene_text.split(",") if gene.strip()]
+
+    # ----------------------------------
     # Load / Clear
     # ----------------------------------
 
@@ -1338,16 +1347,6 @@ with tab_heatmap:
             st.session_state["reload_heatmap_text"] = True
 
             st.rerun()
-
-    # ----------------------------------
-    # Gene List
-    # ----------------------------------
-
-    gene_text = st.text_area(
-        "Genes (comma separated)", height=120, key="heatmap_gene_text"
-    )
-
-    selected_genes = [gene.strip() for gene in gene_text.split(",") if gene.strip()]
 
     # ----------------------------------
     # Add Gene
