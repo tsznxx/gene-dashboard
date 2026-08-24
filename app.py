@@ -853,6 +853,19 @@ with tab_volcano:
         # --------------------------------------------------
 
         st.subheader("Genes to Highlight")
+        
+        # --------------------------------------------------
+        # Editable Gene List
+        # --------------------------------------------------
+        all_genes = st.session_state["all_genes"]
+        gene_text = st.text_area(
+            "Highlighted Genes",
+            value=",".join(st.session_state["highlight_genes"]),
+            height=120,
+        )
+        genes = [ gene.strip() for gene in gene_text.split(",")]
+        highlight_genes = [gene for gene in genes if gene in all_genes]
+        st.session_state['not_found_genes'] = [gene for gene in genes if gene not in highlight_genes]
 
         if "highlight_genes" not in st.session_state:
             st.session_state["highlight_genes"] = []
@@ -899,7 +912,7 @@ with tab_volcano:
         # Add Gene
         # --------------------------------------------------
 
-        colag1, colag2 = st.columns(2,vertical_alignment="bottom")
+        colag = st.columns(2,vertical_alignment="bottom")
         with colag1:
             gene_to_add = st.selectbox(
                 "Type Gene Name",
@@ -919,21 +932,6 @@ with tab_volcano:
 
                     st.rerun()
                 
-        # --------------------------------------------------
-        # Editable Gene List
-        # --------------------------------------------------
-        all_genes = st.session_state["all_genes"]
-        gene_text = st.text_area(
-            "Highlighted Genes",
-            value=",".join(st.session_state["highlight_genes"]),
-            height=120,
-        )
-        genes = [ gene.strip() for gene in gene_text.split(",")]
-        highlight_genes = [gene for gene in genes if gene in all_genes]
-        st.session_state['not_found_genes'] = [gene for gene in genes if gene not in highlight_genes]
-
-        st.session_state["highlight_genes"] = highlight_genes
-
 
         #
         # Keep synchronized
@@ -1103,26 +1101,17 @@ with tab_box:
     # Buttons
     # ----------------------------------
     st.session_state["boxplot_genes"] = st.session_state.get("highlight_genes", [])
-    col1, col2 = st.columns(2)
+    
+    if len(st.session_state.get("highlight_genes", []))>0:
+        col1 = st.columns(1)
+        with col1:
+            st.session_state["boxplot_genes"] = st.session_state.get("highlight_genes", [])
+            if len(st.session_state.get("highlight_genes", []))>0:
+                if st.button("Load Highlighted Genes", key="box_load_highlighted"):
 
-    with col1:
-        st.session_state["boxplot_genes"] = st.session_state.get("highlight_genes", [])
-        if len(st.session_state.get("highlight_genes", []))>0:
-            if st.button("Load Highlighted Genes", key="box_load_highlighted"):
+                    st.session_state["reload_boxplot_text"] = True
 
-                st.session_state["reload_boxplot_text"] = True
-
-                st.rerun()
-
-    with col2:
-
-        if st.button("Clear Genes", key="box_clear_genes"):
-
-            st.session_state["boxplot_genes"] = []
-
-            st.session_state["reload_boxplot_text"] = True
-
-            st.rerun()
+                    st.rerun()
 
     # ----------------------------------
     # Add Gene
@@ -1321,32 +1310,21 @@ with tab_heatmap:
     selected_genes = [gene.strip() for gene in gene_text.split(",") if gene.strip()]
 
     # ----------------------------------
-    # Load / Clear
+    # Load highlighted genes
     # ----------------------------------
+    if len(st.session_state.get("highlight_genes", []))>0:
+        col1 = st.columns(1)
+        with col1:
 
-    col1, col2 = st.columns(2)
+            if st.button("Load Highlighted Genes", key="heatmap_load_highlighted"):
 
-    with col1:
+                st.session_state["heatmap_genes"] = st.session_state.get(
+                    "highlight_genes", []
+                )
 
-        if st.button("Load Highlighted Genes", key="heatmap_load_highlighted"):
+                st.session_state["reload_heatmap_text"] = True
 
-            st.session_state["heatmap_genes"] = st.session_state.get(
-                "highlight_genes", []
-            )
-
-            st.session_state["reload_heatmap_text"] = True
-
-            st.rerun()
-
-    with col2:
-
-        if st.button("Clear Genes", key="heatmap_clear_genes"):
-
-            st.session_state["heatmap_genes"] = []
-
-            st.session_state["reload_heatmap_text"] = True
-
-            st.rerun()
+                st.rerun()
 
     # ----------------------------------
     # Add Gene
