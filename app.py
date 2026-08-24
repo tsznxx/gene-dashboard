@@ -909,7 +909,7 @@ with tab_volcano:
                 key="volcano_gene_search",
             )
         with colag2:
-            if st.button("Add Gene", key="heatmap_add_gene"):
+            if st.button("Add Gene", key="volcano_add_gene"):
 
                 if gene_to_add and gene_to_add not in selected_genes:
 
@@ -1138,7 +1138,7 @@ with tab_box:
             key="boxplot_gene_search",
         )
     with colag2:
-        if st.button("Add Gene", key="heatmap_add_gene"):
+        if st.button("Add Gene", key="boxplot_add_gene"):
 
             if gene_to_add and gene_to_add not in selected_genes:
 
