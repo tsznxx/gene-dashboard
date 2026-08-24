@@ -616,7 +616,7 @@ tab_data, tab_pca, tab_de, tab_volcano, tab_box, tab_heatmap = st.tabs(
 with tab_data:
 
     st.subheader("Dataset Summary")
-    st.write(st.session_state['expr_versions'])
+    st.write(st.session_state['expr_versions'].keys())
 
     expr_summary = summarize_expression(expr_df)
 
