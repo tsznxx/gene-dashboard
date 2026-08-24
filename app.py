@@ -863,7 +863,7 @@ with tab_volcano:
             value=",".join(st.session_state["highlight_genes"]),
             height=120,
         )
-        genes = [ gene.strip() for gene in gene_text.split(",") if gene.strip() in all_genes]
+        genes = [ gene.strip() for gene in gene_text.split(",") if gene.strip()]
         highlight_genes = [gene for gene in genes if gene in all_genes]
         st.session_state['not_found_genes'] = [gene for gene in genes if gene not in highlight_genes]
         st.session_state['highlight_genes'] = highlight_genes
