@@ -863,10 +863,9 @@ with tab_volcano:
             value=",".join(st.session_state["highlight_genes"]),
             height=120,
         )
-        genes = [ gene.strip() for gene in gene_text.split(",")]
+        genes = [ gene.strip() for gene in gene_text.split(",") if gene.strip()]
         highlight_genes = [gene for gene in genes if gene in all_genes]
         st.session_state['not_found_genes'] = [gene for gene in genes if gene not in highlight_genes]
-        st.write(st.session_state['not_found_genes'])
 
         if "highlight_genes" not in st.session_state:
             st.session_state["highlight_genes"] = []
@@ -940,7 +939,6 @@ with tab_volcano:
         st.session_state["highlight_genes"] = highlight_genes
         not_found_genes = st.session_state.get('not_found_genes',[])
         if len(not_found_genes)>0:
-            st.write(not_found_genes)
             st.error(f'''Warning: [{",".join(not_found_genes)}] not found in genes!''')
 
         #
