@@ -137,7 +137,6 @@ with st.sidebar:
     # ==================================================
     # GLOBAL SETTINGS
     # ==================================================
-    st.session_state['history'] = st.session_state.get('history',['raw'])
     if st.session_state.get(
         "data_loaded",
         False
@@ -539,7 +538,6 @@ if st.session_state["run_preprocessing"]:
                 else:
                     processed_df = np.log2(processed_df + 1)
                     st.session_state["expr_versions"]['log2'] = processed_df
-                    st.session_state['history'].append('log2')
 
             if apply_batch_correction:
                 st.write(
@@ -551,7 +549,6 @@ if st.session_state["run_preprocessing"]:
                     meta_df,
                     batch_column
                 )
-                st.session_state['history'].append('combat')
 
             st.write(
                 "Saving result to cache"
@@ -619,7 +616,7 @@ tab_data, tab_pca, tab_de, tab_volcano, tab_box, tab_heatmap = st.tabs(
 with tab_data:
 
     st.subheader("Dataset Summary")
-    st.write(st.session_state['history'])
+    st.write(st.session_state['expr_versions'])
 
     expr_summary = summarize_expression(expr_df)
 
