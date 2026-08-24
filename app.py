@@ -24,8 +24,8 @@ from visualization import (
     create_gene_boxplot,
     create_heatmap,
 )
-@st.dialog("Confirmation Required")
-def confirmation_dialog(
+@st.dialog("Confirmation Required",key='log2')
+def log2_dialog(
     message,
     confirm_key
 ):
@@ -56,7 +56,38 @@ def confirmation_dialog(
 
             st.rerun()
 
+@st.dialog("Confirmation Required",key='combat')
+def combat_dialog(
+    message,
+    confirm_key
+):
 
+    st.write(message)
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+
+        if st.button(
+            "Confirm",
+            key=f"{confirm_key}_yes"
+        ):
+
+            st.session_state[
+                confirm_key
+            ] = True
+
+            st.rerun()
+
+    with col2:
+
+        if st.button(
+            "Cancel",
+            key=f"{confirm_key}_no"
+        ):
+
+            st.rerun()
+            
 st.title("Gene Expression Dashboard")
 
 st.set_page_config(
@@ -566,7 +597,7 @@ if st.session_state["run_preprocessing"]:
                 st.write(
                     "Applying log2(x+1)"
                 )
-                confirmation_dialog("Run log2?","log2")
+                log2_dialog("Run log2?","log2")
                 processed_df = np.log2(
                     processed_df + 1
                 )
@@ -578,7 +609,7 @@ if st.session_state["run_preprocessing"]:
                     f"Running ComBat: "
                     f"{batch_column}"
                 )
-                confirmation_dialog("Run combat?","combat")
+                combat_dialog("Run combat?","combat")
                 processed_df = apply_combat(
                     processed_df,
                     meta_df,

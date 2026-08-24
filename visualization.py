@@ -289,9 +289,6 @@ def create_gene_boxplot(
         errors="coerce"
     )
 
-    if apply_log2:
-        expr = np.log2(expr + 1)
-
     plot_records = []
 
     for gene in genes:
