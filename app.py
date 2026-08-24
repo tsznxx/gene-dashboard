@@ -12,7 +12,11 @@ from data_loader import (
     summarize_metadata,
 )
 
-from analysis import apply_combat, run_pca, run_differential_expression
+from analysis import (
+    apply_combat,
+    run_pca,
+    run_differential_expression
+)
 
 from visualization import (
     create_pca_plot,
@@ -535,13 +539,13 @@ if st.session_state["run_preprocessing"]:
                     if batch_column in st.session_state:
                         processed_df = st.session_state[f'log2_{batch_column}']
                     else:
-                        processed_df = st.apply_combat(processed_df,meta_df,batch_column)
+                        processed_df = apply_combat(processed_df,meta_df,batch_column)
                         st.session_state[f'log2_{batch_column}_expr_df'] = processed_df
             else:
                 if batch_column in st.session_state:
                     processed_df = st.session_state[batch_column]
                 else:
-                    processed_df = st.apply_combat(processed_df,meta_df,batch_column)  
+                    processed_df = apply_combat(processed_df,meta_df,batch_column)  
                     st.session_state[f'{batch_column}_expr_df'] = processed_df                    
             #
             # Cache result
