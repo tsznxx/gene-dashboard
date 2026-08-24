@@ -518,35 +518,51 @@ if st.session_state["run_preprocessing"]:
         ]
     ):
 
-        with st.spinner(
-            f"Generating {requested_key}..."
-        ):
+        with st.status(
+            "Preprocessing dataset...",
+            expanded=True
+        ) as status:
 
-            processed_df = expr_df
+            st.write(
+                "Loading source matrix"
+            )
 
-            # --------------------------
-            # log2 transform
-            # --------------------------
+            processed_df = expr_df.copy()
 
             if apply_log2:
 
-                if 'log2_expr_df' in st.session_state: # use existing df
-                    processed_df = st.session_state['log2_expr_df']
-                else:
-                    processed_df = np.log2(processed_df + 1)
-                    st.session_state['log2_expr_df'] = processed_df
-                if (apply_batch_correction and batch_column):
-                    if batch_column in st.session_state:
-                        processed_df = st.session_state[f'log2_{batch_column}']
-                    else:
-                        processed_df = apply_combat(processed_df,meta_df,batch_column)
-                        st.session_state[f'log2_{batch_column}_expr_df'] = processed_df
-            else:
-                if batch_column in st.session_state:
-                    processed_df = st.session_state[batch_column]
-                else:
-                    processed_df = apply_combat(processed_df,meta_df,batch_column)  
-                    st.session_state[f'{batch_column}_expr_df'] = processed_df                    
+                st.write(
+                    "Applying log2(x+1)"
+                )
+
+                processed_df = np.log2(
+                    processed_df + 1
+                )
+
+            if apply_batch_correction:
+
+                st.write(
+                    f"Running ComBat: "
+                    f"{batch_column}"
+                )
+
+                processed_df = apply_combat(
+                    processed_df,
+                    meta_df,
+                    batch_column
+                )
+
+            st.write(
+                "Saving result to cache"
+            )
+
+            status.update(
+                label=(
+                    f"Completed: "
+                    f"{requested_key}"
+                ),
+                state="complete"
+            )           
             #
             # Cache result
             #
