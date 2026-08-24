@@ -616,7 +616,7 @@ tab_data, tab_pca, tab_de, tab_volcano, tab_box, tab_heatmap = st.tabs(
 with tab_data:
 
     st.subheader("Dataset Summary")
-    st.write(st.session_state['expr_versions'].keys())
+    #st.write(st.session_state['expr_versions'].keys())
 
     expr_summary = summarize_expression(expr_df)
 
@@ -897,26 +897,21 @@ with tab_volcano:
         # --------------------------------------------------
         # Editable Gene List
         # --------------------------------------------------
-
+        all_genes = st.session_state["all_genes"]
         gene_text = st.text_area(
             "Highlighted Genes",
             value=",".join(st.session_state["highlight_genes"]),
             height=120,
         )
-
-        highlight_genes = [
-            gene.strip()
-            for gene in gene_text.split(",")
-            if gene.strip() in st.session_state["all_genes"]
-        ]
+        genes = [ gene.strip() for gene in gene_text.split(",")]
+        highlight_genes = [gene for gene in genes if gene in all_genes]
+        st.session_state['not_found_genes'] = [gene for gene in genes if gene not in highlight_genes]
 
         st.session_state["highlight_genes"] = highlight_genes
 
         # --------------------------------------------------
         # Add Gene
         # --------------------------------------------------
-
-        all_genes = st.session_state["all_genes"]
 
         gene_to_add = st.selectbox(
             "Add Gene",
@@ -965,7 +960,9 @@ with tab_volcano:
                 step=100,
                 key="volcano_height",
             )
-
+        not_found_genes = st.session_state.get('not_found_genes',[])
+        if not_found_genes:
+            st.error(f'''Warning: {",".join(not_found_genes)} not found in genes!''')
         #
         # X-axis
         #
