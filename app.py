@@ -889,26 +889,12 @@ with tab_volcano:
 
             top_gene_list = list(dict.fromkeys(top_gene_list))
 
-            if st.button("Refresh Top Genes", key="refresh_top_genes"):
+            if st.button("Use Top Genes", key="refresh_top_genes"):
 
                 st.session_state["highlight_genes"] = top_gene_list
 
                 st.rerun()
-        # --------------------------------------------------
-        # Editable Gene List
-        # --------------------------------------------------
-        all_genes = st.session_state["all_genes"]
-        gene_text = st.text_area(
-            "Highlighted Genes",
-            value=",".join(st.session_state["highlight_genes"]),
-            height=120,
-        )
-        genes = [ gene.strip() for gene in gene_text.split(",")]
-        highlight_genes = [gene for gene in genes if gene in all_genes]
-        st.session_state['not_found_genes'] = [gene for gene in genes if gene not in highlight_genes]
-
-        st.session_state["highlight_genes"] = highlight_genes
-
+                
         # --------------------------------------------------
         # Add Gene
         # --------------------------------------------------
@@ -928,13 +914,30 @@ with tab_volcano:
                 st.session_state["highlight_genes"] = highlight_genes + [gene_to_add]
 
                 st.rerun()
+                
+        # --------------------------------------------------
+        # Editable Gene List
+        # --------------------------------------------------
+        all_genes = st.session_state["all_genes"]
+        gene_text = st.text_area(
+            "Highlighted Genes",
+            value=",".join(st.session_state["highlight_genes"]),
+            height=120,
+        )
+        genes = [ gene.strip() for gene in gene_text.split(",")]
+        highlight_genes = [gene for gene in genes if gene in all_genes]
+        st.session_state['not_found_genes'] = [gene for gene in genes if gene not in highlight_genes]
+
+        st.session_state["highlight_genes"] = highlight_genes
+
+
         #
         # Keep synchronized
         #
         st.session_state["highlight_genes"] = highlight_genes
         not_found_genes = st.session_state.get('not_found_genes',[])
         if not_found_genes:
-            st.error(f'''Warning: {",".join(not_found_genes)} not found in genes!''')
+            st.error(f'''Warning: [{",".join(not_found_genes)}] not found in genes!''')
 
         #
         # Figure Settings
@@ -1124,8 +1127,6 @@ with tab_box:
     # ----------------------------------
     # Add Gene
     # ----------------------------------
-
-    st.subheader("Add Gene")
 
     gene_to_add = st.selectbox(
         "Type Gene Name",
@@ -1348,8 +1349,6 @@ with tab_heatmap:
     # ----------------------------------
     # Add Gene
     # ----------------------------------
-
-    st.subheader("Add Gene")
 
     gene_to_add = st.selectbox(
         "Type Gene Name",
