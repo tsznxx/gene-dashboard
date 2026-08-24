@@ -137,6 +137,7 @@ with st.sidebar:
     # ==================================================
     # GLOBAL SETTINGS
     # ==================================================
+    st.session_state['history'] = ['raw']
     if st.session_state.get(
         "data_loaded",
         False
@@ -427,7 +428,6 @@ if "all_genes" not in st.session_state:
 # ==================================================
 # PREPROCESSING SETUP
 # ==================================================
-st.session_state['history'] = ['raw']
 
 #
 # Store raw matrix once
@@ -551,7 +551,7 @@ if st.session_state["run_preprocessing"]:
                     meta_df,
                     batch_column
                 )
-                st.session_state['history'].append('log2')
+                st.session_state['history'].append('combat')
 
             st.write(
                 "Saving result to cache"
