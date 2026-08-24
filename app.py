@@ -794,7 +794,8 @@ with tab_de:
             st.session_state["de_results"] = de_results
             st.session_state["de_preprocessing"] = st.session_state["current_preprocessing"]
             st.rerun()
-    else:    
+    else:  
+        de_results = st.session_state["de_results"]
         st.success(f"{len(de_results)} genes analysed.")
 
         st.dataframe(de_results, width="content")
