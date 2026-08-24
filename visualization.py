@@ -512,7 +512,6 @@ def create_heatmap(
 
     annotation_map = (
         metadata_df
-        .set_index("Sample")
         [annotation_column]
         .to_dict()
     )
