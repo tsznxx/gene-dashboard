@@ -863,7 +863,7 @@ with tab_volcano:
             value=",".join(st.session_state["highlight_genes"]),
             height=120,
         )
-        genes = [ gene.strip() for gene in gene_text.split(",") if gene.strip()]
+        genes = [ gene.strip() for gene in gene_text.split(",") if gene.strip() in all_genes]
         highlight_genes = [gene for gene in genes if gene in all_genes]
         st.session_state['not_found_genes'] = [gene for gene in genes if gene not in highlight_genes]
 
@@ -924,9 +924,9 @@ with tab_volcano:
         with colag2:
             if st.button("Add Gene", key="volcano_add_gene"):
 
-                if gene_to_add and gene_to_add not in selected_genes:
+                if gene_to_add and gene_to_add not in highlight_genes:
 
-                    st.session_state["highlight_genes"] = selected_genes + [gene_to_add]
+                    st.session_state["highlight_genes"] = highlight_genes + [gene_to_add]
 
                     st.session_state["reload_volcano_text"] = True
 
@@ -1095,7 +1095,7 @@ with tab_box:
         "Genes (comma separated)", height=120, key="boxplot_gene_text"
     )
 
-    selected_genes = [gene.strip() for gene in gene_text.split(",") if gene.strip()]
+    selected_genes = [gene.strip() for gene in gene_text.split(",") if gene.strip() in st.session_state['all_genes']]
 
     # ----------------------------------
     # Buttons
@@ -1301,7 +1301,7 @@ with tab_heatmap:
         "Genes (comma separated)", height=120, key="heatmap_gene_text"
     )
 
-    selected_genes = [gene.strip() for gene in gene_text.split(",") if gene.strip()]
+    selected_genes = [gene.strip() for gene in gene_text.split(",") if gene.strip() in st.session_state['all_genes']]
 
     # ----------------------------------
     # Load highlighted genes
