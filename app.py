@@ -566,7 +566,7 @@ if st.session_state["run_preprocessing"]:
                 st.write(
                     "Applying log2(x+1)"
                 )
-                confirmation_dialog("Run log2?","Yes")
+                confirmation_dialog("Run log2?","log2")
                 processed_df = np.log2(
                     processed_df + 1
                 )
@@ -578,7 +578,7 @@ if st.session_state["run_preprocessing"]:
                     f"Running ComBat: "
                     f"{batch_column}"
                 )
-                confirmation_dialog("Run combat?","Yes")
+                confirmation_dialog("Run combat?","combat")
                 processed_df = apply_combat(
                     processed_df,
                     meta_df,
