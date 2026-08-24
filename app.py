@@ -518,7 +518,7 @@ if st.session_state["run_preprocessing"]:
             f"Generating {requested_key}..."
         ):
 
-            processed_df = expr_df.copy()
+            processed_df = expr_df
 
             # --------------------------
             # log2 transform
@@ -526,25 +526,23 @@ if st.session_state["run_preprocessing"]:
 
             if apply_log2:
 
-                processed_df = np.log2(
-                    processed_df + 1
-                )
-
-            # --------------------------
-            # ComBat
-            # --------------------------
-
-            if (
-                apply_batch_correction
-                and batch_column
-            ):
-
-                processed_df = apply_combat(
-                    processed_df,
-                    meta_df,
-                    batch_column
-                )
-
+                if 'log2_expr_df' in st.session_state: # use existing df
+                    processed_df = st.session_state['log2_expr_df']
+                else:
+                    processed_df = np.log2(processed_df + 1)
+                    st.session_state['log2_expr_df'] = processed_df
+                if (apply_batch_correction and batch_column):
+                    if batch_column in st.session_state:
+                        processed_df = st.session_state[f'log2_{batch_column}']
+                    else:
+                        processed_df = st.apply_combat(processed_df,meta_df,batch_column)
+                        st.session_state[f'log2_{batch_column}_expr_df'] = processed_df
+            else:
+                if batch_column in st.session_state:
+                    processed_df = st.session_state[batch_column]
+                else:
+                    processed_df = st.apply_combat(processed_df,meta_df,batch_column)  
+                    st.session_state[f'{batch_column}_expr_df'] = processed_df                    
             #
             # Cache result
             #
