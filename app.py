@@ -1093,20 +1093,17 @@ with tab_box:
     # ----------------------------------
     # Buttons
     # ----------------------------------
-
+    st.session_state["boxplot_genes"] = st.session_state.get("highlight_genes", [])
     col1, col2 = st.columns(2)
 
     with col1:
+        st.session_state["boxplot_genes"] = st.session_state.get("highlight_genes", [])
+        if len(st.session_state.get("highlight_genes", []))>0:
+            if st.button("Load Highlighted Genes", key="box_load_highlighted"):
 
-        if st.button("Load Highlighted Genes", key="box_load_highlighted"):
+                st.session_state["reload_boxplot_text"] = True
 
-            st.session_state["boxplot_genes"] = st.session_state.get(
-                "highlight_genes", []
-            )
-
-            st.session_state["reload_boxplot_text"] = True
-
-            st.rerun()
+                st.rerun()
 
     with col2:
 
