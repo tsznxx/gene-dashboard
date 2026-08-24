@@ -569,7 +569,7 @@ if st.session_state["run_preprocessing"]:
             st.session_state[
                 "expr_versions"
             ][requested_key] = processed_df
-        st.rerun()
+        
     #
     # Activate matrix
     #
@@ -592,6 +592,7 @@ if st.session_state["run_preprocessing"]:
     st.session_state[
         "run_preprocessing"
     ] = False
+    st.rerun()
 
 # ==================================================
 # ACTIVE MATRIX FOR ANALYSIS
