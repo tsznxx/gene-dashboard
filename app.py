@@ -793,6 +793,7 @@ with tab_de:
             de_results = de_results.sort_values("log2FC")
             st.session_state["de_results"] = de_results
             st.session_state["de_preprocessing"] = st.session_state["current_preprocessing"]
+            st.rerun()
     else:    
         st.success(f"{len(de_results)} genes analysed.")
 
