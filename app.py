@@ -1349,24 +1349,25 @@ with tab_heatmap:
     # ----------------------------------
     # Add Gene
     # ----------------------------------
+    colag1, colag2 = st.columns(2)
+    with colag1:
+        gene_to_add = st.selectbox(
+            "Type Gene Name",
+            options=st.session_state.get("all_genes", []),
+            index=None,
+            placeholder="Type to search...",
+            key="heatmap_gene_search",
+        )
+    with colg2:
+        if st.button("Add Gene", key="heatmap_add_gene"):
 
-    gene_to_add = st.selectbox(
-        "Type Gene Name",
-        options=st.session_state.get("all_genes", []),
-        index=None,
-        placeholder="Type to search...",
-        key="heatmap_gene_search",
-    )
+            if gene_to_add and gene_to_add not in selected_genes:
 
-    if st.button("Add Gene", key="heatmap_add_gene"):
+                st.session_state["heatmap_genes"] = selected_genes + [gene_to_add]
 
-        if gene_to_add and gene_to_add not in selected_genes:
+                st.session_state["reload_heatmap_text"] = True
 
-            st.session_state["heatmap_genes"] = selected_genes + [gene_to_add]
-
-            st.session_state["reload_heatmap_text"] = True
-
-            st.rerun()
+                st.rerun()
 
     # ----------------------------------
     # Save manual edits
