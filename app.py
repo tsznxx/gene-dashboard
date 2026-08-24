@@ -427,6 +427,7 @@ if "all_genes" not in st.session_state:
 # ==================================================
 # PREPROCESSING SETUP
 # ==================================================
+st.session_state['history'] = ['raw']
 
 #
 # Store raw matrix once
@@ -526,20 +527,21 @@ if st.session_state["run_preprocessing"]:
                 "Loading source matrix"
             )
 
-            processed_df = expr_df
+            processed_df = st.session_state["expr_versions"]['raw']
 
             if apply_log2:
 
                 st.write(
                     "Applying log2(x+1)"
                 )
-                processed_df = np.log2(
-                    processed_df + 1
-                )
-                
+                if 'log2' in st.session_state["expr_versions"]:
+                    processed_df = st.session_state["expr_versions"]['log2']
+                else:
+                    processed_df = np.log2(processed_df + 1)
+                    st.session_state["expr_versions"]['log2'] = processed_df
+                    st.session_state['history'].append('log2')
 
             if apply_batch_correction:
-
                 st.write(
                     f"Running ComBat: "
                     f"{batch_column}"
@@ -549,6 +551,7 @@ if st.session_state["run_preprocessing"]:
                     meta_df,
                     batch_column
                 )
+                st.session_state['history'].append('log2')
 
             st.write(
                 "Saving result to cache"
@@ -616,6 +619,7 @@ tab_data, tab_pca, tab_de, tab_volcano, tab_box, tab_heatmap = st.tabs(
 with tab_data:
 
     st.subheader("Dataset Summary")
+    st.write(st.session_state['history'])
 
     expr_summary = summarize_expression(expr_df)
 
