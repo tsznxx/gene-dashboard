@@ -932,6 +932,9 @@ with tab_volcano:
         # Keep synchronized
         #
         st.session_state["highlight_genes"] = highlight_genes
+        not_found_genes = st.session_state.get('not_found_genes',[])
+        if not_found_genes:
+            st.error(f'''Warning: {",".join(not_found_genes)} not found in genes!''')
 
         #
         # Figure Settings
@@ -960,9 +963,7 @@ with tab_volcano:
                 step=100,
                 key="volcano_height",
             )
-        not_found_genes = st.session_state.get('not_found_genes',[])
-        if not_found_genes:
-            st.error(f'''Warning: {",".join(not_found_genes)} not found in genes!''')
+
         #
         # X-axis
         #
