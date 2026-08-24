@@ -912,7 +912,7 @@ with tab_volcano:
         # Add Gene
         # --------------------------------------------------
 
-        colag = st.columns(2,vertical_alignment="bottom")
+        colag1, colag2 = st.columns(2,vertical_alignment="bottom")
         with colag1:
             gene_to_add = st.selectbox(
                 "Type Gene Name",
