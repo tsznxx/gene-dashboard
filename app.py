@@ -24,6 +24,38 @@ from visualization import (
     create_gene_boxplot,
     create_heatmap,
 )
+@st.dialog("Confirmation Required")
+def confirmation_dialog(
+    message,
+    confirm_key
+):
+
+    st.write(message)
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+
+        if st.button(
+            "Confirm",
+            key=f"{confirm_key}_yes"
+        ):
+
+            st.session_state[
+                confirm_key
+            ] = True
+
+            st.rerun()
+
+    with col2:
+
+        if st.button(
+            "Cancel",
+            key=f"{confirm_key}_no"
+        ):
+
+            st.rerun()
+
 
 st.title("Gene Expression Dashboard")
 
@@ -527,17 +559,18 @@ if st.session_state["run_preprocessing"]:
                 "Loading source matrix"
             )
 
-            processed_df = expr_df.copy()
+            processed_df = expr_df
 
             if apply_log2:
 
                 st.write(
                     "Applying log2(x+1)"
                 )
-
+                confirmation_dialog("Run log2?","Yes")
                 processed_df = np.log2(
                     processed_df + 1
                 )
+                
 
             if apply_batch_correction:
 
@@ -545,7 +578,7 @@ if st.session_state["run_preprocessing"]:
                     f"Running ComBat: "
                     f"{batch_column}"
                 )
-
+                confirmation_dialog("Run combat?","Yes")
                 processed_df = apply_combat(
                     processed_df,
                     meta_df,
