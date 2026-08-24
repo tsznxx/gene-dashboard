@@ -137,7 +137,7 @@ with st.sidebar:
     # ==================================================
     # GLOBAL SETTINGS
     # ==================================================
-    st.session_state['history'] = ['raw']
+    st.session_state['history'] = st.session_state.get('history',['raw'])
     if st.session_state.get(
         "data_loaded",
         False
