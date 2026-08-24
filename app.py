@@ -815,7 +815,7 @@ with tab_volcano:
 
     st.subheader("Volcano Plot")
 
-    if "de_results" not in st.session_state:
+    if not ("de_results" in st.session_state and st.session_state.get("de_preprocessing")==st.session_state.get("current_preprocessing")):
 
         st.info("Run Differential Expression first.")
 
