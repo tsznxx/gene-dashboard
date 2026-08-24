@@ -737,6 +737,17 @@ with tab_pca:
 with tab_de:
 
     st.subheader("Differential Expression Analysis")
+    de_is_current = (
+        "de_results" in st.session_state
+        and
+        st.session_state.get(
+            "de_preprocessing"
+        )
+        ==
+        st.session_state.get(
+            "current_preprocessing"
+        )
+    )
 
     eligible_columns = []
 
@@ -762,25 +773,27 @@ with tab_de:
         remaining = [g for g in groups if g != group1]
 
         group2 = st.selectbox("Group 2", remaining, key="group2")
+    if not de_is_current:
+        if st.button("Run Differential Expression", type="primary"):
 
-    if st.button("Run Differential Expression", type="primary"):
+            de_results = run_differential_expression(
+                expression_df=expr_df,
+                metadata_df=meta_df,
+                group_column=group_column,
+                group1=group1,
+                group2=group2,
+                apply_log2=apply_log2,
+            )
 
-        de_results = run_differential_expression(
-            expression_df=expr_df,
-            metadata_df=meta_df,
-            group_column=group_column,
-            group1=group1,
-            group2=group2,
-            apply_log2=apply_log2,
-        )
+            if de_results.empty:
 
-        if de_results.empty:
+                st.error("No genes available for differential expression analysis.")
 
-            st.error("No genes available for differential expression analysis.")
-
-            st.stop()
-        de_results = de_results.sort_values("log2FC")
-        st.session_state["de_results"] = de_results
+                st.stop()
+            de_results = de_results.sort_values("log2FC")
+            st.session_state["de_results"] = de_results
+            st.session_state["de_preprocessing"] = st.session_state["current_preprocessing"]
+    else:    
         st.success(f"{len(de_results)} genes analysed.")
 
         st.dataframe(de_results, width="content")
