@@ -24,69 +24,6 @@ from visualization import (
     create_gene_boxplot,
     create_heatmap,
 )
-@st.dialog("Confirmation Required",key='log2')
-def log2_dialog(
-    message,
-    confirm_key
-):
-
-    st.write(message)
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-
-        if st.button(
-            "Confirm",
-            key=f"{confirm_key}_yes"
-        ):
-
-            st.session_state[
-                confirm_key
-            ] = True
-
-            st.rerun()
-
-    with col2:
-
-        if st.button(
-            "Cancel",
-            key=f"{confirm_key}_no"
-        ):
-
-            st.rerun()
-
-@st.dialog("Confirmation Required",key='combat')
-def combat_dialog(
-    message,
-    confirm_key
-):
-
-    st.write(message)
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-
-        if st.button(
-            "Confirm",
-            key=f"{confirm_key}_yes"
-        ):
-
-            st.session_state[
-                confirm_key
-            ] = True
-
-            st.rerun()
-
-    with col2:
-
-        if st.button(
-            "Cancel",
-            key=f"{confirm_key}_no"
-        ):
-
-            st.rerun()
             
 st.title("Gene Expression Dashboard")
 
@@ -200,7 +137,7 @@ with st.sidebar:
     # ==================================================
     # GLOBAL SETTINGS
     # ==================================================
-
+    st.session_state['history'] = st.session_state.get('history',[])
     if st.session_state.get(
         "data_loaded",
         False
@@ -597,7 +534,7 @@ if st.session_state["run_preprocessing"]:
                 st.write(
                     "Applying log2(x+1)"
                 )
-                log2_dialog("Run log2?","log2")
+                st.session_state['history'].append('log2')
                 processed_df = np.log2(
                     processed_df + 1
                 )
@@ -609,7 +546,7 @@ if st.session_state["run_preprocessing"]:
                     f"Running ComBat: "
                     f"{batch_column}"
                 )
-                combat_dialog("Run combat?","combat")
+                st.session_state['history'].append('combat')
                 processed_df = apply_combat(
                     processed_df,
                     meta_df,
@@ -682,6 +619,7 @@ tab_data, tab_pca, tab_de, tab_volcano, tab_box, tab_heatmap = st.tabs(
 with tab_data:
 
     st.subheader("Dataset Summary")
+    st.write(st.session_state['history'])
 
     expr_summary = summarize_expression(expr_df)
 
