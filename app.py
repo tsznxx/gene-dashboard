@@ -939,6 +939,7 @@ with tab_volcano:
         st.session_state["highlight_genes"] = highlight_genes
         not_found_genes = st.session_state.get('not_found_genes',[])
         if len(not_found_genes)>0:
+            st.write(not_found_genes)
             st.error(f'''Warning: [{",".join(not_found_genes)}] not found in genes!''')
 
         #
@@ -1101,17 +1102,11 @@ with tab_box:
     # Buttons
     # ----------------------------------
     st.session_state["boxplot_genes"] = st.session_state.get("highlight_genes", [])
-    
+
     if len(st.session_state.get("highlight_genes", []))>0:
-        col1 = st.columns(1)
-        with col1:
-            st.session_state["boxplot_genes"] = st.session_state.get("highlight_genes", [])
-            if len(st.session_state.get("highlight_genes", []))>0:
-                if st.button("Load Highlighted Genes", key="box_load_highlighted"):
-
-                    st.session_state["reload_boxplot_text"] = True
-
-                    st.rerun()
+        if st.button("Load Highlighted Genes", key="box_load_highlighted"):
+            st.session_state["reload_boxplot_text"] = True
+            st.rerun()
 
     # ----------------------------------
     # Add Gene
@@ -1313,18 +1308,15 @@ with tab_heatmap:
     # Load highlighted genes
     # ----------------------------------
     if len(st.session_state.get("highlight_genes", []))>0:
-        col1 = st.columns(1)
-        with col1:
+        if st.button("Load Highlighted Genes", key="heatmap_load_highlighted"):
 
-            if st.button("Load Highlighted Genes", key="heatmap_load_highlighted"):
+            st.session_state["heatmap_genes"] = st.session_state.get(
+                "highlight_genes", []
+            )
 
-                st.session_state["heatmap_genes"] = st.session_state.get(
-                    "highlight_genes", []
-                )
+            st.session_state["reload_heatmap_text"] = True
 
-                st.session_state["reload_heatmap_text"] = True
-
-                st.rerun()
+            st.rerun()
 
     # ----------------------------------
     # Add Gene
