@@ -899,7 +899,7 @@ with tab_volcano:
         # Add Gene
         # --------------------------------------------------
 
-        colag1, colag2 = st.columns(2)
+        colag1, colag2 = st.columns(2,vertical_alignment="bottom")
         with colag1:
             gene_to_add = st.selectbox(
                 "Type Gene Name",
@@ -1132,7 +1132,7 @@ with tab_box:
     # Add Gene
     # ----------------------------------
 
-    colag1, colag2 = st.columns(2)
+    colag1, colag2 = st.columns(2, vertical_alignment="bottom")
     with colag1:
         gene_to_add = st.selectbox(
             "Type Gene Name",
@@ -1355,7 +1355,7 @@ with tab_heatmap:
     # ----------------------------------
     # Add Gene
     # ----------------------------------
-    colag1, colag2 = st.columns(2)
+    colag1, colag2 = st.columns(2, vertical_alignment="bottom")
     with colag1:
         gene_to_add = st.selectbox(
             "Type Gene Name",
