@@ -137,7 +137,6 @@ with st.sidebar:
     # ==================================================
     # GLOBAL SETTINGS
     # ==================================================
-    st.session_state['history'] = st.session_state.get('history',[])
     if st.session_state.get(
         "data_loaded",
         False
@@ -534,7 +533,6 @@ if st.session_state["run_preprocessing"]:
                 st.write(
                     "Applying log2(x+1)"
                 )
-                st.session_state['history'].append('log2')
                 processed_df = np.log2(
                     processed_df + 1
                 )
@@ -546,7 +544,6 @@ if st.session_state["run_preprocessing"]:
                     f"Running ComBat: "
                     f"{batch_column}"
                 )
-                st.session_state['history'].append('combat')
                 processed_df = apply_combat(
                     processed_df,
                     meta_df,
@@ -619,7 +616,6 @@ tab_data, tab_pca, tab_de, tab_volcano, tab_box, tab_heatmap = st.tabs(
 with tab_data:
 
     st.subheader("Dataset Summary")
-    st.write(st.session_state['history'])
 
     expr_summary = summarize_expression(expr_df)
 
