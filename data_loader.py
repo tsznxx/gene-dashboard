@@ -177,9 +177,6 @@ def prepare_expression_matrix(
 
     matrix = matrix.astype(float)
 
-    if apply_log2:
-        matrix = np.log2(matrix + 1)
-
     # transpose:
     # rows=samples, columns=genes
     matrix = matrix.T

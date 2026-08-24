@@ -112,12 +112,6 @@ def run_pca(expression_df, apply_log2=False, n_components=2):
     expr_t = expr.T
 
     #
-    # Optional log2 transform
-    #
-    if apply_log2:
-        expr_t = np.log2(expr_t + 1)
-
-    #
     # Stop immediately if NaN exists
     #
     if expr_t.isna().sum().sum() > 0:
@@ -167,9 +161,6 @@ def run_differential_expression(
     expr = expression_df
 
     expr = expr.apply(pd.to_numeric, errors="coerce")
-
-    if apply_log2:
-        expr = np.log2(expr + 1)
 
     group1_samples = metadata_df[metadata_df[group_column] == group1].index.tolist()
 

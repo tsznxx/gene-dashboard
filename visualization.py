@@ -452,13 +452,6 @@ def create_heatmap(
     ]
 
     #
-    # Log2
-    #
-    if apply_log2:
-        expr = np.log2(
-            expr + 1
-        )
-    #
     # Z-score by gene
     #
     if zscore_by_gene:
