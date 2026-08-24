@@ -938,7 +938,7 @@ with tab_volcano:
         #
         st.session_state["highlight_genes"] = highlight_genes
         not_found_genes = st.session_state.get('not_found_genes',[])
-        if not_found_genes:
+        if len(not_found_genes)>0:
             st.error(f'''Warning: [{",".join(not_found_genes)}] not found in genes!''')
 
         #
