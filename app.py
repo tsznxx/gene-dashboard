@@ -2486,7 +2486,7 @@ with tab_correlation:
                 )
 
                 rows_to_show = st.number_input(
-                    "Rows to Display",
+                    f"Rows to Display (out of {len(corr_results)})",
                     min_value=1,
                     max_value=maximum_rows,
                     value=default_rows,

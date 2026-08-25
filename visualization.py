@@ -766,7 +766,7 @@ def create_correlation_heatmap(
         width=width,
         height=height
     )
-
+    fig = apply_publication_style(fig,width)
     return fig
     
 # ==================================================
