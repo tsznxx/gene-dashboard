@@ -15,7 +15,8 @@ from data_loader import (
 from analysis import (
     apply_combat,
     run_pca,
-    run_differential_expression
+    run_differential_expression,
+    run_correlation_analysis
 )
 
 from visualization import (
@@ -23,7 +24,18 @@ from visualization import (
     create_volcano_plot,
     create_gene_boxplot,
     create_heatmap,
+    create_correlation_scatter,
+    create_correlation_volcano,
+    create_correlation_heatmap,
+    #format_correlation_results
 )
+
+from analysis import (
+    resolve_correlation_subject,
+    run_correlation_analysis,
+    get_correlation_plot_vectors
+)
+
             
 st.title("Gene Expression Dashboard")
 
@@ -605,8 +617,8 @@ expr_df = st.session_state[
 # Tabs
 #
 
-tab_data, tab_pca, tab_de, tab_volcano, tab_box, tab_heatmap = st.tabs(
-    ["Data", "PCA", "DE Analysis", "Volcano Plot", "Gene Boxplot", "Heatmap"]
+tab_data, tab_pca, tab_correlation, tab_de, tab_volcano, tab_box, tab_heatmap = st.tabs(
+    ["Data", "PCA", "Correlation", "DE Analysis", "Volcano Plot", "Gene Boxplot", "Heatmap"]
 )
 
 #
@@ -941,7 +953,6 @@ with tab_volcano:
         not_found_genes = st.session_state.get('not_found_genes',[])
         if len(not_found_genes)>0:
             st.error(f'''Warning: [{",".join(not_found_genes)}] not found in genes!''')
-        st.write(st.session_state["highlight_genes"])
         #
         # Figure Settings
         #
@@ -1488,3 +1499,1265 @@ with tab_heatmap:
                     },
                 },
             )
+
+
+# ==================================================
+# CORRELATION TAB
+# ==================================================
+
+with tab_correlation:
+
+    st.subheader(
+        "Correlation Analysis"
+    )
+
+    st.caption(
+        "The correlation analysis uses the current "
+        f"analysis matrix: "
+        f"{st.session_state.get('current_preprocessing', 'raw')}"
+    )
+
+    all_genes = sorted(
+        st.session_state.get(
+            "all_genes",
+            expr_df.index.astype(str).tolist()
+        )
+    )
+
+    subject_type_options = [
+        "Single Gene",
+        "Gene List",
+        "Gene Signature",
+        "All Genes"
+    ]
+
+    # ==================================================
+    # SUBJECT TYPE SELECTION
+    # ==================================================
+
+    subject_type_col1, subject_type_col2 = (
+        st.columns(2)
+    )
+
+    with subject_type_col1:
+
+        subject_a_type = st.selectbox(
+            "Subject A Type",
+            options=subject_type_options,
+            key="corr_subject_a_type"
+        )
+
+    with subject_type_col2:
+
+        subject_b_type = st.selectbox(
+            "Subject B Type",
+            options=subject_type_options,
+            key="corr_subject_b_type"
+        )
+
+    if (
+        subject_a_type == "All Genes"
+        and subject_b_type == "All Genes"
+    ):
+
+        st.warning(
+            "All Genes versus All Genes is disabled "
+            "because it can generate an extremely large "
+            "number of pairwise comparisons. Select a "
+            "Single Gene, Gene List, or Gene Signature "
+            "for at least one subject."
+        )
+
+    st.divider()
+
+    # ==================================================
+    # SUBJECT A SETTINGS
+    # ==================================================
+
+    st.markdown(
+        "### Subject A"
+    )
+
+    subject_a_gene = None
+    subject_a_genes = None
+    subject_a_signature_name = None
+    subject_a_aggregation = "Mean"
+
+    # --------------------------------------------------
+    # Subject A: Single Gene
+    # --------------------------------------------------
+
+    if subject_a_type == "Single Gene":
+
+        subject_a_gene = st.selectbox(
+            "Subject A Gene",
+            options=all_genes,
+            index=0 if all_genes else None,
+            key="corr_subject_a_gene"
+        )
+
+    # --------------------------------------------------
+    # Subject A: Gene List
+    # --------------------------------------------------
+
+    elif subject_a_type == "Gene List":
+
+        if "corr_a_gene_list" not in st.session_state:
+
+            st.session_state[
+                "corr_a_gene_list"
+            ] = []
+
+        if "corr_a_gene_text" not in st.session_state:
+
+            st.session_state[
+                "corr_a_gene_text"
+            ] = ""
+
+        if "corr_a_reload_text" not in st.session_state:
+
+            st.session_state[
+                "corr_a_reload_text"
+            ] = False
+
+        if st.session_state[
+            "corr_a_reload_text"
+        ]:
+
+            st.session_state[
+                "corr_a_gene_text"
+            ] = ",".join(
+                st.session_state[
+                    "corr_a_gene_list"
+                ]
+            )
+
+            st.session_state[
+                "corr_a_reload_text"
+            ] = False
+
+        a_button_col1, a_button_col2 = (
+            st.columns(2)
+        )
+
+        with a_button_col1:
+
+            if st.button(
+                "Load Highlighted Genes",
+                key="corr_a_load_highlighted"
+            ):
+
+                st.session_state[
+                    "corr_a_gene_list"
+                ] = st.session_state.get(
+                    "highlight_genes",
+                    []
+                ).copy()
+
+                st.session_state[
+                    "corr_a_reload_text"
+                ] = True
+
+                st.rerun()
+
+        with a_button_col2:
+
+            if st.button(
+                "Clear Subject A Genes",
+                key="corr_a_clear_genes"
+            ):
+
+                st.session_state[
+                    "corr_a_gene_list"
+                ] = []
+
+                st.session_state[
+                    "corr_a_reload_text"
+                ] = True
+
+                st.rerun()
+
+        subject_a_gene_text = st.text_area(
+            "Subject A Genes, comma separated",
+            height=100,
+            key="corr_a_gene_text"
+        )
+
+        subject_a_genes = list(
+            dict.fromkeys(
+                gene.strip()
+                for gene
+                in subject_a_gene_text.split(",")
+                if gene.strip()
+            )
+        )
+
+        subject_a_add_gene = st.selectbox(
+            "Add a Gene to Subject A",
+            options=all_genes,
+            index=None,
+            placeholder="Type to search for a gene...",
+            key="corr_a_gene_search"
+        )
+
+        if st.button(
+            "Add Gene to Subject A",
+            key="corr_a_add_gene"
+        ):
+
+            if (
+                subject_a_add_gene
+                and subject_a_add_gene
+                not in subject_a_genes
+            ):
+
+                st.session_state[
+                    "corr_a_gene_list"
+                ] = (
+                    subject_a_genes
+                    + [subject_a_add_gene]
+                )
+
+                st.session_state[
+                    "corr_a_reload_text"
+                ] = True
+
+                st.rerun()
+
+        st.session_state[
+            "corr_a_gene_list"
+        ] = subject_a_genes
+
+    # --------------------------------------------------
+    # Subject A: Gene Signature
+    # --------------------------------------------------
+
+    elif subject_a_type == "Gene Signature":
+
+        subject_a_signature_name = st.text_input(
+            "Subject A Signature Name",
+            value="Signature A",
+            key="corr_a_signature_name"
+        )
+
+        if (
+            "corr_a_signature_genes"
+            not in st.session_state
+        ):
+
+            st.session_state[
+                "corr_a_signature_genes"
+            ] = []
+
+        if (
+            "corr_a_signature_text"
+            not in st.session_state
+        ):
+
+            st.session_state[
+                "corr_a_signature_text"
+            ] = ""
+
+        if (
+            "corr_a_signature_reload_text"
+            not in st.session_state
+        ):
+
+            st.session_state[
+                "corr_a_signature_reload_text"
+            ] = False
+
+        if st.session_state[
+            "corr_a_signature_reload_text"
+        ]:
+
+            st.session_state[
+                "corr_a_signature_text"
+            ] = ",".join(
+                st.session_state[
+                    "corr_a_signature_genes"
+                ]
+            )
+
+            st.session_state[
+                "corr_a_signature_reload_text"
+            ] = False
+
+        a_sig_button_col1, a_sig_button_col2 = (
+            st.columns(2)
+        )
+
+        with a_sig_button_col1:
+
+            if st.button(
+                "Load Highlighted Genes",
+                key="corr_a_sig_load_highlighted"
+            ):
+
+                st.session_state[
+                    "corr_a_signature_genes"
+                ] = st.session_state.get(
+                    "highlight_genes",
+                    []
+                ).copy()
+
+                st.session_state[
+                    "corr_a_signature_reload_text"
+                ] = True
+
+                st.rerun()
+
+        with a_sig_button_col2:
+
+            if st.button(
+                "Clear Signature A Genes",
+                key="corr_a_sig_clear"
+            ):
+
+                st.session_state[
+                    "corr_a_signature_genes"
+                ] = []
+
+                st.session_state[
+                    "corr_a_signature_reload_text"
+                ] = True
+
+                st.rerun()
+
+        subject_a_signature_text = st.text_area(
+            "Subject A Signature Genes, comma separated",
+            height=100,
+            key="corr_a_signature_text"
+        )
+
+        subject_a_genes = list(
+            dict.fromkeys(
+                gene.strip()
+                for gene
+                in subject_a_signature_text.split(",")
+                if gene.strip()
+            )
+        )
+
+        subject_a_signature_add_gene = st.selectbox(
+            "Add a Gene to Signature A",
+            options=all_genes,
+            index=None,
+            placeholder="Type to search for a gene...",
+            key="corr_a_signature_gene_search"
+        )
+
+        if st.button(
+            "Add Gene to Signature A",
+            key="corr_a_signature_add_gene"
+        ):
+
+            if (
+                subject_a_signature_add_gene
+                and subject_a_signature_add_gene
+                not in subject_a_genes
+            ):
+
+                st.session_state[
+                    "corr_a_signature_genes"
+                ] = (
+                    subject_a_genes
+                    + [
+                        subject_a_signature_add_gene
+                    ]
+                )
+
+                st.session_state[
+                    "corr_a_signature_reload_text"
+                ] = True
+
+                st.rerun()
+
+        st.session_state[
+            "corr_a_signature_genes"
+        ] = subject_a_genes
+
+        subject_a_aggregation = st.selectbox(
+            "Subject A Signature Scoring Method",
+            options=[
+                "Mean",
+                "Median",
+                "Sum",
+                "Mean Z-score"
+            ],
+            key="corr_a_signature_aggregation"
+        )
+
+    elif subject_a_type == "All Genes":
+
+        st.info(
+            f"Subject A includes all "
+            f"{len(all_genes):,} genes."
+        )
+
+    st.divider()
+
+    # ==================================================
+    # SUBJECT B SETTINGS
+    # ==================================================
+
+    st.markdown(
+        "### Subject B"
+    )
+
+    subject_b_gene = None
+    subject_b_genes = None
+    subject_b_signature_name = None
+    subject_b_aggregation = "Mean"
+
+    # --------------------------------------------------
+    # Subject B: Single Gene
+    # --------------------------------------------------
+
+    if subject_b_type == "Single Gene":
+
+        default_b_index = (
+            1 if len(all_genes) > 1 else 0
+        )
+
+        subject_b_gene = st.selectbox(
+            "Subject B Gene",
+            options=all_genes,
+            index=(
+                default_b_index
+                if all_genes
+                else None
+            ),
+            key="corr_subject_b_gene"
+        )
+
+    # --------------------------------------------------
+    # Subject B: Gene List
+    # --------------------------------------------------
+
+    elif subject_b_type == "Gene List":
+
+        if "corr_b_gene_list" not in st.session_state:
+
+            st.session_state[
+                "corr_b_gene_list"
+            ] = []
+
+        if "corr_b_gene_text" not in st.session_state:
+
+            st.session_state[
+                "corr_b_gene_text"
+            ] = ""
+
+        if "corr_b_reload_text" not in st.session_state:
+
+            st.session_state[
+                "corr_b_reload_text"
+            ] = False
+
+        if st.session_state[
+            "corr_b_reload_text"
+        ]:
+
+            st.session_state[
+                "corr_b_gene_text"
+            ] = ",".join(
+                st.session_state[
+                    "corr_b_gene_list"
+                ]
+            )
+
+            st.session_state[
+                "corr_b_reload_text"
+            ] = False
+
+        b_button_col1, b_button_col2 = (
+            st.columns(2)
+        )
+
+        with b_button_col1:
+
+            if st.button(
+                "Load Highlighted Genes",
+                key="corr_b_load_highlighted"
+            ):
+
+                st.session_state[
+                    "corr_b_gene_list"
+                ] = st.session_state.get(
+                    "highlight_genes",
+                    []
+                ).copy()
+
+                st.session_state[
+                    "corr_b_reload_text"
+                ] = True
+
+                st.rerun()
+
+        with b_button_col2:
+
+            if st.button(
+                "Clear Subject B Genes",
+                key="corr_b_clear_genes"
+            ):
+
+                st.session_state[
+                    "corr_b_gene_list"
+                ] = []
+
+                st.session_state[
+                    "corr_b_reload_text"
+                ] = True
+
+                st.rerun()
+
+        subject_b_gene_text = st.text_area(
+            "Subject B Genes, comma separated",
+            height=100,
+            key="corr_b_gene_text"
+        )
+
+        subject_b_genes = list(
+            dict.fromkeys(
+                gene.strip()
+                for gene
+                in subject_b_gene_text.split(",")
+                if gene.strip()
+            )
+        )
+
+        subject_b_add_gene = st.selectbox(
+            "Add a Gene to Subject B",
+            options=all_genes,
+            index=None,
+            placeholder="Type to search for a gene...",
+            key="corr_b_gene_search"
+        )
+
+        if st.button(
+            "Add Gene to Subject B",
+            key="corr_b_add_gene"
+        ):
+
+            if (
+                subject_b_add_gene
+                and subject_b_add_gene
+                not in subject_b_genes
+            ):
+
+                st.session_state[
+                    "corr_b_gene_list"
+                ] = (
+                    subject_b_genes
+                    + [subject_b_add_gene]
+                )
+
+                st.session_state[
+                    "corr_b_reload_text"
+                ] = True
+
+                st.rerun()
+
+        st.session_state[
+            "corr_b_gene_list"
+        ] = subject_b_genes
+
+    # --------------------------------------------------
+    # Subject B: Gene Signature
+    # --------------------------------------------------
+
+    elif subject_b_type == "Gene Signature":
+
+        subject_b_signature_name = st.text_input(
+            "Subject B Signature Name",
+            value="Signature B",
+            key="corr_b_signature_name"
+        )
+
+        if (
+            "corr_b_signature_genes"
+            not in st.session_state
+        ):
+
+            st.session_state[
+                "corr_b_signature_genes"
+            ] = []
+
+        if (
+            "corr_b_signature_text"
+            not in st.session_state
+        ):
+
+            st.session_state[
+                "corr_b_signature_text"
+            ] = ""
+
+        if (
+            "corr_b_signature_reload_text"
+            not in st.session_state
+        ):
+
+            st.session_state[
+                "corr_b_signature_reload_text"
+            ] = False
+
+        if st.session_state[
+            "corr_b_signature_reload_text"
+        ]:
+
+            st.session_state[
+                "corr_b_signature_text"
+            ] = ",".join(
+                st.session_state[
+                    "corr_b_signature_genes"
+                ]
+            )
+
+            st.session_state[
+                "corr_b_signature_reload_text"
+            ] = False
+
+        b_sig_button_col1, b_sig_button_col2 = (
+            st.columns(2)
+        )
+
+        with b_sig_button_col1:
+
+            if st.button(
+                "Load Highlighted Genes",
+                key="corr_b_sig_load_highlighted"
+            ):
+
+                st.session_state[
+                    "corr_b_signature_genes"
+                ] = st.session_state.get(
+                    "highlight_genes",
+                    []
+                ).copy()
+
+                st.session_state[
+                    "corr_b_signature_reload_text"
+                ] = True
+
+                st.rerun()
+
+        with b_sig_button_col2:
+
+            if st.button(
+                "Clear Signature B Genes",
+                key="corr_b_sig_clear"
+            ):
+
+                st.session_state[
+                    "corr_b_signature_genes"
+                ] = []
+
+                st.session_state[
+                    "corr_b_signature_reload_text"
+                ] = True
+
+                st.rerun()
+
+        subject_b_signature_text = st.text_area(
+            "Subject B Signature Genes, comma separated",
+            height=100,
+            key="corr_b_signature_text"
+        )
+
+        subject_b_genes = list(
+            dict.fromkeys(
+                gene.strip()
+                for gene
+                in subject_b_signature_text.split(",")
+                if gene.strip()
+            )
+        )
+
+        subject_b_signature_add_gene = st.selectbox(
+            "Add a Gene to Signature B",
+            options=all_genes,
+            index=None,
+            placeholder="Type to search for a gene...",
+            key="corr_b_signature_gene_search"
+        )
+
+        if st.button(
+            "Add Gene to Signature B",
+            key="corr_b_signature_add_gene"
+        ):
+
+            if (
+                subject_b_signature_add_gene
+                and subject_b_signature_add_gene
+                not in subject_b_genes
+            ):
+
+                st.session_state[
+                    "corr_b_signature_genes"
+                ] = (
+                    subject_b_genes
+                    + [
+                        subject_b_signature_add_gene
+                    ]
+                )
+
+                st.session_state[
+                    "corr_b_signature_reload_text"
+                ] = True
+
+                st.rerun()
+
+        st.session_state[
+            "corr_b_signature_genes"
+        ] = subject_b_genes
+
+        subject_b_aggregation = st.selectbox(
+            "Subject B Signature Scoring Method",
+            options=[
+                "Mean",
+                "Median",
+                "Sum",
+                "Mean Z-score"
+            ],
+            key="corr_b_signature_aggregation"
+        )
+
+    elif subject_b_type == "All Genes":
+
+        st.info(
+            f"Subject B includes all "
+            f"{len(all_genes):,} genes."
+        )
+
+    st.divider()
+
+    # ==================================================
+    # ANALYSIS SETTINGS
+    # ==================================================
+
+    st.markdown(
+        "### Analysis Settings"
+    )
+
+    correlation_method = st.radio(
+        "Correlation Method",
+        options=[
+            "pearson",
+            "spearman"
+        ],
+        format_func=lambda value: value.title(),
+        horizontal=True,
+        key="corr_method"
+    )
+
+    min_samples = st.number_input(
+        "Minimum Paired Samples",
+        min_value=3,
+        max_value=max(
+            3,
+            int(expr_df.shape[1])
+        ),
+        value=min(
+            3,
+            int(expr_df.shape[1])
+        ),
+        step=1,
+        key="corr_min_samples"
+    )
+
+    skip_identical_pairs = st.checkbox(
+        "Skip identical gene pairs",
+        value=True,
+        key="corr_skip_identical"
+    )
+
+    invalid_all_vs_all = (
+        subject_a_type == "All Genes"
+        and subject_b_type == "All Genes"
+    )
+
+    # ==================================================
+    # RUN ANALYSIS
+    # ==================================================
+
+    if st.button(
+        "Run Correlation Analysis",
+        type="primary",
+        disabled=invalid_all_vs_all,
+        key="run_correlation_analysis"
+    ):
+
+        try:
+
+            with st.status(
+                "Running correlation analysis...",
+                expanded=True
+            ) as corr_status:
+
+                corr_status.write(
+                    "Resolving Subject A"
+                )
+
+                resolved_subject_a = (
+                    resolve_correlation_subject(
+                        expr_df=expr_df,
+                        subject_type=
+                        subject_a_type,
+                        gene=subject_a_gene,
+                        gene_list=
+                        subject_a_genes,
+                        signature_name=
+                        subject_a_signature_name,
+                        signature_aggregation=
+                        subject_a_aggregation
+                    )
+                )
+
+                corr_status.write(
+                    "Resolving Subject B"
+                )
+
+                resolved_subject_b = (
+                    resolve_correlation_subject(
+                        expr_df=expr_df,
+                        subject_type=
+                        subject_b_type,
+                        gene=subject_b_gene,
+                        gene_list=
+                        subject_b_genes,
+                        signature_name=
+                        subject_b_signature_name,
+                        signature_aggregation=
+                        subject_b_aggregation
+                    )
+                )
+
+                if resolved_subject_a[
+                    "missing_genes"
+                ]:
+
+                    st.warning(
+                        "Subject A genes not found: "
+                        + ", ".join(
+                            resolved_subject_a[
+                                "missing_genes"
+                            ]
+                        )
+                    )
+
+                if resolved_subject_b[
+                    "missing_genes"
+                ]:
+
+                    st.warning(
+                        "Subject B genes not found: "
+                        + ", ".join(
+                            resolved_subject_b[
+                                "missing_genes"
+                            ]
+                        )
+                    )
+
+                corr_status.write(
+                    "Computing pairwise correlations"
+                )
+
+                corr_results = (
+                    run_correlation_analysis(
+                        subject_a=
+                        resolved_subject_a,
+                        subject_b=
+                        resolved_subject_b,
+                        method=
+                        correlation_method,
+                        min_samples=
+                        int(min_samples),
+                        skip_identical_pairs=
+                        skip_identical_pairs,
+                        allow_all_vs_all=False
+                    )
+                )
+
+                st.session_state[
+                    "corr_results"
+                ] = corr_results
+
+                st.session_state[
+                    "corr_subject_a"
+                ] = resolved_subject_a
+
+                st.session_state[
+                    "corr_subject_b"
+                ] = resolved_subject_b
+
+                st.session_state[
+                    "corr_method_used"
+                ] = correlation_method
+
+                st.session_state[
+                    "corr_preprocessing"
+                ] = st.session_state.get(
+                    "current_preprocessing",
+                    "raw"
+                )
+
+                corr_status.update(
+                    label=(
+                        "Correlation analysis completed"
+                    ),
+                    state="complete",
+                    expanded=False
+                )
+
+        except Exception as error:
+
+            st.error(
+                f"Correlation analysis failed: "
+                f"{error}"
+            )
+
+    # ==================================================
+    # CHECK WHETHER RESULTS ARE CURRENT
+    # ==================================================
+
+    corr_results_current = (
+        "corr_results" in st.session_state
+        and
+        st.session_state.get(
+            "corr_preprocessing"
+        )
+        ==
+        st.session_state.get(
+            "current_preprocessing",
+            "raw"
+        )
+    )
+
+    if (
+        "corr_results" in st.session_state
+        and not corr_results_current
+    ):
+
+        st.warning(
+            "The stored correlation results were "
+            "generated from a different preprocessing "
+            "state. Run correlation analysis again."
+        )
+
+    # ==================================================
+    # RESULTS
+    # ==================================================
+
+    if corr_results_current:
+
+        corr_results = st.session_state[
+            "corr_results"
+        ]
+
+        st.divider()
+
+        st.markdown(
+            "### Correlation Results"
+        )
+
+        if corr_results.empty:
+
+            st.warning(
+                "No valid correlation results were produced."
+            )
+
+        else:
+
+            result_col1, result_col2 = (
+                st.columns(2)
+            )
+
+            with result_col1:
+
+                maximum_rows = max(
+                    1,
+                    len(corr_results)
+                )
+
+                default_rows = min(
+                    100,
+                    maximum_rows
+                )
+
+                rows_to_show = st.number_input(
+                    "Rows to Display",
+                    min_value=1,
+                    max_value=maximum_rows,
+                    value=default_rows,
+                    step=1,
+                    key="corr_rows_to_show"
+                )
+
+            with result_col2:
+
+                absolute_cutoff = st.number_input(
+                    "Minimum Absolute Correlation",
+                    min_value=0.0,
+                    max_value=1.0,
+                    value=0.0,
+                    step=0.05,
+                    key="corr_result_cutoff"
+                )
+
+            filtered_corr_results = (
+                corr_results[
+                    corr_results[
+                        "Absolute_Correlation"
+                    ]
+                    >= absolute_cutoff
+                ]
+                .head(
+                    int(rows_to_show)
+                )
+            )
+
+            display_corr_results = (
+                filtered_corr_results.copy()
+            )
+
+            display_corr_results[
+                "Coefficient"
+            ] = display_corr_results[
+                "Coefficient"
+            ].round(4)
+
+            display_corr_results[
+                "PValue"
+            ] = display_corr_results[
+                "PValue"
+            ].map(
+                lambda value:
+                (
+                    f"{value:.3e}"
+                    if pd.notna(value)
+                    else ""
+                )
+            )
+
+            display_corr_results[
+                "FDR"
+            ] = display_corr_results[
+                "FDR"
+            ].map(
+                lambda value:
+                (
+                    f"{value:.3e}"
+                    if pd.notna(value)
+                    else ""
+                )
+            )
+
+            st.dataframe(
+                display_corr_results[
+                    [
+                        "Subject_A",
+                        "Subject_B",
+                        "Coefficient",
+                        "PValue",
+                        "FDR",
+                        "N_Samples"
+                    ]
+                ],
+                width="stretch",
+                hide_index=True
+            )
+
+            st.download_button(
+                label="Download Correlation Results",
+                data=corr_results.to_csv(
+                    sep="\t",
+                    index=False
+                ).encode(
+                    "utf-8"
+                ),
+                file_name=(
+                    "correlation_results.tsv"
+                ),
+                mime=(
+                    "text/tab-separated-values"
+                ),
+                key="download_corr_results"
+            )
+
+            # ==================================================
+            # SCATTER PLOT
+            # ==================================================
+
+            st.divider()
+
+            st.markdown(
+                "### Correlation Scatter Plot"
+            )
+
+            subject_a_options = (
+                corr_results[
+                    "Subject_A"
+                ]
+                .dropna()
+                .astype(str)
+                .unique()
+                .tolist()
+            )
+
+            selected_scatter_a = st.selectbox(
+                "Scatter Plot Subject A",
+                options=subject_a_options,
+                key="corr_scatter_subject_a"
+            )
+
+            subject_b_options = (
+                corr_results.loc[
+                    corr_results[
+                        "Subject_A"
+                    ].astype(str)
+                    == str(
+                        selected_scatter_a
+                    ),
+                    "Subject_B"
+                ]
+                .dropna()
+                .astype(str)
+                .unique()
+                .tolist()
+            )
+
+            selected_scatter_b = st.selectbox(
+                "Scatter Plot Subject B",
+                options=subject_b_options,
+                key="corr_scatter_subject_b"
+            )
+
+            selected_result = (
+                corr_results[
+                    (
+                        corr_results[
+                            "Subject_A"
+                        ].astype(str)
+                        == str(
+                            selected_scatter_a
+                        )
+                    )
+                    &
+                    (
+                        corr_results[
+                            "Subject_B"
+                        ].astype(str)
+                        == str(
+                            selected_scatter_b
+                        )
+                    )
+                ]
+                .iloc[0]
+            )
+
+            scatter_setting_col1, scatter_setting_col2 = (
+                st.columns(2)
+            )
+
+            with scatter_setting_col1:
+
+                corr_plot_width = st.number_input(
+                    "Scatter Plot Width (px)",
+                    min_value=300,
+                    max_value=2000,
+                    value=700,
+                    step=50,
+                    key="corr_plot_width"
+                )
+
+            with scatter_setting_col2:
+
+                corr_plot_height = st.number_input(
+                    "Scatter Plot Height (px)",
+                    min_value=300,
+                    max_value=2000,
+                    value=600,
+                    step=50,
+                    key="corr_plot_height"
+                )
+
+            try:
+
+                scatter_data = (
+                    get_correlation_plot_vectors(
+                        subject_a=
+                        st.session_state[
+                            "corr_subject_a"
+                        ],
+                        subject_b=
+                        st.session_state[
+                            "corr_subject_b"
+                        ],
+                        subject_a_name=
+                        selected_scatter_a,
+                        subject_b_name=
+                        selected_scatter_b
+                    )
+                )
+
+                scatter_fig = (
+                    create_correlation_scatter(
+                        plot_df=scatter_data,
+                        x_column=
+                        selected_scatter_a,
+                        y_column=
+                        selected_scatter_b,
+                        method=
+                        st.session_state[
+                            "corr_method_used"
+                        ],
+                        coefficient=
+                        selected_result[
+                            "Coefficient"
+                        ],
+                        pvalue=
+                        selected_result[
+                            "PValue"
+                        ],
+                        fdr=
+                        selected_result[
+                            "FDR"
+                        ],
+                        width=
+                        corr_plot_width,
+                        height=
+                        corr_plot_height
+                    )
+                )
+
+                scatter_filename = (
+                    f"{selected_scatter_a}_vs_"
+                    f"{selected_scatter_b}_"
+                    f"correlation"
+                )
+
+                st.plotly_chart(
+                    scatter_fig,
+                    width="content",
+                    config={
+                        "displaylogo": False,
+                        "toImageButtonOptions": {
+                            "format": "svg",
+                            "filename":
+                            scatter_filename,
+                            "width":
+                            corr_plot_width,
+                            "height":
+                            corr_plot_height,
+                            "scale": 1
+                        }
+                    }
+                )
+
+            except Exception as error:
+
+                st.error(
+                    "Unable to create the correlation "
+                    f"scatter plot: {error}"
+                )

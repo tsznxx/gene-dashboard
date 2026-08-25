@@ -559,3 +559,224 @@ def create_heatmap(
 
     #fig = apply_publication_style(fig,width)
     return fig
+    
+    
+# ==================================================
+# Correlation Scatter Plot
+# ==================================================
+
+def create_correlation_scatter(
+    plot_df,
+    x_column,
+    y_column,
+    method="pearson",
+    coefficient=None,
+    pvalue=None,
+    fdr=None,
+    width=1000,
+    height=700
+):
+    """
+    Correlation scatter plot.
+
+    Parameters
+    ----------
+    plot_df : pd.DataFrame
+
+    x_column : str
+
+    y_column : str
+
+    method : str
+        pearson or spearman
+    """
+
+    trendline = (
+        "ols"
+        if method.lower() == "pearson"
+        else "lowess"
+    )
+
+    fig = px.scatter(
+        plot_df,
+        x=x_column,
+        y=y_column,
+        trendline=trendline,
+        hover_data=["Sample"]
+    )
+
+    title = (
+        f"{x_column} vs {y_column}"
+    )
+
+    stats_text = []
+
+    if coefficient is not None:
+
+        stat_name = (
+            "r"
+            if method.lower() == "pearson"
+            else "ρ"
+        )
+
+        stats_text.append(
+            f"{stat_name}={coefficient:.3f}"
+        )
+
+    if pvalue is not None:
+
+        stats_text.append(
+            f"p={pvalue:.2e}"
+        )
+
+    if fdr is not None:
+
+        stats_text.append(
+            f"FDR={fdr:.2e}"
+        )
+
+    if stats_text:
+
+        title += (
+            "<br>"
+            + " | ".join(stats_text)
+        )
+
+    fig.update_layout(
+        title=title,
+        width=width,
+        height=height,
+        template="plotly_white"
+    )
+
+    return fig
+    
+# ==================================================
+# Correlation Volcano Plot
+# ==================================================
+
+def create_correlation_volcano(
+    corr_df,
+    coefficient_cutoff=0.5,
+    fdr_cutoff=0.05,
+    width=1200,
+    height=800
+):
+
+    df = corr_df.copy()
+
+    df["minus_log10_fdr"] = (
+        -np.log10(
+            df["FDR"]
+            .clip(lower=1e-300)
+        )
+    )
+
+    df["Significant"] = (
+        (
+            df["Coefficient"]
+            .abs()
+            >= coefficient_cutoff
+        )
+        &
+        (
+            df["FDR"]
+            <= fdr_cutoff
+        )
+    )
+
+    fig = px.scatter(
+        df,
+        x="Coefficient",
+        y="minus_log10_fdr",
+        color="Significant",
+        hover_data=[
+            "Subject_A",
+            "Subject_B",
+            "Coefficient",
+            "FDR"
+        ]
+    )
+
+    fig.add_vline(
+        x=coefficient_cutoff,
+        line_dash="dash"
+    )
+
+    fig.add_vline(
+        x=-coefficient_cutoff,
+        line_dash="dash"
+    )
+
+    fig.add_hline(
+        y=-np.log10(fdr_cutoff),
+        line_dash="dash"
+    )
+
+    fig.update_layout(
+        title="Correlation Volcano Plot",
+        width=width,
+        height=height,
+        template="plotly_white"
+    )
+
+    return fig
+    
+# ==================================================
+# Correlation Heatmap
+# ==================================================
+
+def create_correlation_heatmap(
+    expr_df,
+    genes,
+    method="pearson",
+    width=1000,
+    height=900
+):
+
+    if len(genes) < 2:
+
+        raise ValueError(
+            "At least two genes are required."
+        )
+
+    gene_expr = expr_df.loc[
+        genes
+    ]
+
+    corr_matrix = (
+        gene_expr.T.corr(
+            method=method
+        )
+    )
+
+    fig = px.imshow(
+        corr_matrix,
+        color_continuous_scale="RdBu_r",
+        zmin=-1,
+        zmax=1,
+        aspect="auto"
+    )
+
+    fig.update_layout(
+        title=(
+            f"{method.title()} "
+            "Correlation Heatmap"
+        ),
+        width=width,
+        height=height
+    )
+
+    return fig
+    
+# ==================================================
+# Correlation Network Table
+# ==================================================
+
+def extract_network_edges(
+    corr_df,
+    coefficient_cutoff=0.7,
+    fdr_cutoff=0.05
+):
+
+    pass    
