@@ -1191,36 +1191,6 @@ with tab_de_volcano:
                 key="volcano_sig_cutoff"
             )
         
-        # --------------------------------------------------
-        # Editable gene text
-        # --------------------------------------------------
-
-        current_gene_text = ",".join(
-            st.session_state.get(
-                "highlight_genes",
-                []
-            )
-        )
-
-        edited_gene_text = st.text_area(
-            "Highlighted Genes, comma separated",
-            value=current_gene_text,
-            height=100,
-            key="volcano_highlight_text"
-        )
-
-        highlight_genes = list(
-            dict.fromkeys(
-                gene.strip()
-                for gene
-                in edited_gene_text.split(",")
-                if gene.strip() in st.session_state['all_genes']
-            )
-        )
-
-        st.session_state[
-            "highlight_genes"
-        ] = highlight_genes
         
         if "highlight_genes" not in st.session_state:
 
@@ -1266,13 +1236,13 @@ with tab_de_volcano:
 
             # DE results are already sorted descending.
             top_up = (
-                significant_results
+                significant_results["Gene"]
                 .head(
                     min(
-                        int(top_n),
+                        top_n,
                         significant_up
                     )
-                )["Gene"]
+                )
                 .astype(str)
                 .tolist()
             )
@@ -1280,13 +1250,13 @@ with tab_de_volcano:
             # Select the most negative genes from the end
             # of the already descending-sorted table.
             top_down = (
-                significant_results
+                significant_results['Gene']
                 .tail(
                     min(
-                        int(top_n),
+                        top_n,
                         significant_down
                     )
-                )["Gene"]
+                )
                 .astype(str)
                 .tolist()
             )
@@ -1380,7 +1350,37 @@ with tab_de_volcano:
                 )
 
                 st.rerun()
+        # --------------------------------------------------
+        # Editable gene text
+        # --------------------------------------------------
 
+        current_gene_text = ",".join(
+            st.session_state.get(
+                "highlight_genes",
+                []
+            )
+        )
+
+        edited_gene_text = st.text_area(
+            "Highlighted Genes, comma separated",
+            value=current_gene_text,
+            height=100,
+            key="volcano_highlight_text"
+        )
+
+        highlight_genes = list(
+            dict.fromkeys(
+                gene.strip()
+                for gene
+                in edited_gene_text.split(",")
+                if gene.strip() in st.session_state['all_genes']
+            )
+        )
+
+        st.session_state[
+            "highlight_genes"
+        ] = highlight_genes
+        
         # ==================================================
         # FIGURE SETTINGS
         # ==================================================
