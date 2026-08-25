@@ -1157,6 +1157,40 @@ with tab_de_volcano:
         st.markdown(
             "#### Genes to Highlight"
         )
+        significance_column = st.radio(
+            "Significance Metric",
+            options=[
+                "PValue",
+                "FDR"
+            ],
+            horizontal=True,
+            key="volcano_sig_metric"
+        )
+
+        cutoff_col1, cutoff_col2 = st.columns(2)
+
+        with cutoff_col1:
+
+            log2fc_cutoff = st.number_input(
+                "Absolute log2FC Cutoff",
+                min_value=0.0,
+                value=1.0,
+                step=0.1,
+                key="volcano_fc_cutoff"
+            )
+
+        with cutoff_col2:
+
+            significance_cutoff = st.number_input(
+                f"{significance_column} Cutoff",
+                min_value=0.0,
+                max_value=1.0,
+                value=0.05,
+                step=0.01,
+                format="%.4f",
+                key="volcano_sig_cutoff"
+            )
+        
         # --------------------------------------------------
         # Editable gene text
         # --------------------------------------------------
@@ -1354,39 +1388,6 @@ with tab_de_volcano:
         st.markdown(
             "#### Figure Settings"
         )
-        significance_column = st.radio(
-            "Significance Metric",
-            options=[
-                "PValue",
-                "FDR"
-            ],
-            horizontal=True,
-            key="volcano_sig_metric"
-        )
-
-        cutoff_col1, cutoff_col2 = st.columns(2)
-
-        with cutoff_col1:
-
-            log2fc_cutoff = st.number_input(
-                "Absolute log2FC Cutoff",
-                min_value=0.0,
-                value=1.0,
-                step=0.1,
-                key="volcano_fc_cutoff"
-            )
-
-        with cutoff_col2:
-
-            significance_cutoff = st.number_input(
-                f"{significance_column} Cutoff",
-                min_value=0.0,
-                max_value=1.0,
-                value=0.05,
-                step=0.01,
-                format="%.4f",
-                key="volcano_sig_cutoff"
-            )
 
         figure_col1, figure_col2 = st.columns(2)
 
