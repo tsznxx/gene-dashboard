@@ -617,8 +617,8 @@ expr_df = st.session_state[
 # Tabs
 #
 
-tab_data, tab_pca, tab_correlation, tab_de, tab_volcano, tab_box, tab_heatmap = st.tabs(
-    ["Data", "PCA", "Correlation", "DE Analysis", "Volcano Plot", "Gene Boxplot", "Heatmap"]
+tab_data, tab_pca, tab_correlation, tab_de_volcano, tab_box, tab_heatmap = st.tabs(
+    ["Data", "PCA", "Correlation", "DEG Analysis", "Gene Boxplot", "Heatmap"]
 )
 
 #
@@ -744,322 +744,820 @@ with tab_pca:
             st.error(str(e))
 
 
-# DE Tab
-with tab_de:
+# ==================================================
+# DIFFERENTIAL EXPRESSION AND VOLCANO TAB
+# ==================================================
 
-    st.subheader("Differential Expression Analysis")
-    de_is_current = (
+with tab_de_volcano:
+
+    st.subheader(
+        "Differential Expression and Volcano Plot"
+    )
+
+    current_preprocessing = (
+        st.session_state.get(
+            "current_preprocessing",
+            "raw"
+        )
+    )
+
+    st.caption(
+        f"Current analysis matrix: "
+        f"{current_preprocessing}"
+    )
+
+    # ==================================================
+    # CHECK WHETHER STORED DE RESULTS ARE CURRENT
+    # ==================================================
+
+    de_results_current = (
         "de_results" in st.session_state
         and
         st.session_state.get(
             "de_preprocessing"
         )
         ==
-        st.session_state.get(
-            "current_preprocessing"
-        )
+        current_preprocessing
     )
 
-    eligible_columns = []
+    if (
+        "de_results" in st.session_state
+        and not de_results_current
+    ):
 
-    for col in meta_df.columns:
-
-        if meta_df[col].nunique() >= 2:
-            eligible_columns.append(col)
-
-    group_column = st.selectbox(
-        "Grouping Column", eligible_columns, key="de_group_column"
-    )
-
-    groups = sorted(meta_df[group_column].dropna().unique().tolist())
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-
-        group1 = st.selectbox("Group 1", groups, key="group1")
-
-    with col2:
-
-        remaining = [g for g in groups if g != group1]
-
-        group2 = st.selectbox("Group 2", remaining, key="group2")
-    if not de_is_current:
-        if st.button("Run Differential Expression", type="primary"):
-
-            de_results = run_differential_expression(
-                expression_df=expr_df,
-                metadata_df=meta_df,
-                group_column=group_column,
-                group1=group1,
-                group2=group2,
-                apply_log2=apply_log2,
-            )
-
-            if de_results.empty:
-
-                st.error("No genes available for differential expression analysis.")
-
-                st.stop()
-            de_results = de_results.sort_values("log2FC")
-            st.session_state["de_results"] = de_results
-            st.session_state["de_preprocessing"] = st.session_state["current_preprocessing"]
-            st.rerun()
-    else:  
-        de_results = st.session_state["de_results"]
-        st.success(f"{len(de_results)} genes analysed.")
-
-        st.dataframe(de_results, width="content")
-
-        st.download_button(
-            label="Download DE Results",
-            data=de_results.to_csv(index=False, sep="\t"),
-            file_name="DE_results.tsv",
-            mime="text/tab-separated-values",
+        st.warning(
+            "The stored differential expression results "
+            "were generated from a different preprocessing "
+            "state. Run DE analysis again for the current "
+            "analysis matrix."
         )
 
-# ==================================================
-# VOLCANO TAB
-# ==================================================
+    # ==================================================
+    # DIFFERENTIAL EXPRESSION SETTINGS
+    # ==================================================
 
-with tab_volcano:
+    st.markdown(
+        "### Differential Expression Settings"
+    )
 
-    st.subheader("Volcano Plot")
+    # Exclude columns that cannot define two groups.
+    candidate_group_columns = [
+        column
+        for column in meta_df.columns
+        if (
+            meta_df[column]
+            .dropna()
+            .nunique()
+            >= 2
+        )
+    ]
 
-    if not ("de_results" in st.session_state and st.session_state.get("de_preprocessing")==st.session_state.get("current_preprocessing")):
+    if len(candidate_group_columns) == 0:
 
-        st.info("Run Differential Expression first.")
+        st.error(
+            "No metadata column contains at least two "
+            "groups. Differential expression cannot be run."
+        )
 
     else:
 
-        de_df = st.session_state["de_results"]
-        if not "highlight_genes" in st.session_state:
-            st.session_state["highlight_genes"] = []
+        # Prefer a column named Group.
+        group_default_index = 0
+
+        for index, column in enumerate(
+            candidate_group_columns
+        ):
+
+            if column.lower() == "group":
+
+                group_default_index = index
+                break
+
+        group_column = st.selectbox(
+            "Grouping Column",
+            options=candidate_group_columns,
+            index=group_default_index,
+            key="de_group_column"
+        )
+
+        available_groups = (
+            meta_df[group_column]
+            .dropna()
+            .unique()
+            .tolist()
+        )
+
+        available_groups = sorted(
+            available_groups,
+            key=str
+        )
+
+        if len(available_groups) < 2:
+
+            st.error(
+                "The selected metadata column must contain "
+                "at least two groups."
+            )
+
+        else:
+
+            group_col1, group_col2 = st.columns(2)
+
+            with group_col1:
+
+                group1 = st.selectbox(
+                    "Group 1",
+                    options=available_groups,
+                    index=0,
+                    key="de_group1"
+                )
+
+            group2_options = [
+                group
+                for group in available_groups
+                if group != group1
+            ]
+
+            with group_col2:
+
+                group2 = st.selectbox(
+                    "Group 2",
+                    options=group2_options,
+                    index=0,
+                    key="de_group2"
+                )
+
+            group1_count = int(
+                (
+                    meta_df[group_column]
+                    == group1
+                ).sum()
+            )
+
+            group2_count = int(
+                (
+                    meta_df[group_column]
+                    == group2
+                ).sum()
+            )
+
+            st.caption(
+                f"{group1}: {group1_count} samples | "
+                f"{group2}: {group2_count} samples"
+            )
+
+            insufficient_samples = (
+                group1_count < 2
+                or group2_count < 2
+            )
+
+            if insufficient_samples:
+
+                st.warning(
+                    "Welch's t-test requires at least two "
+                    "samples in each selected group."
+                )
+
+            # ==================================================
+            # RUN DE ANALYSIS
+            # ==================================================
+
+            if st.button(
+                "Run Differential Expression",
+                type="primary",
+                disabled=insufficient_samples,
+                key="run_de_analysis"
+            ):
+
+                try:
+
+                    with st.status(
+                        "Running differential expression...",
+                        expanded=True
+                    ) as de_status:
+
+                        de_status.write(
+                            "Checking expression and metadata"
+                        )
+
+                        if expr_df is None:
+
+                            raise ValueError(
+                                "The active expression matrix "
+                                "is unavailable."
+                            )
+
+                        if not isinstance(
+                            expr_df,
+                            pd.DataFrame
+                        ):
+
+                            raise TypeError(
+                                "The active expression matrix "
+                                "must be a pandas DataFrame."
+                            )
+
+                        if expr_df.empty:
+
+                            raise ValueError(
+                                "The active expression matrix "
+                                "contains no genes."
+                            )
+
+                        if meta_df is None:
+
+                            raise ValueError(
+                                "The metadata table is unavailable."
+                            )
+
+                        if not isinstance(
+                            meta_df,
+                            pd.DataFrame
+                        ):
+
+                            raise TypeError(
+                                "The metadata table must be "
+                                "a pandas DataFrame."
+                            )
+
+                        if meta_df.empty:
+
+                            raise ValueError(
+                                "The metadata table is empty."
+                            )
+
+                        de_status.write(
+                            f"Comparing {group1} versus {group2}"
+                        )
+
+                        de_results = (
+                            run_differential_expression(
+                                expression_df=expr_df,
+                                metadata_df=meta_df,
+                                group_column=group_column,
+                                group1=group1,
+                                group2=group2
+                            )
+                        )
+
+                        if (
+                            de_results is None
+                            or de_results.empty
+                        ):
+
+                            raise ValueError(
+                                "No valid differential expression "
+                                "results were produced."
+                            )
+
+                        # Sort once and reuse the sorted table.
+                        de_results = (
+                            de_results
+                            .sort_values(
+                                "log2FC",
+                                ascending=False
+                            )
+                            .reset_index(
+                                drop=True
+                            )
+                        )
+
+                        de_status.write(
+                            "Saving differential expression results"
+                        )
+
+                        st.session_state[
+                            "de_results"
+                        ] = de_results
+
+                        st.session_state[
+                            "de_preprocessing"
+                        ] = current_preprocessing
+
+                        st.session_state[
+                            "de_comparison"
+                        ] = {
+                            "group_column": group_column,
+                            "group1": group1,
+                            "group2": group2
+                        }
+
+                        # Reset Volcano top-gene signature so that
+                        # defaults are regenerated for this analysis.
+                        st.session_state.pop(
+                            "volcano_top_signature",
+                            None
+                        )
+
+                        st.session_state[
+                            "highlight_genes"
+                        ] = []
+
+                        de_status.update(
+                            label=(
+                                "Differential expression completed"
+                            ),
+                            state="complete",
+                            expanded=False
+                        )
+
+                    st.rerun()
+
+                except Exception as error:
+
+                    st.error(
+                        "Differential expression analysis failed: "
+                        f"{error}"
+                    )
+
+    # ==================================================
+    # DE RESULTS
+    # ==================================================
+
+    de_results_current = (
+        "de_results" in st.session_state
+        and
+        st.session_state.get(
+            "de_preprocessing"
+        )
+        ==
+        current_preprocessing
+    )
+
+    if de_results_current:
+
+        de_results = st.session_state[
+            "de_results"
+        ]
+
+        comparison = st.session_state.get(
+            "de_comparison",
+            {}
+        )
+
+        comparison_group1 = comparison.get(
+            "group1",
+            "Group 1"
+        )
+
+        comparison_group2 = comparison.get(
+            "group2",
+            "Group 2"
+        )
+
+        st.divider()
+
+        st.markdown(
+            "### Differential Expression Results"
+        )
+
+        st.write(
+            f"**Comparison:** "
+            f"{comparison_group1} vs "
+            f"{comparison_group2}"
+        )
+
+        st.dataframe(
+            de_results,
+            width="stretch",
+            hide_index=True
+        )
+
+        st.download_button(
+            label="Download DE Results",
+            data=de_results.to_csv(
+                sep="\t",
+                index=False
+            ).encode(
+                "utf-8"
+            ),
+            file_name=(
+                f"DE_{comparison_group1}_vs_"
+                f"{comparison_group2}.tsv"
+            ),
+            mime="text/tab-separated-values",
+            key="download_de_results"
+        )
+
+        # ==================================================
+        # VOLCANO SETTINGS
+        # ==================================================
+
+        st.divider()
+
+        st.markdown(
+            "### Volcano Plot"
+        )
 
         significance_column = st.radio(
-            "Use significance metric",
-            ["PValue", "FDR"],
+            "Significance Metric",
+            options=[
+                "PValue",
+                "FDR"
+            ],
             horizontal=True,
-            key="volcano_sig_metric",
+            key="volcano_sig_metric"
         )
 
-        col1, col2 = st.columns(2)
+        cutoff_col1, cutoff_col2 = st.columns(2)
 
-        with col1:
+        with cutoff_col1:
 
             log2fc_cutoff = st.number_input(
-                "Absolute log2FC cutoff", value=1.0, step=0.1, key="volcano_fc_cutoff"
+                "Absolute log2FC Cutoff",
+                min_value=0.0,
+                value=1.0,
+                step=0.1,
+                key="volcano_fc_cutoff"
             )
 
-        with col2:
+        with cutoff_col2:
 
             significance_cutoff = st.number_input(
-                f"{significance_column} cutoff",
+                f"{significance_column} Cutoff",
+                min_value=0.0,
+                max_value=1.0,
                 value=0.05,
                 step=0.01,
-                key="volcano_sig_cutoff",
+                format="%.4f",
+                key="volcano_sig_cutoff"
             )
 
-        # --------------------------------------------------
-        # Highlighted Genes
-        # --------------------------------------------------
+        # ==================================================
+        # HIGHLIGHTED GENES
+        # ==================================================
 
-        st.subheader("Genes to Highlight")
-        
-        # --------------------------------------------------
-        # Editable Gene List
-        # --------------------------------------------------
-        all_genes = st.session_state["all_genes"]
-        gene_text = st.text_area(
-            "Highlighted Genes",
-            value=",".join(st.session_state["highlight_genes"]),
-            height=120,
+        st.markdown(
+            "#### Genes to Highlight"
         )
-        genes = [ gene.strip() for gene in gene_text.split(",") if gene.strip()]
-        highlight_genes = [gene for gene in genes if gene in all_genes]
-        st.session_state['not_found_genes'] = [gene for gene in genes if gene not in highlight_genes]
-        st.session_state['highlight_genes'] = highlight_genes
 
         if "highlight_genes" not in st.session_state:
-            st.session_state["highlight_genes"] = []
+
+            st.session_state[
+                "highlight_genes"
+            ] = []
 
         use_top_genes = st.checkbox(
-            "Use Top Significant Genes", value=True, key="volcano_use_top_genes"
+            "Use Top Significant Genes",
+            value=True,
+            key="volcano_use_top_genes"
         )
+
+        top_gene_list = []
 
         if use_top_genes:
 
             top_n = st.number_input(
-                "Top Up/Down Genes Per Direction",
+                "Top Genes per Direction",
                 min_value=1,
                 max_value=100,
                 value=5,
-                key="volcano_top_n",
+                step=1,
+                key="volcano_top_n"
             )
 
-            #
-            # Significant genes only
-            #
-            sig_df = de_df[de_df[significance_column] <= significance_cutoff].copy()
+            significant_results = de_results[
+                de_results[
+                    significance_column
+                ]
+                <= significance_cutoff
+            ]
 
-            up_df_N = sum(sig_df["log2FC"] >= log2fc_cutoff)
-            down_df_N = sum(sig_df["log2FC"] <= log2fc_cutoff)
+            significant_up = significant_results[
+                significant_results["log2FC"]
+                >= log2fc_cutoff
+            ]
 
-            up_n = min(top_n, up_df_N)
-            down_n = min(top_n, down_df_N)
+            significant_down = significant_results[
+                significant_results["log2FC"]
+                <= -log2fc_cutoff
+            ]
 
-            top_gene_list = (
-                sig_df["Gene"].tail(min(top_n, up_df_N)).to_list()
-                + sig_df["Gene"].head(min(top_n, down_df_N)).to_list()
+            # DE results are already sorted descending.
+            top_up = (
+                significant_up
+                .head(
+                    min(
+                        int(top_n),
+                        len(significant_up)
+                    )
+                )["Gene"]
+                .astype(str)
+                .tolist()
             )
 
-            top_gene_list = list(dict.fromkeys(top_gene_list))
+            # Select the most negative genes from the end
+            # of the already descending-sorted table.
+            top_down = (
+                significant_down
+                .tail(
+                    min(
+                        int(top_n),
+                        len(significant_down)
+                    )
+                )["Gene"]
+                .astype(str)
+                .tolist()
+            )
 
-            if st.button("Use Top Genes", key="refresh_top_genes"):
+            top_down = list(
+                reversed(
+                    top_down
+                )
+            )
 
-                st.session_state["highlight_genes"] = top_gene_list
+            top_gene_list = list(
+                dict.fromkeys(
+                    top_up + top_down
+                )
+            )
+
+            top_signature = (
+                current_preprocessing,
+                comparison_group1,
+                comparison_group2,
+                significance_column,
+                float(significance_cutoff),
+                float(log2fc_cutoff),
+                int(top_n)
+            )
+
+            if st.button(
+                "Refresh Top Genes",
+                key="volcano_refresh_top_genes"
+            ):
+
+                st.session_state[
+                    "highlight_genes"
+                ] = top_gene_list
 
                 st.rerun()
-                
+
+            if (
+                st.session_state.get(
+                    "volcano_top_signature"
+                )
+                is None
+            ):
+
+                st.session_state[
+                    "highlight_genes"
+                ] = top_gene_list
+
+                st.session_state[
+                    "volcano_top_signature"
+                ] = top_signature
+
         # --------------------------------------------------
-        # Add Gene
+        # Editable gene text
         # --------------------------------------------------
 
-        colag1, colag2 = st.columns(2,vertical_alignment="bottom")
-        with colag1:
-            gene_to_add = st.selectbox(
-                "Type Gene Name",
-                options=st.session_state.get("all_genes", []),
-                index=None,
-                placeholder="Type to search...",
-                key="volcano_gene_search",
+        current_gene_text = ",".join(
+            st.session_state.get(
+                "highlight_genes",
+                []
             )
-        with colag2:
-            if st.button("Add Gene", key="volcano_add_gene"):
+        )
 
-                if gene_to_add and gene_to_add not in highlight_genes:
+        edited_gene_text = st.text_area(
+            "Highlighted Genes, comma separated",
+            value=current_gene_text,
+            height=100,
+            key="volcano_highlight_text"
+        )
 
-                    st.session_state["highlight_genes"] = highlight_genes + [gene_to_add]
+        highlight_genes = list(
+            dict.fromkeys(
+                gene.strip()
+                for gene
+                in edited_gene_text.split(",")
+                if gene.strip()
+            )
+        )
 
-                    st.session_state["reload_volcano_text"] = True
+        st.session_state[
+            "highlight_genes"
+        ] = highlight_genes
 
-                    st.rerun()
-                
+        # --------------------------------------------------
+        # Add gene
+        # --------------------------------------------------
 
-        #
-        # Keep synchronized
-        #
-        st.session_state["highlight_genes"] = highlight_genes
-        not_found_genes = st.session_state.get('not_found_genes',[])
-        if len(not_found_genes)>0:
-            st.error(f'''Warning: [{",".join(not_found_genes)}] not found in genes!''')
-        #
-        # Figure Settings
-        #
-        st.divider()
-        st.subheader("Figure Settings")
+        all_genes = sorted(
+            st.session_state.get(
+                "all_genes",
+                expr_df.index.astype(str).tolist()
+            )
+        )
 
-        col3, col4 = st.columns(2)
+        gene_to_add = st.selectbox(
+            "Add a Gene",
+            options=all_genes,
+            index=None,
+            placeholder="Type to search for a gene...",
+            key="volcano_gene_search"
+        )
 
-        with col3:
+        if st.button(
+            "Add Gene",
+            key="volcano_add_gene"
+        ):
+
+            if (
+                gene_to_add
+                and gene_to_add
+                not in highlight_genes
+            ):
+
+                st.session_state[
+                    "highlight_genes"
+                ] = (
+                    highlight_genes
+                    + [gene_to_add]
+                )
+
+                # Remove the widget state so the text area
+                # rebuilds from highlight_genes on rerun.
+                st.session_state.pop(
+                    "volcano_highlight_text",
+                    None
+                )
+
+                st.rerun()
+
+        # ==================================================
+        # FIGURE SETTINGS
+        # ==================================================
+
+        st.markdown(
+            "#### Figure Settings"
+        )
+
+        figure_col1, figure_col2 = st.columns(2)
+
+        with figure_col1:
+
             volcano_width = st.number_input(
                 "Figure Width (px)",
-                value=500,
-                min_value=200,
-                max_value=2000,
+                min_value=400,
+                max_value=4000,
+                value=1200,
                 step=100,
-                key="volcano_width",
+                key="volcano_width"
             )
 
-        with col4:
+        with figure_col2:
+
             volcano_height = st.number_input(
                 "Figure Height (px)",
-                value=400,
-                min_value=200,
-                max_value=1500,
+                min_value=300,
+                max_value=4000,
+                value=800,
                 step=100,
-                key="volcano_height",
+                key="volcano_height"
             )
 
-        #
-        # X-axis
-        #
-        auto_x = st.checkbox("Automatic X-axis", value=True, key="volcano_auto_x")
+        auto_x = st.checkbox(
+            "Automatic X-axis",
+            value=True,
+            key="volcano_auto_x"
+        )
 
         x_range = None
 
         if not auto_x:
 
-            c5, c6 = st.columns(2)
+            x_col1, x_col2 = st.columns(2)
 
-            with c5:
+            with x_col1:
+
                 x_min = st.number_input(
-                    "X-axis Min", value=-5.0, step=0.1, key="volcano_xmin"
+                    "X-axis Minimum",
+                    value=-5.0,
+                    key="volcano_x_min"
                 )
 
-            with c6:
+            with x_col2:
+
                 x_max = st.number_input(
-                    "X-axis Max", value=5.0, step=0.1, key="volcano_xmax"
+                    "X-axis Maximum",
+                    value=5.0,
+                    key="volcano_x_max"
                 )
 
-            x_range = [x_min, x_max]
+            if x_min >= x_max:
 
-        #
-        # Y-axis
-        #
-        auto_y = st.checkbox("Automatic Y-axis", value=True, key="volcano_auto_y")
+                st.warning(
+                    "X-axis minimum must be smaller "
+                    "than X-axis maximum."
+                )
+
+            else:
+
+                x_range = [
+                    x_min,
+                    x_max
+                ]
+
+        auto_y = st.checkbox(
+            "Automatic Y-axis",
+            value=True,
+            key="volcano_auto_y"
+        )
 
         y_range = None
 
         if not auto_y:
 
-            c7, c8 = st.columns(2)
+            y_col1, y_col2 = st.columns(2)
 
-            with c7:
+            with y_col1:
+
                 y_min = st.number_input(
-                    "Y-axis Min", value=0.0, step=0.1, key="volcano_ymin"
+                    "Y-axis Minimum",
+                    value=0.0,
+                    key="volcano_y_min"
                 )
 
-            with c8:
+            with y_col2:
+
                 y_max = st.number_input(
-                    "Y-axis Max", value=20.0, step=0.1, key="volcano_ymax"
+                    "Y-axis Maximum",
+                    value=20.0,
+                    key="volcano_y_max"
                 )
 
-            y_range = [y_min, y_max]
+            if y_min >= y_max:
 
-        #
-        # Create Figure
-        #
-        if st.button("Generate Volcano Plot", key="generate_volcano_plot"):
-            fig = create_volcano_plot(
-                de_df=de_df,
-                significance_column=significance_column,
-                significance_cutoff=significance_cutoff,
-                log2fc_cutoff=log2fc_cutoff,
-                highlight_genes=highlight_genes,
-                width=volcano_width,
-                height=volcano_height,
-                x_range=x_range,
-                y_range=y_range,
-            )
+                st.warning(
+                    "Y-axis minimum must be smaller "
+                    "than Y-axis maximum."
+                )
 
-            #
-            # Display Figure
-            #
-            st.plotly_chart(
-                fig,
-                width="content",
-                config={
-                    "displaylogo": False,
-                    "toImageButtonOptions": {
-                        "format": "svg",
-                        "filename": "volcano_plot",
-                        "width": volcano_width,
-                        "height": volcano_height,
-                        "scale": 1,
-                    },
-                },
-            )
+            else:
+
+                y_range = [
+                    y_min,
+                    y_max
+                ]
+
+        # ==================================================
+        # CREATE AND DISPLAY VOLCANO
+        # ==================================================
+
+        volcano_fig = create_volcano_plot(
+            de_df=de_results,
+            significance_column=
+            significance_column,
+            significance_cutoff=
+            significance_cutoff,
+            log2fc_cutoff=
+            log2fc_cutoff,
+            highlight_genes=
+            highlight_genes,
+            width=
+            volcano_width,
+            height=
+            volcano_height,
+            x_range=
+            x_range,
+            y_range=
+            y_range
+        )
+
+        volcano_filename = (
+            f"volcano_{comparison_group1}_vs_"
+            f"{comparison_group2}"
+        )
+
+        st.plotly_chart(
+            volcano_fig,
+            width="content",
+            config={
+                "displaylogo": False,
+                "toImageButtonOptions": {
+                    "format": "svg",
+                    "filename":
+                    volcano_filename,
+                    "width":
+                    volcano_width,
+                    "height":
+                    volcano_height,
+                    "scale": 1
+                }
+            }
+        )
+
+    else:
+
+        st.info(
+            "Run differential expression analysis "
+            "for the current analysis matrix to display "
+            "the results and Volcano plot."
+        )
+
+
+
 
 
 # ==================================================
