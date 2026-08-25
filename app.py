@@ -2484,6 +2484,7 @@ with tab_correlation:
                     100,
                     maximum_rows
                 )
+                st.write(corr_results.shape)
 
                 rows_to_show = st.number_input(
                     "Rows to Display",
