@@ -630,14 +630,14 @@ def create_correlation_scatter(
     if fdr is not None:
 
         stats_text.append(
-            f"FDR={fdr:.2e}<br>"
+            f"FDR={fdr:.2e}"
         )
 
     if stats_text:
 
         title += (
             "<br>"
-            + " | ".join(stats_text)
+            + " | ".join(stats_text)+"<br> "
         )
 
     fig.update_layout(
