@@ -578,7 +578,9 @@ def create_correlation_scatter(
     pvalue=None,
     fdr=None,
     width=1000,
-    height=700
+    height=700,
+    xrange=None,
+    yrange=None
 ):
     """
     Correlation scatter plot.
@@ -649,6 +651,16 @@ def create_correlation_scatter(
         height=height,
         template="plotly_white"
     )
+    if x_range is not None:
+
+        fig.update_xaxes(
+            range=x_range
+        )
+    if y_range is not None:
+
+        fig.update_yaxes(
+            range=y_range
+        )        
     fig = apply_publication_style(fig)
     return fig
     

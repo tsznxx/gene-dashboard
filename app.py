@@ -147,7 +147,7 @@ with st.sidebar:
             st.rerun()
 
     # ==================================================
-    # GLOBAL SETTINGS
+    # Preprocess settings
     # ==================================================
     if st.session_state.get(
         "data_loaded",
@@ -2681,6 +2681,52 @@ with tab_correlation:
                     step=50,
                     key="corr_plot_height"
                 )
+            #
+            # X-axis
+            #
+            auto_x = st.checkbox("Automatic X-axis", value=True, key="correlation_auto_x")
+
+            x_range = None
+
+            if not auto_x:
+
+                c5, c6 = st.columns(2)
+
+                with c5:
+                    x_min = st.number_input(
+                        "X-axis Min", value=-5.0, step=0.1, key="correlation_xmin"
+                    )
+
+                with c6:
+                    x_max = st.number_input(
+                        "X-axis Max", value=5.0, step=0.1, key="correlation_xmax"
+                    )
+
+                x_range = [x_min, x_max]
+
+            #
+            # Y-axis
+            #
+            auto_y = st.checkbox("Automatic Y-axis", value=True, key="correlation_auto_y")
+
+            y_range = None
+
+            if not auto_y:
+
+                c7, c8 = st.columns(2)
+
+                with c7:
+                    y_min = st.number_input(
+                        "Y-axis Min", value=0.0, step=0.1, key="correlation_ymin"
+                    )
+
+                with c8:
+                    y_max = st.number_input(
+                        "Y-axis Max", value=20.0, step=0.1, key="correlation_ymax"
+                    )
+
+                y_range = [y_min, y_max]
+
 
             try:
 
@@ -2727,7 +2773,9 @@ with tab_correlation:
                         width=
                         corr_plot_width,
                         height=
-                        corr_plot_height
+                        corr_plot_height,
+                        xrange=xrange,
+                        yrange=yrange
                     )
                 )
 
