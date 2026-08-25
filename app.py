@@ -2727,7 +2727,8 @@ with tab_correlation:
 
                 y_range = [y_min, y_max]
 
-
+            st.write(x_range)
+            st.write(y_range)
             try:
 
                 scatter_data = (
@@ -2746,6 +2747,8 @@ with tab_correlation:
                         selected_scatter_b
                     )
                 )
+                st.write("try",x_range)
+                st.write("try",y_range)
                 scatter_fig = (
                     create_correlation_scatter(
                         plot_df=scatter_data,
