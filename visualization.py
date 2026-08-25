@@ -27,15 +27,15 @@ TAB10 = [
 
 
 def apply_publication_style(
-    fig,
-    width
+    fig
 ):
+    width_px, height_px = fig.get_size_inches() * fig.dpi
 
     legend_gap_px = 40
 
     legend_x = (
         1
-        + legend_gap_px / width
+        + legend_gap_px / width_px
     )
 
     fig.update_layout(
@@ -127,7 +127,7 @@ def create_pca_plot(
         ),
         legend_title=color_column
     )
-    fig = apply_publication_style(fig,width)
+    fig = apply_publication_style(fig)
     return fig
 
 
@@ -265,7 +265,7 @@ def create_volcano_plot(
         fig.update_yaxes(
             range=y_range
         )
-    fig = apply_publication_style(fig,width)
+    fig = apply_publication_style(fig)
     return fig
     
     
@@ -404,7 +404,7 @@ def create_gene_boxplot(
         fig.update_yaxes(
             range=y_range
         )
-    fig = apply_publication_style(fig,width)
+    fig = apply_publication_style(fig)
     return fig
     
 def create_heatmap(
@@ -557,7 +557,7 @@ def create_heatmap(
         yaxis_title="Genes"
     )
 
-    #fig = apply_publication_style(fig,width)
+    #fig = apply_publication_style(fig)
     return fig
     
     
@@ -632,7 +632,7 @@ def create_correlation_scatter(
     if fdr is not None:
 
         stats_text.append(
-            f"FDR={fdr:.2e}"
+            f"FDR={fdr:.2e}<br>"
         )
 
     if stats_text:
@@ -648,7 +648,7 @@ def create_correlation_scatter(
         height=height,
         template="plotly_white"
     )
-    fig = apply_publication_style(fig,width)
+    fig = apply_publication_style(fig)
     return fig
     
 # ==================================================
@@ -719,7 +719,7 @@ def create_correlation_volcano(
         height=height,
         template="plotly_white"
     )
-    fig = apply_publication_style(fig,width)
+    fig = apply_publication_style(fig)
     return fig
     
 # ==================================================
@@ -766,7 +766,7 @@ def create_correlation_heatmap(
         width=width,
         height=height
     )
-    fig = apply_publication_style(fig,width)
+    fig = apply_publication_style(fig)
     return fig
     
 # ==================================================
