@@ -654,12 +654,12 @@ def create_correlation_scatter(
     if x_range is not None:
 
         fig.update_xaxes(
-            range=x_range
+            range=xrange
         )
     if y_range is not None:
 
         fig.update_yaxes(
-            range=y_range
+            range=yrange
         )        
     fig = apply_publication_style(fig)
     return fig
