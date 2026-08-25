@@ -29,32 +29,38 @@ TAB10 = [
 def apply_publication_style(
     fig
 ):
-    legend_gap_px = 40
-
-    legend_x = (
-        1
-        + legend_gap_px / fig.layout.width
-    )
-
-    fig.update_layout(
-        template="plotly_white",
-        plot_bgcolor="white",
-        paper_bgcolor="white",
-
-        legend=dict(
-            x=legend_x,
-            y=1,
-            xanchor="left",
-            yanchor="top"
+    if fig.layout.legend:
+        legend_gap_px = 40
+        legend_x = (
+            1
+            + legend_gap_px / fig.layout.width
         )
-    )
+
+        fig.update_layout(
+            template="plotly_white",
+            plot_bgcolor="white",
+            paper_bgcolor="white",
+
+            legend=dict(
+                x=legend_x,
+                y=1,
+                xanchor="left",
+                yanchor="top"
+            )
+        )
+    else:
+        fig.update_layout(
+            template="plotly_white",
+            plot_bgcolor="white",
+            paper_bgcolor="white",
+        )
 
     fig.update_xaxes(
         showgrid=False,
         showline=True,
         linewidth=1,
         linecolor="black",
-        mirror="allticks",
+        mirror=True,
         ticks="outside",
         ticklen=6,
         tickwidth=1,
@@ -67,7 +73,7 @@ def apply_publication_style(
         showline=True,
         linewidth=1,
         linecolor="black",
-        mirror="allticks",
+        mirror=True,
         ticks="outside",
         ticklen=6,
         tickwidth=1,
