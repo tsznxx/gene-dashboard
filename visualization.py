@@ -635,10 +635,7 @@ def create_correlation_scatter(
 
     if stats_text:
 
-        title += (
-            "<br>"
-            + " | ".join(stats_text)+"<br> "
-        )
+        title += " | ".join(stats_text)
 
     fig.update_layout(
         title=title,
