@@ -2666,7 +2666,7 @@ with tab_correlation:
                     "Scatter Plot Width (px)",
                     min_value=300,
                     max_value=2000,
-                    value=700,
+                    value=500,
                     step=50,
                     key="corr_plot_width"
                 )
@@ -2677,7 +2677,7 @@ with tab_correlation:
                     "Scatter Plot Height (px)",
                     min_value=300,
                     max_value=2000,
-                    value=600,
+                    value=500,
                     step=50,
                     key="corr_plot_height"
                 )
