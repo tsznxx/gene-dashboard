@@ -1250,7 +1250,7 @@ with tab_de_volcano:
             with colag1:
                 gene_to_add = st.selectbox(
                     "Type Gene Name",
-                    options=st.session_state.get("all_genes", []),
+                    options=[g for g in st.session_state.get("all_genes", []) if not g inst.session_state["highlight_genes"]] ,
                     index=None,
                     placeholder="Type to search...",
                     key="volcano_gene_search",
