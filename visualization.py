@@ -54,7 +54,7 @@ def apply_publication_style(
         showline=True,
         linewidth=1,
         linecolor="black",
-        mirror=True,
+        mirror="allticks",
         ticks="outside",
         ticklen=6,
         tickwidth=1,
@@ -67,7 +67,7 @@ def apply_publication_style(
         showline=True,
         linewidth=1,
         linecolor="black",
-        mirror=True,
+        mirror="allticks",
         ticks="outside",
         ticklen=6,
         tickwidth=1,
@@ -635,7 +635,7 @@ def create_correlation_scatter(
 
     if stats_text:
 
-        title += " | ".join(stats_text)
+        title += "|"+" | ".join(stats_text)
 
     fig.update_layout(
         title=title,
