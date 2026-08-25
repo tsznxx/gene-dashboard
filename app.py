@@ -157,7 +157,7 @@ with st.sidebar:
         st.divider()
 
         st.header(
-            "Global Settings"
+            "Preprocessing"
         )
 
         # ----------------------------------
