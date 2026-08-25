@@ -1190,7 +1190,37 @@ with tab_de_volcano:
                 format="%.4f",
                 key="volcano_sig_cutoff"
             )
-        
+
+        # --------------------------------------------------
+        # Editable gene text
+        # --------------------------------------------------
+
+        current_gene_text = ",".join(
+            st.session_state.get(
+                "highlight_genes",
+                []
+            )
+        )
+
+        edited_gene_text = st.text_area(
+            "Highlighted Genes, comma separated",
+            value=current_gene_text,
+            height=100,
+            key="volcano_highlight_text"
+        )
+
+        highlight_genes = list(
+            dict.fromkeys(
+                gene.strip()
+                for gene
+                in edited_gene_text.split(",")
+                if gene.strip() in st.session_state['all_genes']
+            )
+        )
+
+        st.session_state[
+            "highlight_genes"
+        ] = highlight_genes
         
         if "highlight_genes" not in st.session_state:
 
@@ -1276,6 +1306,7 @@ with tab_de_volcano:
                 float(log2fc_cutoff),
                 int(top_n)
             )
+            st.session_state['highlight_genes'] = top_gene_list
 
             if st.button(
                 "Refresh Top Genes",
@@ -1350,36 +1381,7 @@ with tab_de_volcano:
                 )
 
                 st.rerun()
-        # --------------------------------------------------
-        # Editable gene text
-        # --------------------------------------------------
 
-        current_gene_text = ",".join(
-            st.session_state.get(
-                "highlight_genes",
-                []
-            )
-        )
-
-        edited_gene_text = st.text_area(
-            "Highlighted Genes, comma separated",
-            value=current_gene_text,
-            height=100,
-            key="volcano_highlight_text"
-        )
-
-        highlight_genes = list(
-            dict.fromkeys(
-                gene.strip()
-                for gene
-                in edited_gene_text.split(",")
-                if gene.strip() in st.session_state['all_genes']
-            )
-        )
-
-        st.session_state[
-            "highlight_genes"
-        ] = highlight_genes
         
         # ==================================================
         # FIGURE SETTINGS
