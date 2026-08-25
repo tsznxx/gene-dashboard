@@ -1273,6 +1273,7 @@ with tab_de_volcano:
 
             st.session_state["volcano_top_signature"] = st.session_state.get("volcano_top_signature",None)
             if (st.session_state.get("volcano_top_signature") is not None) or sum([v1==v2 for v1,v2 in zip(st.session_state["volcano_top_signature"],top_signature)])!=len(top_signature):
+                st.write(top_signature)
 
                 st.session_state[
                     "highlight_genes"
