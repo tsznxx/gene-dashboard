@@ -689,7 +689,7 @@ with tab_pca:
         pca_height = st.number_input(
             "Figure Height (px)",
             min_value=300,
-            max_value=1200,
+            max_value=450,
             value=450,
             step=50,
             key="pca_height",
@@ -1149,39 +1149,6 @@ with tab_de_volcano:
             "### Volcano Plot"
         )
 
-        significance_column = st.radio(
-            "Significance Metric",
-            options=[
-                "PValue",
-                "FDR"
-            ],
-            horizontal=True,
-            key="volcano_sig_metric"
-        )
-
-        cutoff_col1, cutoff_col2 = st.columns(2)
-
-        with cutoff_col1:
-
-            log2fc_cutoff = st.number_input(
-                "Absolute log2FC Cutoff",
-                min_value=0.0,
-                value=1.0,
-                step=0.1,
-                key="volcano_fc_cutoff"
-            )
-
-        with cutoff_col2:
-
-            significance_cutoff = st.number_input(
-                f"{significance_column} Cutoff",
-                min_value=0.0,
-                max_value=1.0,
-                value=0.05,
-                step=0.01,
-                format="%.4f",
-                key="volcano_sig_cutoff"
-            )
 
         # ==================================================
         # HIGHLIGHTED GENES
@@ -1190,7 +1157,37 @@ with tab_de_volcano:
         st.markdown(
             "#### Genes to Highlight"
         )
+        # --------------------------------------------------
+        # Editable gene text
+        # --------------------------------------------------
 
+        current_gene_text = ",".join(
+            st.session_state.get(
+                "highlight_genes",
+                []
+            )
+        )
+
+        edited_gene_text = st.text_area(
+            "Highlighted Genes, comma separated",
+            value=current_gene_text,
+            height=100,
+            key="volcano_highlight_text"
+        )
+
+        highlight_genes = list(
+            dict.fromkeys(
+                gene.strip()
+                for gene
+                in edited_gene_text.split(",")
+                if gene.strip() in st.session_state['all_genes']
+            )
+        )
+
+        st.session_state[
+            "highlight_genes"
+        ] = highlight_genes
+        
         if "highlight_genes" not in st.session_state:
 
             st.session_state[
@@ -1226,12 +1223,12 @@ with tab_de_volcano:
             significant_up = significant_results[
                 significant_results["log2FC"]
                 >= log2fc_cutoff
-            ]
+            ].shape[0]
 
             significant_down = significant_results[
                 significant_results["log2FC"]
                 <= -log2fc_cutoff
-            ]
+            ].shape[0]
 
             # DE results are already sorted descending.
             top_up = (
@@ -1239,7 +1236,7 @@ with tab_de_volcano:
                 .head(
                     min(
                         int(top_n),
-                        len(significant_up)
+                        significant_up
                     )
                 )["Gene"]
                 .astype(str)
@@ -1253,22 +1250,16 @@ with tab_de_volcano:
                 .tail(
                     min(
                         int(top_n),
-                        len(significant_down)
+                        significant_down
                     )
                 )["Gene"]
                 .astype(str)
                 .tolist()
             )
 
-            top_down = list(
-                reversed(
-                    top_down
-                )
-            )
-
             top_gene_list = list(
                 dict.fromkeys(
-                    top_up + top_down
+                    top_up + top_down[::-1]
                 )
             )
 
@@ -1308,36 +1299,7 @@ with tab_de_volcano:
                     "volcano_top_signature"
                 ] = top_signature
 
-        # --------------------------------------------------
-        # Editable gene text
-        # --------------------------------------------------
 
-        current_gene_text = ",".join(
-            st.session_state.get(
-                "highlight_genes",
-                []
-            )
-        )
-
-        edited_gene_text = st.text_area(
-            "Highlighted Genes, comma separated",
-            value=current_gene_text,
-            height=100,
-            key="volcano_highlight_text"
-        )
-
-        highlight_genes = list(
-            dict.fromkeys(
-                gene.strip()
-                for gene
-                in edited_gene_text.split(",")
-                if gene.strip()
-            )
-        )
-
-        st.session_state[
-            "highlight_genes"
-        ] = highlight_genes
 
         # --------------------------------------------------
         # Add gene
@@ -1392,6 +1354,39 @@ with tab_de_volcano:
         st.markdown(
             "#### Figure Settings"
         )
+        significance_column = st.radio(
+            "Significance Metric",
+            options=[
+                "PValue",
+                "FDR"
+            ],
+            horizontal=True,
+            key="volcano_sig_metric"
+        )
+
+        cutoff_col1, cutoff_col2 = st.columns(2)
+
+        with cutoff_col1:
+
+            log2fc_cutoff = st.number_input(
+                "Absolute log2FC Cutoff",
+                min_value=0.0,
+                value=1.0,
+                step=0.1,
+                key="volcano_fc_cutoff"
+            )
+
+        with cutoff_col2:
+
+            significance_cutoff = st.number_input(
+                f"{significance_column} Cutoff",
+                min_value=0.0,
+                max_value=1.0,
+                value=0.05,
+                step=0.01,
+                format="%.4f",
+                key="volcano_sig_cutoff"
+            )
 
         figure_col1, figure_col2 = st.columns(2)
 
