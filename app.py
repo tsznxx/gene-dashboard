@@ -1247,6 +1247,7 @@ with tab_de_volcano:
             #
             # Significant genes only
             #
+            de_df = st.session_state['de_results']
             sig_df = de_df[de_df[significance_column] <= significance_cutoff].copy()
 
             up_df_N = sum(sig_df["log2FC"] >= log2fc_cutoff)
