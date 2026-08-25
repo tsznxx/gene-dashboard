@@ -1145,342 +1145,242 @@ with tab_de_volcano:
 
         st.divider()
 
-        st.markdown(
-            "### Volcano Plot"
-        )
+        st.subheader("Volcano Plot")
 
+        if not ("de_results" in st.session_state and st.session_state.get("de_preprocessing")==st.session_state.get("current_preprocessing")):
 
-        # ==================================================
-        # HIGHLIGHTED GENES
-        # ==================================================
+            st.info("Run Differential Expression first.")
 
-        st.markdown(
-            "#### Genes to Highlight"
-        )
-        significance_column = st.radio(
-            "Significance Metric",
-            options=[
-                "PValue",
-                "FDR"
-            ],
-            horizontal=True,
-            key="volcano_sig_metric"
-        )
+        else:
 
-        cutoff_col1, cutoff_col2 = st.columns(2)
+            de_df = st.session_state["de_results"]
+            if not "highlight_genes" in st.session_state:
+                st.session_state["highlight_genes"] = []
 
-        with cutoff_col1:
-
-            log2fc_cutoff = st.number_input(
-                "Absolute log2FC Cutoff",
-                min_value=0.0,
-                value=1.0,
-                step=0.1,
-                key="volcano_fc_cutoff"
+            significance_column = st.radio(
+                "Use significance metric",
+                ["PValue", "FDR"],
+                horizontal=True,
+                key="volcano_sig_metric",
             )
 
-        with cutoff_col2:
+            col1, col2 = st.columns(2)
 
-            significance_cutoff = st.number_input(
-                f"{significance_column} Cutoff",
-                min_value=0.0,
-                max_value=1.0,
-                value=0.05,
-                step=0.01,
-                format="%.4f",
-                key="volcano_sig_cutoff"
+            with col1:
+
+                log2fc_cutoff = st.number_input(
+                    "Absolute log2FC cutoff", value=1.0, step=0.1, key="volcano_fc_cutoff"
+                )
+
+            with col2:
+
+                significance_cutoff = st.number_input(
+                    f"{significance_column} cutoff",
+                    value=0.05,
+                    step=0.01,
+                    key="volcano_sig_cutoff",
+                )
+
+            # --------------------------------------------------
+            # Highlighted Genes
+            # --------------------------------------------------
+
+            st.subheader("Genes to Highlight")
+            
+            # --------------------------------------------------
+            # Editable Gene List
+            # --------------------------------------------------
+            all_genes = st.session_state["all_genes"]
+            gene_text = st.text_area(
+                "Highlighted Genes",
+                value=",".join(st.session_state["highlight_genes"]),
+                height=120,
+            )
+            genes = [ gene.strip() for gene in gene_text.split(",") if gene.strip()]
+            highlight_genes = [gene for gene in genes if gene in all_genes]
+            st.session_state['not_found_genes'] = [gene for gene in genes if gene not in highlight_genes]
+            st.session_state['highlight_genes'] = highlight_genes
+
+            if "highlight_genes" not in st.session_state:
+                st.session_state["highlight_genes"] = []
+
+            use_top_genes = st.checkbox(
+                "Use Top Significant Genes", value=True, key="volcano_use_top_genes"
             )
 
-        # --------------------------------------------------
-        # Editable gene text
-        # --------------------------------------------------
+            if use_top_genes:
 
-        current_gene_text = ",".join(
-            st.session_state.get(
-                "highlight_genes",
-                []
-            )
-        )
+                top_n = st.number_input(
+                    "Top Up/Down Genes Per Direction",
+                    min_value=1,
+                    max_value=100,
+                    value=5,
+                    key="volcano_top_n",
+                )
 
-        edited_gene_text = st.text_area(
-            "Highlighted Genes, comma separated",
-            value=current_gene_text,
-            height=100,
-            key="volcano_highlight_text"
-        )
+                #
+                # Significant genes only
+                #
+                sig_df = de_df[de_df[significance_column] <= significance_cutoff].copy()
 
-        highlight_genes = list(
-            dict.fromkeys(
-                gene.strip()
-                for gene
-                in edited_gene_text.split(",")
-                if gene.strip() in st.session_state['all_genes']
-            )
-        )
+                up_df_N = sum(sig_df["log2FC"] >= log2fc_cutoff)
+                down_df_N = sum(sig_df["log2FC"] <= log2fc_cutoff)
 
-        st.session_state["highlight_genes"] = st.session_state.get("highlight_genes",highlight_genes)
+                up_n = min(top_n, up_df_N)
+                down_n = min(top_n, down_df_N)
 
-        use_top_genes = st.checkbox(
-            "Use Top Significant Genes",
-            value=True,
-            key="volcano_use_top_genes"
-        )
+                top_gene_list = (
+                    sig_df["Gene"].tail(min(top_n, up_df_N)).to_list()
+                    + sig_df["Gene"].head(min(top_n, down_df_N)).to_list()
+                )
 
-        if use_top_genes:
+                top_gene_list = list(dict.fromkeys(top_gene_list))
 
-            top_n = st.number_input(
-                "Top Up/Down Genes Per Direction",
-                min_value=1,
-                max_value=100,
-                value=5,
-                key="volcano_top_n",
-            )
+                if st.button("Use Top Genes", key="refresh_top_genes"):
 
-            #
-            # Significant genes only
-            #
-            de_df = st.session_state['de_results']
-            sig_df = de_df[de_df[significance_column] <= significance_cutoff].copy()
-
-            up_df_N = sum(sig_df["log2FC"] >= log2fc_cutoff)
-            down_df_N = sum(sig_df["log2FC"] <= log2fc_cutoff)
-
-            up_n = min(top_n, up_df_N)
-            down_n = min(top_n, down_df_N)
-
-            top_gene_list = (
-                sig_df["Gene"].tail(min(top_n, up_df_N)).to_list()
-                + sig_df["Gene"].head(min(top_n, down_df_N)).to_list()
-            )
-
-            top_gene_list = list(dict.fromkeys(top_gene_list))
-            top_signature = (
-                current_preprocessing,
-                comparison_group1,
-                comparison_group2,
-                significance_column,
-                float(significance_cutoff),
-                float(log2fc_cutoff),
-                int(top_n)
-            )
-            st.write("topgenelist",top_gene_list)
-
-            if st.button("Refresh Top Genes", key="refresh_top_genes"):
-
-                st.session_state["highlight_genes"] = top_gene_list
-
-                st.rerun()
-
-            st.session_state["volcano_top_signature"] = st.session_state.get("volcano_top_signature",None)
-            if (st.session_state.get("volcano_top_signature") is None) or sum([v1==v2 for v1,v2 in zip(st.session_state["volcano_top_signature"],top_signature)])!=len(top_signature):
-                st.write(top_signature)
-
-                st.session_state[
-                    "highlight_genes"
-                ] = top_gene_list
-
-                st.session_state[
-                    "volcano_top_signature"
-                ] = top_signature
-        # --------------------------------------------------
-        # Add Gene
-        # --------------------------------------------------
-
-        colag1, colag2 = st.columns(2,vertical_alignment="bottom")
-        with colag1:
-            gene_to_add = st.selectbox(
-                "Type Gene Name",
-                options=st.session_state.get("all_genes", []),
-                index=None,
-                placeholder="Type to search...",
-                key="volcano_gene_search",
-            )
-        with colag2:
-            if st.button("Add Gene", key="volcano_add_gene"):
-
-                if gene_to_add and gene_to_add not in highlight_genes:
-
-                    st.session_state["highlight_genes"] = highlight_genes + [gene_to_add]
-
-                    st.session_state["reload_volcano_text"] = True
+                    st.session_state["highlight_genes"] = top_gene_list
 
                     st.rerun()
+                    
+            # --------------------------------------------------
+            # Add Gene
+            # --------------------------------------------------
 
-        
-        # ==================================================
-        # FIGURE SETTINGS
-        # ==================================================
+            colag1, colag2 = st.columns(2,vertical_alignment="bottom")
+            with colag1:
+                gene_to_add = st.selectbox(
+                    "Type Gene Name",
+                    options=st.session_state.get("all_genes", []),
+                    index=None,
+                    placeholder="Type to search...",
+                    key="volcano_gene_search",
+                )
+            with colag2:
+                if st.button("Add Gene", key="volcano_add_gene"):
 
-        st.markdown(
-            "#### Figure Settings"
-        )
+                    if gene_to_add and gene_to_add not in highlight_genes:
 
-        figure_col1, figure_col2 = st.columns(2)
+                        st.session_state["highlight_genes"] = highlight_genes + [gene_to_add]
 
-        with figure_col1:
+                        st.session_state["reload_volcano_text"] = True
 
-            volcano_width = st.number_input(
-                "Figure Width (px)",
-                min_value=400,
-                max_value=4000,
-                value=1200,
-                step=100,
-                key="volcano_width"
-            )
+                        st.rerun()
+                    
 
-        with figure_col2:
+            #
+            # Keep synchronized
+            #
+            st.session_state["highlight_genes"] = highlight_genes
+            not_found_genes = st.session_state.get('not_found_genes',[])
+            if len(not_found_genes)>0:
+                st.error(f'''Warning: [{",".join(not_found_genes)}] not found in genes!''')
+            #
+            # Figure Settings
+            #
+            st.divider()
+            st.subheader("Figure Settings")
 
-            volcano_height = st.number_input(
-                "Figure Height (px)",
-                min_value=300,
-                max_value=4000,
-                value=800,
-                step=100,
-                key="volcano_height"
-            )
+            col3, col4 = st.columns(2)
 
-        auto_x = st.checkbox(
-            "Automatic X-axis",
-            value=True,
-            key="volcano_auto_x"
-        )
-
-        x_range = None
-
-        if not auto_x:
-
-            x_col1, x_col2 = st.columns(2)
-
-            with x_col1:
-
-                x_min = st.number_input(
-                    "X-axis Minimum",
-                    value=-5.0,
-                    key="volcano_x_min"
+            with col3:
+                volcano_width = st.number_input(
+                    "Figure Width (px)",
+                    value=500,
+                    min_value=200,
+                    max_value=2000,
+                    step=100,
+                    key="volcano_width",
                 )
 
-            with x_col2:
-
-                x_max = st.number_input(
-                    "X-axis Maximum",
-                    value=5.0,
-                    key="volcano_x_max"
+            with col4:
+                volcano_height = st.number_input(
+                    "Figure Height (px)",
+                    value=400,
+                    min_value=200,
+                    max_value=1500,
+                    step=100,
+                    key="volcano_height",
                 )
 
-            if x_min >= x_max:
+            #
+            # X-axis
+            #
+            auto_x = st.checkbox("Automatic X-axis", value=True, key="volcano_auto_x")
 
-                st.warning(
-                    "X-axis minimum must be smaller "
-                    "than X-axis maximum."
+            x_range = None
+
+            if not auto_x:
+
+                c5, c6 = st.columns(2)
+
+                with c5:
+                    x_min = st.number_input(
+                        "X-axis Min", value=-5.0, step=0.1, key="volcano_xmin"
+                    )
+
+                with c6:
+                    x_max = st.number_input(
+                        "X-axis Max", value=5.0, step=0.1, key="volcano_xmax"
+                    )
+
+                x_range = [x_min, x_max]
+
+            #
+            # Y-axis
+            #
+            auto_y = st.checkbox("Automatic Y-axis", value=True, key="volcano_auto_y")
+
+            y_range = None
+
+            if not auto_y:
+
+                c7, c8 = st.columns(2)
+
+                with c7:
+                    y_min = st.number_input(
+                        "Y-axis Min", value=0.0, step=0.1, key="volcano_ymin"
+                    )
+
+                with c8:
+                    y_max = st.number_input(
+                        "Y-axis Max", value=20.0, step=0.1, key="volcano_ymax"
+                    )
+
+                y_range = [y_min, y_max]
+
+            #
+            # Create Figure
+            #
+            if st.button("Generate Volcano Plot", key="generate_volcano_plot"):
+                fig = create_volcano_plot(
+                    de_df=de_df,
+                    significance_column=significance_column,
+                    significance_cutoff=significance_cutoff,
+                    log2fc_cutoff=log2fc_cutoff,
+                    highlight_genes=highlight_genes,
+                    width=volcano_width,
+                    height=volcano_height,
+                    x_range=x_range,
+                    y_range=y_range,
                 )
 
-            else:
-
-                x_range = [
-                    x_min,
-                    x_max
-                ]
-
-        auto_y = st.checkbox(
-            "Automatic Y-axis",
-            value=True,
-            key="volcano_auto_y"
-        )
-
-        y_range = None
-
-        if not auto_y:
-
-            y_col1, y_col2 = st.columns(2)
-
-            with y_col1:
-
-                y_min = st.number_input(
-                    "Y-axis Minimum",
-                    value=0.0,
-                    key="volcano_y_min"
+                #
+                # Display Figure
+                #
+                st.plotly_chart(
+                    fig,
+                    width="content",
+                    config={
+                        "displaylogo": False,
+                        "toImageButtonOptions": {
+                            "format": "svg",
+                            "filename": "volcano_plot",
+                            "width": volcano_width,
+                            "height": volcano_height,
+                            "scale": 1,
+                        },
+                    },
                 )
-
-            with y_col2:
-
-                y_max = st.number_input(
-                    "Y-axis Maximum",
-                    value=20.0,
-                    key="volcano_y_max"
-                )
-
-            if y_min >= y_max:
-
-                st.warning(
-                    "Y-axis minimum must be smaller "
-                    "than Y-axis maximum."
-                )
-
-            else:
-
-                y_range = [
-                    y_min,
-                    y_max
-                ]
-
-        # ==================================================
-        # CREATE AND DISPLAY VOLCANO
-        # ==================================================
-
-        volcano_fig = create_volcano_plot(
-            de_df=de_results,
-            significance_column=
-            significance_column,
-            significance_cutoff=
-            significance_cutoff,
-            log2fc_cutoff=
-            log2fc_cutoff,
-            highlight_genes=
-            highlight_genes,
-            width=
-            volcano_width,
-            height=
-            volcano_height,
-            x_range=
-            x_range,
-            y_range=
-            y_range
-        )
-
-        volcano_filename = (
-            f"volcano_{comparison_group1}_vs_"
-            f"{comparison_group2}"
-        )
-
-        st.plotly_chart(
-            volcano_fig,
-            width="content",
-            config={
-                "displaylogo": False,
-                "toImageButtonOptions": {
-                    "format": "svg",
-                    "filename":
-                    volcano_filename,
-                    "width":
-                    volcano_width,
-                    "height":
-                    volcano_height,
-                    "scale": 1
-                }
-            }
-        )
-
-    else:
-
-        st.info(
-            "Run differential expression analysis "
-            "for the current analysis matrix to display "
-            "the results and Volcano plot."
-        )
-
-
-
-
 
 # ==================================================
 # BOXPLOT TAB
