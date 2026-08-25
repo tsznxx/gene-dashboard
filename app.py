@@ -1266,7 +1266,7 @@ with tab_de_volcano:
 
             # DE results are already sorted descending.
             top_up = (
-                significant_up
+                significant_results
                 .head(
                     min(
                         int(top_n),
@@ -1280,7 +1280,7 @@ with tab_de_volcano:
             # Select the most negative genes from the end
             # of the already descending-sorted table.
             top_down = (
-                significant_down
+                significant_results
                 .tail(
                     min(
                         int(top_n),
