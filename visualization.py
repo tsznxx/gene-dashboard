@@ -651,12 +651,12 @@ def create_correlation_scatter(
         height=height,
         template="plotly_white"
     )
-    if x_range is not None:
+    if xrange is not None:
 
         fig.update_xaxes(
             range=xrange
         )
-    if y_range is not None:
+    if yrange is not None:
 
         fig.update_yaxes(
             range=yrange
