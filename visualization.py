@@ -648,7 +648,7 @@ def create_correlation_scatter(
         height=height,
         template="plotly_white"
     )
-
+    fig = apply_publication_style(fig,width)
     return fig
     
 # ==================================================
@@ -719,7 +719,7 @@ def create_correlation_volcano(
         height=height,
         template="plotly_white"
     )
-
+    fig = apply_publication_style(fig,width)
     return fig
     
 # ==================================================
