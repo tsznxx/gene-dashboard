@@ -1234,69 +1234,33 @@ with tab_de_volcano:
             key="volcano_use_top_genes"
         )
 
-        top_gene_list = []
-
         if use_top_genes:
 
             top_n = st.number_input(
-                "Top Genes per Direction",
+                "Top Up/Down Genes Per Direction",
                 min_value=1,
                 max_value=100,
                 value=5,
-                step=1,
-                key="volcano_top_n"
+                key="volcano_top_n",
             )
 
-            significant_results = de_results[
-                de_results[
-                    significance_column
-                ]
-                <= significance_cutoff
-            ]
+            #
+            # Significant genes only
+            #
+            sig_df = de_df[de_df[significance_column] <= significance_cutoff].copy()
 
-            significant_up = significant_results[
-                significant_results["log2FC"]
-                >= log2fc_cutoff
-            ].shape[0]
+            up_df_N = sum(sig_df["log2FC"] >= log2fc_cutoff)
+            down_df_N = sum(sig_df["log2FC"] <= log2fc_cutoff)
 
-            significant_down = significant_results[
-                significant_results["log2FC"]
-                <= -log2fc_cutoff
-            ].shape[0]
+            up_n = min(top_n, up_df_N)
+            down_n = min(top_n, down_df_N)
 
-            # DE results are already sorted descending.
-            top_up = (
-                significant_results["Gene"]
-                .head(
-                    min(
-                        top_n,
-                        significant_up
-                    )
-                )
-                .astype(str)
-                .tolist()
+            top_gene_list = (
+                sig_df["Gene"].tail(min(top_n, up_df_N)).to_list()
+                + sig_df["Gene"].head(min(top_n, down_df_N)).to_list()
             )
 
-            # Select the most negative genes from the end
-            # of the already descending-sorted table.
-            top_down = (
-                significant_results['Gene']
-                .tail(
-                    min(
-                        top_n,
-                        significant_down
-                    )
-                )
-                .astype(str)
-                .tolist()
-            )
-
-            top_gene_list = list(
-                dict.fromkeys(
-                    top_up + top_down[::-1]
-                )
-            )
-
+            top_gene_list = list(dict.fromkeys(top_gene_list))
             top_signature = (
                 current_preprocessing,
                 comparison_group1,
@@ -1305,17 +1269,11 @@ with tab_de_volcano:
                 float(significance_cutoff),
                 float(log2fc_cutoff),
                 int(top_n)
-            )
-            st.session_state['highlight_genes'] = top_gene_list
+            )            
 
-            if st.button(
-                "Refresh Top Genes",
-                key="volcano_refresh_top_genes"
-            ):
+            if st.button("Refresh Top Genes", key="refresh_top_genes"):
 
-                st.session_state[
-                    "highlight_genes"
-                ] = top_gene_list
+                st.session_state["highlight_genes"] = top_gene_list
 
                 st.rerun()
 
@@ -1333,54 +1291,29 @@ with tab_de_volcano:
                 st.session_state[
                     "volcano_top_signature"
                 ] = top_signature
-
-
-
         # --------------------------------------------------
-        # Add gene
+        # Add Gene
         # --------------------------------------------------
 
-        all_genes = sorted(
-            st.session_state.get(
-                "all_genes",
-                expr_df.index.astype(str).tolist()
+        colag1, colag2 = st.columns(2,vertical_alignment="bottom")
+        with colag1:
+            gene_to_add = st.selectbox(
+                "Type Gene Name",
+                options=st.session_state.get("all_genes", []),
+                index=None,
+                placeholder="Type to search...",
+                key="volcano_gene_search",
             )
-        )
+        with colag2:
+            if st.button("Add Gene", key="volcano_add_gene"):
 
-        gene_to_add = st.selectbox(
-            "Add a Gene",
-            options=all_genes,
-            index=None,
-            placeholder="Type to search for a gene...",
-            key="volcano_gene_search"
-        )
+                if gene_to_add and gene_to_add not in highlight_genes:
 
-        if st.button(
-            "Add Gene",
-            key="volcano_add_gene"
-        ):
+                    st.session_state["highlight_genes"] = highlight_genes + [gene_to_add]
 
-            if (
-                gene_to_add
-                and gene_to_add
-                not in highlight_genes
-            ):
+                    st.session_state["reload_volcano_text"] = True
 
-                st.session_state[
-                    "highlight_genes"
-                ] = (
-                    highlight_genes
-                    + [gene_to_add]
-                )
-
-                # Remove the widget state so the text area
-                # rebuilds from highlight_genes on rerun.
-                st.session_state.pop(
-                    "volcano_highlight_text",
-                    None
-                )
-
-                st.rerun()
+                    st.rerun()
 
         
         # ==================================================
