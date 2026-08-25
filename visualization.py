@@ -29,7 +29,7 @@ TAB10 = [
 def apply_publication_style(
     fig
 ):
-    if fig.layout.legend:
+    if fig.layout.legend is not None:
         legend_gap_px = 40
         legend_x = (
             1
@@ -80,78 +80,6 @@ def apply_publication_style(
         tickcolor="black"
       
     )
-def apply_publication_style(
-    fig,
-    width=None,
-    legend_gap_px=40
-):
-    fig.update_layout(
-        template="plotly_white",
-        plot_bgcolor="white",
-        paper_bgcolor="white",
-        font={
-            "color": "black"
-        }
-    )
-
-    if width is not None:
-        fig.update_layout(
-            legend={
-                "x": 1 + legend_gap_px / width,
-                "y": 1,
-                "xanchor": "left",
-                "yanchor": "top"
-            }
-        )
-
-    fig.update_xaxes(
-        showgrid=False,
-        zeroline=False,
-        showline=True,
-        linecolor="black",
-        linewidth=1,
-        mirror="allticks",
-        ticks="outside",
-        tickcolor="black",
-        tickwidth=1,
-        ticklen=6
-    )
-
-    fig.update_yaxes(
-        showgrid=False,
-        zeroline=False,
-        showline=True,
-        linecolor="black",
-        linewidth=1,
-        mirror="allticks",
-        ticks="outside",
-        tickcolor="black",
-        tickwidth=1,
-        ticklen=6
-    )
-
-    # Guaranteed complete four-sided frame.
-    fig.add_shape(
-        type="rect",
-        xref="paper",
-        yref="paper",
-        x0=0,
-        y0=0,
-        x1=1,
-        y1=1,
-        line={
-            "color": "black",
-            "width": 1
-        },
-        fillcolor="rgba(0,0,0,0)",
-        layer="above"
-    )
-
-    return fig
-    
-    
-    
-    return fig
 
 def create_pca_plot(
     pca_df,
