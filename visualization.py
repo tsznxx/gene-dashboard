@@ -80,6 +80,7 @@ def apply_publication_style(
         tickcolor="black"
       
     )
+    return fig
 
 def create_pca_plot(
     pca_df,
