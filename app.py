@@ -2746,7 +2746,6 @@ with tab_correlation:
                         selected_scatter_b
                     )
                 )
-
                 scatter_fig = (
                     create_correlation_scatter(
                         plot_df=scatter_data,
@@ -2774,8 +2773,8 @@ with tab_correlation:
                         corr_plot_width,
                         height=
                         corr_plot_height,
-                        xrange=xrange,
-                        yrange=yrange
+                        xrange=x_range,
+                        yrange=y_range
                     )
                 )
 
