@@ -1218,15 +1218,7 @@ with tab_de_volcano:
             )
         )
 
-        st.session_state[
-            "highlight_genes"
-        ] = highlight_genes
-        
-        if "highlight_genes" not in st.session_state:
-
-            st.session_state[
-                "highlight_genes"
-            ] = []
+        st.session_state["highlight_genes"] = st.session_state.get("highlight_genes",highlight_genes)
 
         use_top_genes = st.checkbox(
             "Use Top Significant Genes",
@@ -1270,7 +1262,8 @@ with tab_de_volcano:
                 float(significance_cutoff),
                 float(log2fc_cutoff),
                 int(top_n)
-            )            
+            )
+            st.write("topgenelist",top_gene_list)
 
             if st.button("Refresh Top Genes", key="refresh_top_genes"):
 
@@ -1278,12 +1271,8 @@ with tab_de_volcano:
 
                 st.rerun()
 
-            if (
-                st.session_state.get(
-                    "volcano_top_signature"
-                )
-                is None
-            ):
+            st.session_state["volcano_top_signature"] = st.session_state.get("volcano_top_signature",None)
+            if (st.session_state.get("volcano_top_signature") is not None) or sum([v1==v2 for v1,v2 in zip(st.session_state["volcano_top_signature"],top_signature)])!=len(top_signature):
 
                 st.session_state[
                     "highlight_genes"
