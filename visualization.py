@@ -29,13 +29,11 @@ TAB10 = [
 def apply_publication_style(
     fig
 ):
-    width_px, height_px = fig.get_size_inches() * fig.dpi
-
     legend_gap_px = 40
 
     legend_x = (
         1
-        + legend_gap_px / width_px
+        + legend_gap_px / fig.layout.width
     )
 
     fig.update_layout(
