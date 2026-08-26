@@ -2555,12 +2555,6 @@ with tab_correlation:
         "### Analysis Settings"
     )
 
-    stratify_scatter = st.checkbox(
-        "Color scatter plot by a metadata category",
-        value=False,
-        key="corr_stratify_scatter"
-    )
-
     run_by_group = st.checkbox(
         "Calculate correlations separately by group",
         value=False,
@@ -2571,8 +2565,8 @@ with tab_correlation:
     selected_groups = []
 
     if (
-        stratify_scatter
-        or run_by_group
+            stratify_scatter
+            or run_by_group
     ):
 
         eligible_group_columns = [
@@ -3036,7 +3030,7 @@ with tab_correlation:
             )
 
             # ==================================================
-            # SCATTER PLOT
+            # CORRELATION SCATTER PLOT
             # ==================================================
 
             st.divider()
@@ -3044,316 +3038,444 @@ with tab_correlation:
             st.markdown(
                 "### Correlation Scatter Plot"
             )
-            result_groups = (
-                corr_results["Group"]
-                .dropna()
-                .astype(str)
-                .unique()
-                .tolist()
-            )
 
-            selected_result_group = st.selectbox(
-                "Correlation Result Group",
-                options=result_groups,
-                key="corr_result_group"
-            )
-
-            group_corr_results = corr_results[
-                corr_results["Group"].astype(str)
-                == str(selected_result_group)
-            ]
+            # --------------------------------------------------
+            # Select Subject A
+            # --------------------------------------------------
 
             subject_a_options = (
-                group_corr_results[
-                    "Subject_A"
-                ]
+                corr_results["Subject_A"]
                 .dropna()
                 .astype(str)
                 .unique()
                 .tolist()
             )
 
-            selected_scatter_a = st.selectbox(
-                "Scatter Plot Subject A",
-                options=subject_a_options,
-                key="corr_scatter_subject_a"
-            )
+            if len(subject_a_options) == 0:
 
-            subject_b_options = (
-                group_corr_results.loc[
-                    group_corr_results[
-                        "Subject_A"
-                    ].astype(str)
-                    == str(selected_scatter_a),
-                    "Subject_B"
-                ]
-                .dropna()
-                .astype(str)
-                .unique()
-                .tolist()
-            )
+                st.warning(
+                    "No Subject A values are available "
+                    "for scatter plotting."
+                )
 
-            selected_scatter_b = st.selectbox(
-                "Scatter Plot Subject B",
-                options=subject_b_options,
-                key="corr_scatter_subject_b"
-            )
+            else:
 
-            selected_result = (
-                group_corr_results[
-                    (
-                        group_corr_results[
+                selected_scatter_a = st.selectbox(
+                    "Scatter Plot Subject A",
+                    options=subject_a_options,
+                    key="corr_scatter_subject_a"
+                )
+
+                # --------------------------------------------------
+                # Select Subject B
+                # --------------------------------------------------
+
+                subject_b_options = (
+                    corr_results.loc[
+                        corr_results[
                             "Subject_A"
                         ].astype(str)
-                        == str(selected_scatter_a)
-                    )
-                    &
-                    (
-                        group_corr_results[
-                            "Subject_B"
-                        ].astype(str)
-                        == str(selected_scatter_b)
-                    )
-                ]
-                .iloc[0]
-            )
-
-            scatter_setting_col1, scatter_setting_col2 = (
-                st.columns(2)
-            )
-
-            with scatter_setting_col1:
-
-                corr_plot_width = st.number_input(
-                    "Scatter Plot Width (px)",
-                    min_value=300,
-                    max_value=2000,
-                    value=500,
-                    step=50,
-                    key="corr_plot_width"
+                        == str(
+                            selected_scatter_a
+                        ),
+                        "Subject_B"
+                    ]
+                    .dropna()
+                    .astype(str)
+                    .unique()
+                    .tolist()
                 )
 
-            with scatter_setting_col2:
+                if len(subject_b_options) == 0:
 
-                corr_plot_height = st.number_input(
-                    "Scatter Plot Height (px)",
-                    min_value=300,
-                    max_value=2000,
-                    value=500,
-                    step=50,
-                    key="corr_plot_height"
-                )
-            #
-            # X-axis
-            #
-            auto_x = st.checkbox("Automatic X-axis", value=True, key="correlation_auto_x")
-
-            x_range = None
-
-            if not auto_x:
-
-                c5, c6 = st.columns(2)
-
-                with c5:
-                    x_min = st.number_input(
-                        "X-axis Min", value=-5.0, step=0.1, key="correlation_xmin"
+                    st.warning(
+                        "No Subject B values are available "
+                        "for the selected Subject A."
                     )
 
-                with c6:
-                    x_max = st.number_input(
-                        "X-axis Max", value=5.0, step=0.1, key="correlation_xmax"
+                else:
+
+                    selected_scatter_b = st.selectbox(
+                        "Scatter Plot Subject B",
+                        options=subject_b_options,
+                        key="corr_scatter_subject_b"
                     )
 
-                x_range = [x_min, x_max]
+                    # ==================================================
+                    # FIGURE SETTINGS
+                    # ==================================================
 
-            #
-            # Y-axis
-            #
-            auto_y = st.checkbox("Automatic Y-axis", value=True, key="correlation_auto_y")
-
-            y_range = None
-
-            if not auto_y:
-
-                c7, c8 = st.columns(2)
-
-                with c7:
-                    y_min = st.number_input(
-                        "Y-axis Min", value=0.0, step=0.1, key="correlation_ymin"
+                    st.markdown(
+                        "#### Figure Settings"
                     )
 
-                with c8:
-                    y_max = st.number_input(
-                        "Y-axis Max", value=20.0, step=0.1, key="correlation_ymax"
+                    figure_col1, figure_col2 = (
+                        st.columns(2)
                     )
 
-                y_range = [y_min, y_max]
+                    with figure_col1:
 
-            try:
-                stratification_settings = (
-                    st.session_state.get(
-                        "corr_stratify_settings",
-                        {}
+                        corr_plot_width = st.number_input(
+                            "Scatter Plot Width (px)",
+                            min_value=300,
+                            max_value=2000,
+                            value=700,
+                            step=50,
+                            key="corr_plot_width"
+                        )
+
+                    with figure_col2:
+
+                        corr_plot_height = st.number_input(
+                            "Scatter Plot Height (px)",
+                            min_value=300,
+                            max_value=2000,
+                            value=600,
+                            step=50,
+                            key="corr_plot_height"
+                        )
+
+                    # ==================================================
+                    # RETRIEVE SAVED GROUP SETTINGS
+                    # ==================================================
+
+                    group_settings = (
+                        st.session_state.get(
+                            "corr_group_settings",
+                            {}
+                        )
                     )
-                )
 
-                stored_group_column = (
-                    stratification_settings.get(
-                        "group_column"
+                    stored_run_by_group = (
+                        group_settings.get(
+                            "run_by_group",
+                            False
+                        )
                     )
-                )
 
-                stored_selected_groups = (
-                    stratification_settings.get(
-                        "selected_groups",
-                        []
+                    stored_group_column = (
+                        group_settings.get(
+                            "group_column"
+                        )
                     )
-                )
 
-                stored_stratify_scatter = (
-                    stratification_settings.get(
-                        "stratify_scatter",
-                        False
+                    stored_selected_groups = (
+                        group_settings.get(
+                            "selected_groups",
+                            []
+                        )
                     )
-                )
 
-                stored_run_by_group = (
-                    stratification_settings.get(
-                        "run_by_group",
-                        False
-                    )
-                )
+                    # ==================================================
+                    # RETRIEVE EXPRESSION VECTORS
+                    # ==================================================
 
-                scatter_sample_ids = None
+                    try:
 
-                # If correlations were calculated separately,
-                # use samples from the selected result group.
-                if (
-                    stored_run_by_group
-                    and selected_result_group
-                    != "All Samples"
-                ):
-
-                    scatter_sample_ids = (
-                        meta_df.index[
-                            meta_df[
-                                stored_group_column
-                            ].astype(str)
-                            == str(
-                                selected_result_group
+                        scatter_data = (
+                            get_correlation_plot_vectors(
+                                subject_a=
+                                st.session_state[
+                                    "corr_subject_a"
+                                ],
+                                subject_b=
+                                st.session_state[
+                                    "corr_subject_b"
+                                ],
+                                subject_a_name=
+                                selected_scatter_a,
+                                subject_b_name=
+                                selected_scatter_b,
+                                sample_ids=None
                             )
-                        ]
-                        .astype(str)
-                        .tolist()
-                    )
+                        )
 
-                scatter_data = get_correlation_plot_vectors(
-                    subject_a=st.session_state[
-                        "corr_subject_a"
-                    ],
-                    subject_b=st.session_state[
-                        "corr_subject_b"
-                    ],
-                    subject_a_name=selected_scatter_a,
-                    subject_b_name=selected_scatter_b,
-                    sample_ids=scatter_sample_ids
-                )
+                        # Normalize sample IDs before
+                        # merging with metadata.
+                        scatter_data["Sample"] = (
+                            scatter_data["Sample"]
+                            .astype(str)
+                        )
 
-                # Add metadata group information.
-                if (
-                    stored_stratify_scatter
-                    and stored_group_column
-                ):
+                        # ==================================================
+                        # ADD GROUP METADATA
+                        # ==================================================
 
-                    annotation_df = (
-                        meta_df[
-                            [
+                        scatter_group_column = None
+
+                        if (
+                            stored_run_by_group
+                            and stored_group_column is not None
+                            and stored_group_column
+                            in meta_df.columns
+                        ):
+
+                            scatter_group_column = (
                                 stored_group_column
-                            ]
-                        ]
-                        .copy()
-                    )
+                            )
 
-                    annotation_df.index = (
-                        annotation_df.index
-                        .astype(str)
-                    )
+                            annotation_df = (
+                                meta_df[
+                                    [
+                                        stored_group_column
+                                    ]
+                                ]
+                                .copy()
+                            )
 
-                    annotation_df.index.name = "Sample"
+                            annotation_df.index = (
+                                annotation_df.index
+                                .astype(str)
+                            )
 
-                    annotation_df = (
-                        annotation_df
-                        .reset_index()
-                    )
+                            annotation_df.index.name = (
+                                "Sample"
+                            )
 
-                    scatter_data = scatter_data.merge(
-                        annotation_df,
-                        on="Sample",
-                        how="left"
-                    )
+                            annotation_df = (
+                                annotation_df
+                                .reset_index()
+                            )
 
-                    if stored_selected_groups:
+                            scatter_data = (
+                                scatter_data.merge(
+                                    annotation_df,
+                                    on="Sample",
+                                    how="left"
+                                )
+                            )
 
-                        scatter_data = scatter_data[
-                            scatter_data[
-                                stored_group_column
-                            ].isin(
+                            # Keep only the groups that were selected
+                            # when the correlation analysis was run.
+                            if (
                                 stored_selected_groups
+                                is not None
+                                and len(
+                                    stored_selected_groups
+                                ) > 0
+                            ):
+
+                                scatter_data = (
+                                    scatter_data[
+                                        scatter_data[
+                                            stored_group_column
+                                        ].isin(
+                                            stored_selected_groups
+                                        )
+                                    ]
+                                    .copy()
+                                )
+
+                        # ==================================================
+                        # RETRIEVE STATISTICS FOR THE SELECTED PAIR
+                        # ==================================================
+
+                        scatter_statistics = (
+                            corr_results[
+                                (
+                                    corr_results[
+                                        "Subject_A"
+                                    ].astype(str)
+                                    == str(
+                                        selected_scatter_a
+                                    )
+                                )
+                                &
+                                (
+                                    corr_results[
+                                        "Subject_B"
+                                    ].astype(str)
+                                    == str(
+                                        selected_scatter_b
+                                    )
+                                )
+                            ]
+                            .copy()
+                        )
+
+                        # Preserve the group order chosen by the
+                        # user when group-specific analysis was run.
+                        if (
+                            stored_run_by_group
+                            and stored_selected_groups
+                            and "Group"
+                            in scatter_statistics.columns
+                        ):
+
+                            group_order = {
+                                str(group):
+                                index
+                                for index, group
+                                in enumerate(
+                                    stored_selected_groups
+                                )
+                            }
+
+                            scatter_statistics[
+                                "_group_order"
+                            ] = (
+                                scatter_statistics["Group"]
+                                .astype(str)
+                                .map(group_order)
                             )
-                        ]
 
-                scatter_fig = create_correlation_scatter(
-                    plot_df=scatter_data,
-                    x_column=selected_scatter_a,
-                    y_column=selected_scatter_b,
-                    method=st.session_state[
-                        "corr_method_used"
-                    ],
-                    coefficient=selected_result[
-                        "Coefficient"
-                    ],
-                    pvalue=selected_result[
-                        "PValue"
-                    ],
-                    fdr=selected_result[
-                        "FDR"
-                    ],
-                    group_column=(
-                        stored_group_column
-                        if stored_stratify_scatter
-                        else None
-                    ),
-                    width=corr_plot_width,
-                    height=corr_plot_height
-                )
+                            scatter_statistics = (
+                                scatter_statistics
+                                .sort_values(
+                                    "_group_order"
+                                )
+                                .drop(
+                                    columns=[
+                                        "_group_order"
+                                    ]
+                                )
+                            )
 
-                scatter_filename = (
-                    f"{selected_scatter_a}_vs_"
-                    f"{selected_scatter_b}_"
-                    f"correlation"
-                )
+                        # ==================================================
+                        # VALIDATE PLOTTING DATA
+                        # ==================================================
 
-                st.plotly_chart(
-                    scatter_fig,
-                    width="content",
-                    config={
-                        "displaylogo": False,
-                        "toImageButtonOptions": {
-                            "format": "svg",
-                            "filename":
-                            scatter_filename,
-                            "width":
-                            corr_plot_width,
-                            "height":
-                            corr_plot_height,
-                            "scale": 1
-                        }
-                    }
-                )
+                        if scatter_data.empty:
 
-            except Exception as error:
+                            st.warning(
+                                "No samples are available for "
+                                "the selected correlation pair."
+                            )
 
-                st.error(
-                    "Unable to create the correlation "
-                    f"scatter plot: {error}"
-                )
+                        elif (
+                            selected_scatter_a
+                            not in scatter_data.columns
+                            or selected_scatter_b
+                            not in scatter_data.columns
+                        ):
+
+                            st.warning(
+                                "The selected correlation vectors "
+                                "are unavailable in the plotting data."
+                            )
+
+                        else:
+
+                            # Display sample counts for grouped plots.
+                            if (
+                                scatter_group_column is not None
+                                and scatter_group_column
+                                in scatter_data.columns
+                            ):
+
+                                scatter_group_counts = (
+                                    scatter_data[
+                                        scatter_group_column
+                                    ]
+                                    .value_counts()
+                                )
+
+                                st.caption(
+                                    " | ".join(
+                                        (
+                                            f"{group}: "
+                                            f"{count} samples"
+                                        )
+                                        for group, count
+                                        in scatter_group_counts.items()
+                                    )
+                                )
+
+                            # ==================================================
+                            # CREATE SCATTER FIGURE
+                            # ==================================================
+
+                            scatter_fig = (
+                                create_correlation_scatter(
+                                    plot_df=scatter_data,
+                                    x_column=
+                                    selected_scatter_a,
+                                    y_column=
+                                    selected_scatter_b,
+                                    method=
+                                    st.session_state.get(
+                                        "corr_method_used",
+                                        "pearson"
+                                    ),
+                                    statistics_df=
+                                    scatter_statistics,
+                                    group_column=
+                                    scatter_group_column,
+                                    width=int(
+                                        corr_plot_width
+                                    ),
+                                    height=int(
+                                        corr_plot_height
+                                    )
+                                )
+                            )
+
+                            # ==================================================
+                            # EXPORT FILENAME
+                            # ==================================================
+
+                            scatter_filename = (
+                                f"{selected_scatter_a}_vs_"
+                                f"{selected_scatter_b}_"
+                                f"correlation"
+                            )
+
+                            if (
+                                stored_run_by_group
+                                and stored_group_column
+                            ):
+
+                                scatter_filename += (
+                                    f"_by_{stored_group_column}"
+                                )
+
+                            # Replace filename characters that may
+                            # be problematic on some systems.
+                            scatter_filename = (
+                                scatter_filename
+                                .replace(
+                                    " ",
+                                    "_"
+                                )
+                                .replace(
+                                    "/",
+                                    "_"
+                                )
+                                .replace(
+                                    "\\",
+                                    "_"
+                                )
+                            )
+
+                            # ==================================================
+                            # DISPLAY AND EXPORT SVG
+                            # ==================================================
+
+                            st.plotly_chart(
+                                scatter_fig,
+                                width="content",
+                                config={
+                                    "displaylogo": False,
+                                    "toImageButtonOptions": {
+                                        "format": "svg",
+                                        "filename":
+                                        scatter_filename,
+                                        "width":
+                                        int(
+                                            corr_plot_width
+                                        ),
+                                        "height":
+                                        int(
+                                            corr_plot_height
+                                        ),
+                                        "scale": 1
+                                    }
+                                }
+                            )
+
+                    except Exception as error:
+
+                        st.error(
+                            "Unable to create the correlation "
+                            f"scatter plot: {error}"
+                        )
