@@ -16,7 +16,9 @@ from analysis import (
     apply_combat,
     run_pca,
     run_differential_expression,
-    run_correlation_analysis
+    run_correlation_analysis,
+    resolve_correlation_subject,
+    get_correlation_plot_vectors
 )
 
 from visualization import (
@@ -31,9 +33,7 @@ from visualization import (
 )
 
 from analysis import (
-    resolve_correlation_subject,
-    run_correlation_analysis,
-    get_correlation_plot_vectors
+
 )
 
             
@@ -2938,7 +2938,7 @@ with tab_correlation:
                     100,
                     maximum_rows
                 )
-
+                st.write(corr_results)
                 rows_to_show = st.number_input(
                     f"Rows to Display (out of {len(corr_results)})",
                     min_value=1,
