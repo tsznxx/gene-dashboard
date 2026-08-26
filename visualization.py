@@ -570,30 +570,29 @@ def create_correlation_scatter(
     x_column,
     y_column,
     method="pearson",
+    statistics_df=None,
     group_column=None,
-    group_statistics=None,
-    coefficient=None,
-    pvalue=None,
-    fdr=None,
     width=700,
     height=600
 ):
     """
     Create a correlation scatter plot.
 
-    When group_column is provided:
-    - samples are colored by group
-    - TAB10 colors are used
-    - one trendline is fitted per group
-    - all selected groups are shown together
+    If group_column is provided:
+        - points are colored using TAB10
+        - one fitted line is created per group
+        - all selected groups appear together
 
-    Pearson uses OLS.
-    Spearman uses LOWESS.
+    If group_column is None:
+        - one overall scatter plot and fitted line
+          are displayed
     """
+
+    method = method.lower()
 
     trendline = (
         "ols"
-        if method.lower() == "pearson"
+        if method == "pearson"
         else "lowess"
     )
 
@@ -602,36 +601,26 @@ def create_correlation_scatter(
         "x": x_column,
         "y": y_column,
         "trendline": trendline,
-        "hover_data": [
-            "Sample"
-        ]
+        "hover_data": ["Sample"]
     }
 
     # ----------------------------------
     # Group colors
     # ----------------------------------
 
-    color_map = None
-
     if (
         group_column is not None
-        and group_column
-        in plot_df.columns
+        and group_column in plot_df.columns
     ):
 
         groups = (
             plot_df[group_column]
             .dropna()
-            .astype(str)
             .unique()
             .tolist()
         )
 
-        groups = sorted(
-            groups,
-            key=str
-        )
-
+        # Preserve the order represented in the data.
         color_map = {
             group: TAB10[
                 index % len(TAB10)
@@ -640,20 +629,9 @@ def create_correlation_scatter(
             in enumerate(groups)
         }
 
-        plot_df = plot_df.copy()
-
-        plot_df[group_column] = (
-            plot_df[group_column]
-            .astype(str)
+        plot_arguments["color"] = (
+            group_column
         )
-
-        plot_arguments[
-            "data_frame"
-        ] = plot_df
-
-        plot_arguments[
-            "color"
-        ] = group_column
 
         plot_arguments[
             "color_discrete_map"
@@ -670,166 +648,126 @@ def create_correlation_scatter(
     )
 
     # ----------------------------------
-    # Point appearance
-    # ----------------------------------
-
-    fig.update_traces(
-        marker={
-            "size": 8,
-            "opacity": 0.85
-        },
-        selector={
-            "mode": "markers"
-        }
-    )
-
-    # ----------------------------------
-    # Title and group statistics
+    # Title and statistics
     # ----------------------------------
 
     title = (
         f"{x_column} vs {y_column}"
     )
 
-    statistics_lines = []
-
     if (
-        group_statistics is not None
-        and not group_statistics.empty
-        and "Group"
-        in group_statistics.columns
+        statistics_df is not None
+        and not statistics_df.empty
     ):
 
-        statistic_symbol = (
+        statistic_name = (
             "r"
-            if method.lower()
-            == "pearson"
+            if method == "pearson"
             else "rho"
         )
+
+        statistic_lines = []
 
         for _, row in (
-            group_statistics.iterrows()
+            statistics_df.iterrows()
         ):
 
-            group_name = str(
-                row["Group"]
+            group_name = row.get(
+                "Group",
+                "All Samples"
             )
 
-            coefficient_value = (
-                row["Coefficient"]
+            coefficient = row.get(
+                "Coefficient"
             )
 
-            pvalue_value = (
-                row["PValue"]
+            pvalue = row.get(
+                "PValue"
             )
 
-            fdr_value = (
-                row["FDR"]
+            fdr = row.get(
+                "FDR"
             )
 
-            sample_count = (
-                row.get(
-                    "N_Samples",
-                    np.nan
-                )
+            n_samples = row.get(
+                "N_Samples"
             )
 
-            line_parts = [
+            pieces = [
                 f"{group_name}: "
-                f"{statistic_symbol}="
-                f"{coefficient_value:.3f}"
+                f"{statistic_name}="
+                f"{coefficient:.3f}"
             ]
 
-            if pd.notna(
-                pvalue_value
-            ):
+            if pd.notna(pvalue):
 
-                line_parts.append(
-                    f"p={pvalue_value:.2e}"
+                pieces.append(
+                    f"p={pvalue:.2e}"
                 )
 
-            if pd.notna(
-                fdr_value
-            ):
+            if pd.notna(fdr):
 
-                line_parts.append(
-                    f"FDR={fdr_value:.2e}"
+                pieces.append(
+                    f"FDR={fdr:.2e}"
                 )
 
-            if pd.notna(
-                sample_count
-            ):
+            if pd.notna(n_samples):
 
-                line_parts.append(
-                    f"n={int(sample_count)}"
+                pieces.append(
+                    f"n={int(n_samples)}"
                 )
 
-            statistics_lines.append(
-                " | ".join(
-                    line_parts
-                )
+            statistic_lines.append(
+                " | ".join(pieces)
             )
-
-    else:
-
-        statistic_symbol = (
-            "r"
-            if method.lower()
-            == "pearson"
-            else "rho"
-        )
-
-        overall_parts = []
-
-        if coefficient is not None:
-
-            overall_parts.append(
-                f"{statistic_symbol}="
-                f"{coefficient:.3f}"
-            )
-
-        if pvalue is not None:
-
-            overall_parts.append(
-                f"p={pvalue:.2e}"
-            )
-
-        if fdr is not None:
-
-            overall_parts.append(
-                f"FDR={fdr:.2e}"
-            )
-
-        if len(overall_parts) > 0:
-
-            statistics_lines.append(
-                " | ".join(
-                    overall_parts
-                )
-            )
-
-    if len(statistics_lines) > 0:
 
         title += (
             "<br>"
             + "<br>".join(
-                statistics_lines
+                statistic_lines
             )
         )
 
     # ----------------------------------
-    # Layout
+    # Marker settings
     # ----------------------------------
 
+    fig.update_traces(
+        marker={
+            "size": 8,
+            "opacity": 0.8
+        },
+        selector={
+            "mode": "markers"
+        }
+    )
+
     fig.update_layout(
-        title=title,
+        title={
+            "text": title,
+            "x": 0.5,
+            "xanchor": "center"
+        },
         width=width,
         height=height,
         legend_title_text=(
             group_column
-            if group_column
+            if group_column is not None
             else None
-        )
+        ),
+        margin={
+            "l": 80,
+            "r": 120,
+            "t": (
+                100
+                if statistics_df is None
+                else 130
+                + 20 * len(
+                    statistics_df
+                )
+            ),
+            "b": 80
+        }
     )
 
     fig = apply_publication_style(
