@@ -3470,9 +3470,9 @@ with tab_correlation:
                                     }
                                 )
 
-                        except Exception as error:
+                    except Exception as error:
 
-                            st.error(
-                                "Unable to create the correlation "
-                                f"scatter plot: {error}"
-                            )
+                        st.error(
+                            "Unable to create the correlation "
+                            f"scatter plot: {error}"
+                        )
