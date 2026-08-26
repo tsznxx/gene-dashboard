@@ -2820,6 +2820,7 @@ with tab_correlation:
                     allow_all_vs_all=False,
                     sample_groups=sample_groups
                 )
+                st.write(corr_results)
                 st.session_state[
                     "corr_stratify_settings"
                 ] = {
@@ -2933,7 +2934,6 @@ with tab_correlation:
                     100,
                     maximum_rows
                 )
-                st.write(corr_results)
                 rows_to_show = st.number_input(
                     f"Rows to Display (out of {len(corr_results)})",
                     min_value=1,
@@ -3005,6 +3005,7 @@ with tab_correlation:
             st.dataframe(
                 display_corr_results[
                     [
+                        "Group",
                         "Subject_A",
                         "Subject_B",
                         "Coefficient",
