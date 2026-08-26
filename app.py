@@ -2564,10 +2564,7 @@ with tab_correlation:
     group_column = None
     selected_groups = []
 
-    if (
-            stratify_scatter
-            or run_by_group
-    ):
+    if (run_by_group):
 
         eligible_group_columns = [
             column
@@ -2818,7 +2815,6 @@ with tab_correlation:
                 st.session_state[
                     "corr_stratify_settings"
                 ] = {
-                    "stratify_scatter": stratify_scatter,
                     "run_by_group": run_by_group,
                     "group_column": group_column,
                     "selected_groups": selected_groups
