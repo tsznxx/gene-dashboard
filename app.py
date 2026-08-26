@@ -3381,98 +3381,98 @@ with tab_correlation:
                             # ==================================================
                             # CREATE SCATTER FIGURE
                             # ==================================================
-
-                            scatter_fig = (
-                                create_correlation_scatter(
-                                    plot_df=scatter_data,
-                                    x_column=
-                                    selected_scatter_a,
-                                    y_column=
-                                    selected_scatter_b,
-                                    method=
-                                    st.session_state.get(
-                                        "corr_method_used",
-                                        "pearson"
-                                    ),
-                                    statistics_df=
-                                    scatter_statistics,
-                                    group_column=
-                                    scatter_group_column,
-                                    width=int(
-                                        corr_plot_width
-                                    ),
-                                    height=int(
-                                        corr_plot_height
-                                    )
-                                )
-                            )
-
-                            # ==================================================
-                            # EXPORT FILENAME
-                            # ==================================================
-
-                            scatter_filename = (
-                                f"{selected_scatter_a}_vs_"
-                                f"{selected_scatter_b}_"
-                                f"correlation"
-                            )
-
-                            if (
-                                stored_run_by_group
-                                and stored_group_column
-                            ):
-
-                                scatter_filename += (
-                                    f"_by_{stored_group_column}"
-                                )
-
-                            # Replace filename characters that may
-                            # be problematic on some systems.
-                            scatter_filename = (
-                                scatter_filename
-                                .replace(
-                                    " ",
-                                    "_"
-                                )
-                                .replace(
-                                    "/",
-                                    "_"
-                                )
-                                .replace(
-                                    "\\",
-                                    "_"
-                                )
-                            )
-
-                            # ==================================================
-                            # DISPLAY AND EXPORT SVG
-                            # ==================================================
-
-                            st.plotly_chart(
-                                scatter_fig,
-                                width="content",
-                                config={
-                                    "displaylogo": False,
-                                    "toImageButtonOptions": {
-                                        "format": "svg",
-                                        "filename":
-                                        scatter_filename,
-                                        "width":
-                                        int(
+                            if st.button("Generate Scatter Plot", key="generate_correlation_scatter"):
+                                scatter_fig = (
+                                    create_correlation_scatter(
+                                        plot_df=scatter_data,
+                                        x_column=
+                                        selected_scatter_a,
+                                        y_column=
+                                        selected_scatter_b,
+                                        method=
+                                        st.session_state.get(
+                                            "corr_method_used",
+                                            "pearson"
+                                        ),
+                                        statistics_df=
+                                        scatter_statistics,
+                                        group_column=
+                                        scatter_group_column,
+                                        width=int(
                                             corr_plot_width
                                         ),
-                                        "height":
-                                        int(
+                                        height=int(
                                             corr_plot_height
-                                        ),
-                                        "scale": 1
+                                        )
+                                    )
+                                )
+
+                                # ==================================================
+                                # EXPORT FILENAME
+                                # ==================================================
+
+                                scatter_filename = (
+                                    f"{selected_scatter_a}_vs_"
+                                    f"{selected_scatter_b}_"
+                                    f"correlation"
+                                )
+
+                                if (
+                                    stored_run_by_group
+                                    and stored_group_column
+                                ):
+
+                                    scatter_filename += (
+                                        f"_by_{stored_group_column}"
+                                    )
+
+                                # Replace filename characters that may
+                                # be problematic on some systems.
+                                scatter_filename = (
+                                    scatter_filename
+                                    .replace(
+                                        " ",
+                                        "_"
+                                    )
+                                    .replace(
+                                        "/",
+                                        "_"
+                                    )
+                                    .replace(
+                                        "\\",
+                                        "_"
+                                    )
+                                )
+
+                                # ==================================================
+                                # DISPLAY AND EXPORT SVG
+                                # ==================================================
+
+                                st.plotly_chart(
+                                    scatter_fig,
+                                    width="content",
+                                    config={
+                                        "displaylogo": False,
+                                        "toImageButtonOptions": {
+                                            "format": "svg",
+                                            "filename":
+                                            scatter_filename,
+                                            "width":
+                                            int(
+                                                corr_plot_width
+                                            ),
+                                            "height":
+                                            int(
+                                                corr_plot_height
+                                            ),
+                                            "scale": 1
+                                        }
                                     }
-                                }
+                                )
+
+                        except Exception as error:
+
+                            st.error(
+                                "Unable to create the correlation "
+                                f"scatter plot: {error}"
                             )
-
-                    except Exception as error:
-
-                        st.error(
-                            "Unable to create the correlation "
-                            f"scatter plot: {error}"
-                        )
