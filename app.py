@@ -2811,13 +2811,14 @@ with tab_correlation:
                     allow_all_vs_all=False,
                     sample_groups=sample_groups
                 )
-                st.write(corr_results)
-                st.session_state[
-                    "corr_stratify_settings"
-                ] = {
+                st.session_state["corr_group_settings"] = {
                     "run_by_group": run_by_group,
                     "group_column": group_column,
-                    "selected_groups": selected_groups
+                    "selected_groups": (
+                        list(selected_groups)
+                        if selected_groups
+                        else []
+                    )
                 }
                 st.session_state[
                     "corr_results"
