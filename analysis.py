@@ -771,28 +771,11 @@ def run_correlation_analysis(
     method="pearson",
     min_samples=3,
     skip_identical_pairs=True,
-    allow_all_vs_all=False
+    allow_all_vs_all=False,
+    sample_groups=None
 ):
     """
     Perform pairwise correlation across two resolved subjects.
-
-    Examples
-    --------
-    Single Gene vs Single Gene:
-        1 correlation.
-
-    Single Gene vs Gene List:
-        One correlation per gene in the list.
-
-    Gene List vs Gene List:
-        All pairwise correlations between the two lists.
-
-    Gene Signature vs All Genes:
-        Signature score against each gene.
-
-    All Genes vs All Genes:
-        Disabled by default because it can generate a very
-        large number of comparisons.
 
     Parameters
     ----------
@@ -800,113 +783,135 @@ def run_correlation_analysis(
         Output from resolve_correlation_subject().
 
     method : str
-        pearson or spearman.
+        "pearson" or "spearman".
 
     min_samples : int
-        Minimum number of paired observations.
+        Minimum number of paired samples required.
 
     skip_identical_pairs : bool
-        Skip a gene correlated with itself when both subjects
-        contain the same named gene.
+        Skip correlations such as TP53 vs TP53.
 
     allow_all_vs_all : bool
-        Whether to allow All Genes vs All Genes.
+        Allow or prevent All Genes vs All Genes.
+
+    sample_groups : dict or None
+        Optional dictionary mapping group names to sample IDs.
+
+        Example:
+        {
+            "Tumor": ["S01", "S02", "S03"],
+            "Normal": ["S04", "S05", "S06"]
+        }
+
+        When None, calculate one correlation using all samples.
 
     Returns
     -------
     pandas.DataFrame
-        Subject_A, Subject_B, Coefficient, PValue, FDR,
-        and N_Samples.
+        Columns:
+        Group
+        Subject_A
+        Subject_B
+        Coefficient
+        PValue
+        FDR
+        N_Samples
+        Absolute_Correlation
     """
 
-    type_a = subject_a[
-        "subject_type"
-    ]
-
-    type_b = subject_b[
-        "subject_type"
-    ]
+    type_a = subject_a["subject_type"]
+    type_b = subject_b["subject_type"]
 
     if (
         type_a == "All Genes"
         and type_b == "All Genes"
         and not allow_all_vs_all
     ):
-
         raise ValueError(
-            "All Genes vs All Genes is disabled because "
-            "the number of pairwise comparisons can be "
-            "extremely large. Please use a gene list or "
-            "gene signature for at least one subject."
+            "All Genes versus All Genes is disabled because "
+            "the number of pairwise comparisons can be very large."
         )
 
-    vectors_a = subject_a[
-        "vectors"
-    ]
-
-    vectors_b = subject_b[
-        "vectors"
-    ]
+    vectors_a = subject_a["vectors"]
+    vectors_b = subject_b["vectors"]
 
     if len(vectors_a) == 0:
-
         raise ValueError(
-            "Subject A contains no valid vectors."
+            "Subject A contains no valid expression vectors."
         )
 
     if len(vectors_b) == 0:
-
         raise ValueError(
-            "Subject B contains no valid vectors."
+            "Subject B contains no valid expression vectors."
         )
+
+    # If no grouping is requested, use every sample.
+    if sample_groups is None:
+        sample_groups = {
+            "All Samples": None
+        }
 
     results = []
 
-    for name_a, vector_a in (
-        vectors_a.items()
-    ):
+    for group_name, group_samples in sample_groups.items():
 
-        for name_b, vector_b in (
-            vectors_b.items()
-        ):
+        for name_a, vector_a in vectors_a.items():
 
-            if (
-                skip_identical_pairs
-                and name_a == name_b
-            ):
-                continue
+            for name_b, vector_b in vectors_b.items():
 
-            coefficient, pvalue, n_samples = (
-                compute_pairwise_correlation(
-                    x=vector_a,
-                    y=vector_b,
-                    method=method,
-                    min_samples=min_samples
+                if (
+                    skip_identical_pairs
+                    and name_a == name_b
+                ):
+                    continue
+
+                current_a = vector_a
+                current_b = vector_b
+
+                # Restrict both vectors to samples in this group.
+                if group_samples is not None:
+
+                    common_group_samples = [
+                        sample
+                        for sample in group_samples
+                        if (
+                            sample in current_a.index
+                            and sample in current_b.index
+                        )
+                    ]
+
+                    current_a = current_a.loc[
+                        common_group_samples
+                    ]
+
+                    current_b = current_b.loc[
+                        common_group_samples
+                    ]
+
+                coefficient, pvalue, n_samples = (
+                    compute_pairwise_correlation(
+                        x=current_a,
+                        y=current_b,
+                        method=method,
+                        min_samples=min_samples
+                    )
                 )
-            )
 
-            results.append(
-                {
-                    "Subject_A":
-                    name_a,
-
-                    "Subject_B":
-                    name_b,
-
-                    "Coefficient":
-                    coefficient,
-
-                    "PValue":
-                    pvalue,
-
-                    "N_Samples":
-                    n_samples
-                }
-            )
+                results.append(
+                    {
+                        "Group": group_name,
+                        "Subject_A": name_a,
+                        "Subject_B": name_b,
+                        "Coefficient": coefficient,
+                        "PValue": pvalue,
+                        "N_Samples": n_samples
+                    }
+                )
 
     corr_df = pd.DataFrame(
         results,
         columns=[
+            "Group",
             "Subject_A",
             "Subject_B",
             "Coefficient",
@@ -916,16 +921,43 @@ def run_correlation_analysis(
     )
 
     if corr_df.empty:
-
         corr_df["FDR"] = pd.Series(
             dtype=float
         )
-
+        corr_df["Absolute_Correlation"] = pd.Series(
+            dtype=float
+        )
         return corr_df
 
-    corr_df = add_correlation_fdr(
-        corr_df
-    )
+    corr_df["FDR"] = np.nan
+
+    # Calculate FDR separately within each group.
+    for group_name in corr_df["Group"].unique():
+
+        group_mask = (
+            corr_df["Group"] == group_name
+        )
+
+        valid_mask = (
+            group_mask
+            & corr_df["PValue"].notna()
+            & np.isfinite(
+                corr_df["PValue"]
+            )
+        )
+
+        if valid_mask.any():
+
+            corr_df.loc[
+                valid_mask,
+                "FDR"
+            ] = multipletests(
+                corr_df.loc[
+                    valid_mask,
+                    "PValue"
+                ],
+                method="fdr_bh"
+            )[1]
 
     corr_df["Absolute_Correlation"] = (
         corr_df["Coefficient"].abs()
@@ -935,10 +967,12 @@ def run_correlation_analysis(
         corr_df
         .sort_values(
             by=[
+                "Group",
                 "Absolute_Correlation",
                 "PValue"
             ],
             ascending=[
+                True,
                 False,
                 True
             ],
@@ -951,7 +985,6 @@ def run_correlation_analysis(
 
     return corr_df
 
-
 # ==================================================
 # Retrieve Vectors for Scatter Plot
 # ==================================================
@@ -960,63 +993,60 @@ def get_correlation_plot_vectors(
     subject_a,
     subject_b,
     subject_a_name,
-    subject_b_name
+    subject_b_name,
+    sample_ids=None
 ):
     """
-    Retrieve the exact vectors for a selected correlation
-    result row.
+    Retrieve vectors for a selected correlation pair.
 
-    This is useful for creating the correlation scatter plot.
+    Parameters
+    ----------
+    sample_ids : list or None
+        Optional sample subset.
     """
 
-    vectors_a = subject_a[
-        "vectors"
-    ]
-
-    vectors_b = subject_b[
-        "vectors"
-    ]
+    vectors_a = subject_a["vectors"]
+    vectors_b = subject_b["vectors"]
 
     if subject_a_name not in vectors_a:
-
         raise ValueError(
-            f"Subject A '{subject_a_name}' "
-            "is unavailable."
+            f"Subject A '{subject_a_name}' is unavailable."
         )
 
     if subject_b_name not in vectors_b:
-
         raise ValueError(
-            f"Subject B '{subject_b_name}' "
-            "is unavailable."
+            f"Subject B '{subject_b_name}' is unavailable."
         )
 
-    x = vectors_a[
-        subject_a_name
-    ]
-
-    y = vectors_b[
-        subject_b_name
-    ]
+    x = vectors_a[subject_a_name]
+    y = vectors_b[subject_b_name]
 
     plot_df = pd.concat(
         [
             pd.to_numeric(
                 x,
                 errors="coerce"
-            ).rename(
-                subject_a_name
-            ),
+            ).rename(subject_a_name),
             pd.to_numeric(
                 y,
                 errors="coerce"
-            ).rename(
-                subject_b_name
-            )
+            ).rename(subject_b_name)
         ],
         axis=1,
         join="inner"
     )
+
+    if sample_ids is not None:
+
+        valid_samples = [
+            sample
+            for sample in sample_ids
+            if sample in plot_df.index
+        ]
+
+        plot_df = plot_df.loc[
+            valid_samples
+        ]
 
     plot_df = (
         plot_df

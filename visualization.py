@@ -577,24 +577,15 @@ def create_correlation_scatter(
     coefficient=None,
     pvalue=None,
     fdr=None,
+    group_column=None,
     width=1000,
-    height=700,
-    xrange=None,
-    yrange=None
+    height=700
 ):
     """
-    Correlation scatter plot.
+    Create a correlation scatter plot.
 
-    Parameters
-    ----------
-    plot_df : pd.DataFrame
-
-    x_column : str
-
-    y_column : str
-
-    method : str
-        pearson or spearman
+    When group_column is supplied, points are colored by
+    metadata group and displayed in a legend.
     """
 
     trendline = (
@@ -603,12 +594,44 @@ def create_correlation_scatter(
         else "lowess"
     )
 
+    plot_arguments = {
+        "data_frame": plot_df,
+        "x": x_column,
+        "y": y_column,
+        "trendline": trendline,
+        "hover_data": ["Sample"]
+    }
+
+    if (
+        group_column is not None
+        and group_column in plot_df.columns
+    ):
+
+        groups = (
+            plot_df[group_column]
+            .dropna()
+            .unique()
+            .tolist()
+        )
+
+        color_map = {
+            group: TAB10[
+                index % len(TAB10)
+            ]
+            for index, group
+            in enumerate(groups)
+        }
+
+        plot_arguments[
+            "color"
+        ] = group_column
+
+        plot_arguments[
+            "color_discrete_map"
+        ] = color_map
+
     fig = px.scatter(
-        plot_df,
-        x=x_column,
-        y=y_column,
-        trendline=trendline,
-        hover_data=["Sample"]
+        **plot_arguments
     )
 
     title = (
@@ -619,14 +642,16 @@ def create_correlation_scatter(
 
     if coefficient is not None:
 
-        stat_name = (
+        statistic_name = (
             "r"
-            if method.lower() == "pearson"
+            if method.lower()
+            == "pearson"
             else "ρ"
         )
 
         stats_text.append(
-            f"{stat_name}={coefficient:.3f}"
+            f"{statistic_name}="
+            f"{coefficient:.3f}"
         )
 
     if pvalue is not None:
@@ -643,24 +668,36 @@ def create_correlation_scatter(
 
     if stats_text:
 
-        title += "|"+" | ".join(stats_text)
+        title += (
+            "<br>"
+            + " | ".join(
+                stats_text
+            )
+        )
+
+    fig.update_traces(
+        marker={
+            "size": 8
+        },
+        selector={
+            "mode": "markers"
+        }
+    )
 
     fig.update_layout(
         title=title,
         width=width,
         height=height,
-        template="plotly_white"
-    )
-    if xrange is not None:
-
-        fig.update_xaxes(
-            range=xrange
+        legend_title_text=(
+            group_column
+            if group_column
+            else None
         )
-    if yrange is not None:
+    )
 
-        fig.update_yaxes(
-            range=yrange
-        )        
+    fig = apply_publication_style(
+        fig
+    )
     fig = apply_publication_style(fig)
     return fig
     
