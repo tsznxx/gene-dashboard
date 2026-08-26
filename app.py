@@ -2560,6 +2560,106 @@ with tab_correlation:
         "### Analysis Settings"
     )
 
+    stratify_scatter = st.checkbox(
+        "Color scatter plot by a metadata category",
+        value=False,
+        key="corr_stratify_scatter"
+    )
+
+    run_by_group = st.checkbox(
+        "Calculate correlations separately by group",
+        value=False,
+        key="corr_run_by_group"
+    )
+
+    group_column = None
+    selected_groups = []
+
+    if (
+        stratify_scatter
+        or run_by_group
+    ):
+
+        eligible_group_columns = [
+            column
+            for column in meta_df.columns
+            if (
+                meta_df[column]
+                .dropna()
+                .nunique()
+                >= 2
+            )
+        ]
+
+        if len(eligible_group_columns) == 0:
+
+            st.warning(
+                "No metadata column contains at least two categories."
+            )
+
+        else:
+
+            default_group_index = 0
+
+            for index, column in enumerate(
+                eligible_group_columns
+            ):
+
+                if column.lower() == "group":
+
+                    default_group_index = index
+                    break
+
+            group_column = st.selectbox(
+                "Group Category",
+                options=eligible_group_columns,
+                index=default_group_index,
+                key="corr_group_column"
+            )
+
+            available_groups = (
+                meta_df[group_column]
+                .dropna()
+                .unique()
+                .tolist()
+            )
+
+            available_groups = sorted(
+                available_groups,
+                key=str
+            )
+
+            selected_groups = st.multiselect(
+                "Groups to Include",
+                options=available_groups,
+                default=available_groups,
+                key="corr_selected_groups"
+            )
+
+            if len(selected_groups) == 0:
+
+                st.warning(
+                    "Select at least one group."
+                )
+
+            group_counts = (
+                meta_df.loc[
+                    meta_df[group_column].isin(
+                        selected_groups
+                    ),
+                    group_column
+                ]
+                .value_counts()
+            )
+
+            st.caption(
+                " | ".join(
+                    f"{group}: {count} samples"
+                    for group, count
+                    in group_counts.items()
+                )
+            )
+            
     correlation_method = st.radio(
         "Correlation Method",
         options=[
@@ -2682,23 +2782,57 @@ with tab_correlation:
                 corr_status.write(
                     "Computing pairwise correlations"
                 )
+                sample_groups = None
 
-                corr_results = (
-                    run_correlation_analysis(
-                        subject_a=
-                        resolved_subject_a,
-                        subject_b=
-                        resolved_subject_b,
-                        method=
-                        correlation_method,
-                        min_samples=
-                        int(min_samples),
-                        skip_identical_pairs=
-                        skip_identical_pairs,
-                        allow_all_vs_all=False
-                    )
+                if run_by_group:
+
+                    if group_column is None:
+
+                        raise ValueError(
+                            "Select a group category before running "
+                            "group-specific correlations."
+                        )
+
+                    if len(selected_groups) == 0:
+
+                        raise ValueError(
+                            "Select at least one group."
+                        )
+
+                    sample_groups = {}
+
+                    for group_value in selected_groups:
+
+                        samples_in_group = (
+                            meta_df.index[
+                                meta_df[group_column]
+                                == group_value
+                            ]
+                            .astype(str)
+                            .tolist()
+                        )
+
+                        sample_groups[
+                            str(group_value)
+                        ] = samples_in_group
+        
+                corr_results = run_correlation_analysis(
+                    subject_a=resolved_subject_a,
+                    subject_b=resolved_subject_b,
+                    method=correlation_method,
+                    min_samples=int(min_samples),
+                    skip_identical_pairs=skip_identical_pairs,
+                    allow_all_vs_all=False,
+                    sample_groups=sample_groups
                 )
-
+                st.session_state[
+                    "corr_stratify_settings"
+                ] = {
+                    "stratify_scatter": stratify_scatter,
+                    "run_by_group": run_by_group,
+                    "group_column": group_column,
+                    "selected_groups": selected_groups
+                }
                 st.session_state[
                     "corr_results"
                 ] = corr_results
@@ -2914,9 +3048,27 @@ with tab_correlation:
             st.markdown(
                 "### Correlation Scatter Plot"
             )
+            result_groups = (
+                corr_results["Group"]
+                .dropna()
+                .astype(str)
+                .unique()
+                .tolist()
+            )
+
+            selected_result_group = st.selectbox(
+                "Correlation Result Group",
+                options=result_groups,
+                key="corr_result_group"
+            )
+
+            group_corr_results = corr_results[
+                corr_results["Group"].astype(str)
+                == str(selected_result_group)
+            ]
 
             subject_a_options = (
-                corr_results[
+                group_corr_results[
                     "Subject_A"
                 ]
                 .dropna()
@@ -2932,13 +3084,11 @@ with tab_correlation:
             )
 
             subject_b_options = (
-                corr_results.loc[
-                    corr_results[
+                group_corr_results.loc[
+                    group_corr_results[
                         "Subject_A"
                     ].astype(str)
-                    == str(
-                        selected_scatter_a
-                    ),
+                    == str(selected_scatter_a),
                     "Subject_B"
                 ]
                 .dropna()
@@ -2954,23 +3104,19 @@ with tab_correlation:
             )
 
             selected_result = (
-                corr_results[
+                group_corr_results[
                     (
-                        corr_results[
+                        group_corr_results[
                             "Subject_A"
                         ].astype(str)
-                        == str(
-                            selected_scatter_a
-                        )
+                        == str(selected_scatter_a)
                     )
                     &
                     (
-                        corr_results[
+                        group_corr_results[
                             "Subject_B"
                         ].astype(str)
-                        == str(
-                            selected_scatter_b
-                        )
+                        == str(selected_scatter_b)
                     )
                 ]
                 .iloc[0]
@@ -3048,53 +3194,141 @@ with tab_correlation:
                 y_range = [y_min, y_max]
 
             try:
-
-                scatter_data = (
-                    get_correlation_plot_vectors(
-                        subject_a=
-                        st.session_state[
-                            "corr_subject_a"
-                        ],
-                        subject_b=
-                        st.session_state[
-                            "corr_subject_b"
-                        ],
-                        subject_a_name=
-                        selected_scatter_a,
-                        subject_b_name=
-                        selected_scatter_b
+                stratification_settings = (
+                    st.session_state.get(
+                        "corr_stratify_settings",
+                        {}
                     )
                 )
-                scatter_fig = (
-                    create_correlation_scatter(
-                        plot_df=scatter_data,
-                        x_column=
-                        selected_scatter_a,
-                        y_column=
-                        selected_scatter_b,
-                        method=
-                        st.session_state[
-                            "corr_method_used"
-                        ],
-                        coefficient=
-                        selected_result[
-                            "Coefficient"
-                        ],
-                        pvalue=
-                        selected_result[
-                            "PValue"
-                        ],
-                        fdr=
-                        selected_result[
-                            "FDR"
-                        ],
-                        width=
-                        corr_plot_width,
-                        height=
-                        corr_plot_height,
-                        xrange=x_range,
-                        yrange=y_range
+
+                stored_group_column = (
+                    stratification_settings.get(
+                        "group_column"
                     )
+                )
+
+                stored_selected_groups = (
+                    stratification_settings.get(
+                        "selected_groups",
+                        []
+                    )
+                )
+
+                stored_stratify_scatter = (
+                    stratification_settings.get(
+                        "stratify_scatter",
+                        False
+                    )
+                )
+
+                stored_run_by_group = (
+                    stratification_settings.get(
+                        "run_by_group",
+                        False
+                    )
+                )
+
+                scatter_sample_ids = None
+
+                # If correlations were calculated separately,
+                # use samples from the selected result group.
+                if (
+                    stored_run_by_group
+                    and selected_result_group
+                    != "All Samples"
+                ):
+
+                    scatter_sample_ids = (
+                        meta_df.index[
+                            meta_df[
+                                stored_group_column
+                            ].astype(str)
+                            == str(
+                                selected_result_group
+                            )
+                        ]
+                        .astype(str)
+                        .tolist()
+                    )
+
+                scatter_data = get_correlation_plot_vectors(
+                    subject_a=st.session_state[
+                        "corr_subject_a"
+                    ],
+                    subject_b=st.session_state[
+                        "corr_subject_b"
+                    ],
+                    subject_a_name=selected_scatter_a,
+                    subject_b_name=selected_scatter_b,
+                    sample_ids=scatter_sample_ids
+                )
+
+                # Add metadata group information.
+                if (
+                    stored_stratify_scatter
+                    and stored_group_column
+                ):
+
+                    annotation_df = (
+                        meta_df[
+                            [
+                                stored_group_column
+                            ]
+                        ]
+                        .copy()
+                    )
+
+                    annotation_df.index = (
+                        annotation_df.index
+                        .astype(str)
+                    )
+
+                    annotation_df.index.name = "Sample"
+
+                    annotation_df = (
+                        annotation_df
+                        .reset_index()
+                    )
+
+                    scatter_data = scatter_data.merge(
+                        annotation_df,
+                        on="Sample",
+                        how="left"
+                    )
+
+                    if stored_selected_groups:
+
+                        scatter_data = scatter_data[
+                            scatter_data[
+                                stored_group_column
+                            ].isin(
+                                stored_selected_groups
+                            )
+                        ]
+
+                scatter_fig = create_correlation_scatter(
+                    plot_df=scatter_data,
+                    x_column=selected_scatter_a,
+                    y_column=selected_scatter_b,
+                    method=st.session_state[
+                        "corr_method_used"
+                    ],
+                    coefficient=selected_result[
+                        "Coefficient"
+                    ],
+                    pvalue=selected_result[
+                        "PValue"
+                    ],
+                    fdr=selected_result[
+                        "FDR"
+                    ],
+                    group_column=(
+                        stored_group_column
+                        if stored_stratify_scatter
+                        else None
+                    ),
+                    width=corr_plot_width,
+                    height=corr_plot_height
                 )
 
                 scatter_filename = (
