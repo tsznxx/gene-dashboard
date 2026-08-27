@@ -1608,7 +1608,7 @@ with tab_box:
     st.session_state["boxplot_genes"] = st.session_state.get("highlight_genes", [])
 
     if len(st.session_state.get("highlight_genes", []))>0:
-        if st.button("Load Highlighted Genes", key="box_load_highlighted"):
+        if st.button("Load DEF Highlighted Genes", key="box_load_highlighted"):
             st.session_state["reload_boxplot_text"] = True
             st.rerun()
 
@@ -1840,7 +1840,7 @@ with tab_heatmap:
     # Load highlighted genes
     # ----------------------------------
     if len(st.session_state.get("highlight_genes", []))>0:
-        if st.button("Load Highlighted Genes", key="heatmap_load_highlighted"):
+        if st.button("Load DEG Highlighted Genes", key="heatmap_load_highlighted"):
 
             st.session_state["heatmap_genes"] = st.session_state.get(
                 "highlight_genes", []
@@ -2190,7 +2190,7 @@ with tab_correlation:
         with a_button_col1:
 
             if st.button(
-                "Load Highlighted Genes",
+                "Load DEG Highlighted Genes",
                 key="corr_a_load_highlighted"
             ):
 
@@ -2337,7 +2337,7 @@ with tab_correlation:
         with a_sig_button_col1:
 
             if st.button(
-                "Load Highlighted Genes",
+                "Load DEG Highlighted Genes",
                 key="corr_a_sig_load_highlighted"
             ):
 
@@ -2525,7 +2525,7 @@ with tab_correlation:
         with b_button_col1:
 
             if st.button(
-                "Load Highlighted Genes",
+                "Load DEG Highlighted Genes",
                 key="corr_b_load_highlighted"
             ):
 
@@ -2672,7 +2672,7 @@ with tab_correlation:
         with b_sig_button_col1:
 
             if st.button(
-                "Load Highlighted Genes",
+                "Load DEG Highlighted Genes",
                 key="corr_b_sig_load_highlighted"
             ):
 
