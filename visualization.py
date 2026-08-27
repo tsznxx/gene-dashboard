@@ -375,7 +375,7 @@ def create_gene_boxplot(
         left_on='Sample',
         right_index=True,
         how="inner",
-        validate="one_to_one"
+        validate="many_to_one"
     )
 
 
