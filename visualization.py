@@ -319,7 +319,8 @@ def create_gene_boxplot(
 
     plot_df = plot_df.merge(
         metadata_df,
-        on="Sample",
+        left_index=True,
+        right_index=True,
         how="left"
     )
 
