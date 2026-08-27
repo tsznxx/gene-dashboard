@@ -351,10 +351,6 @@ def create_gene_boxplot(
             Combined boxplot
     """
 
-    mdf = pandas.concat([expr_df.transpose(),meta_df[[group_column]],axis=1)
-    mdf.index.name = 'Sample'
-    long_mdf = mdf.melt(id_vars=['Sample',group_column],value_vars=expr_df.index.values,
-
     # --------------------------------------------------
     # Convert expression data to long format
     # --------------------------------------------------
