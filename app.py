@@ -789,8 +789,8 @@ expr_df = st.session_state[
 # Tabs
 #
 
-tab_data, tab_pca, tab_correlation, tab_de_volcano, tab_box, tab_heatmap = st.tabs(
-    ["Data", "PCA", "Correlation", "DEG Analysis", "Gene Boxplot", "Heatmap"]
+tab_data, tab_pca, tab_de_volcano, tab_correlation,  tab_box, tab_heatmap = st.tabs(
+    ["Data", "PCA", "DEG Analysis", "Correlation", "Gene Boxplot", "Heatmap"]
 )
 
 #
