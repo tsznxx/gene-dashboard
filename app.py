@@ -1666,7 +1666,7 @@ with tab_box:
         "Groups to Include",
         options=available_groups,
         default=available_groups,
-        key="corr_selected_groups"
+        key="boxplot_selected_groups"
     )
 
     if len(selected_groups) == 0:
@@ -1887,6 +1887,31 @@ with tab_heatmap:
     annotation_column = st.selectbox(
         "Annotation Column", meta_df.columns.tolist(), index=1, key="heatmap_annotation"
     )
+    available_groups = (
+        meta_df[annotation_column]
+        .dropna()
+        .unique()
+        .tolist()
+    )
+
+    available_groups = sorted(
+        available_groups,
+        key=str
+    )
+
+    selected_groups = st.multiselect(
+        "Groups to Include",
+        options=available_groups,
+        default=available_groups,
+        key="heatmap_selected_groups"
+    )
+
+    if len(selected_groups) == 0:
+
+        st.warning(
+            "Select at least one group."
+        )
+    
 
     col3, col4 = st.columns(2)
 
@@ -1989,13 +2014,13 @@ with tab_heatmap:
             st.warning("Please specify at least one gene.")
 
         else:
-
+            selected_idx = meta_df[annotation_column].isin(selected_groups)
+            filtered_expr_df = expr_df.loc[selected_genes,selected_idx].copy()
+            filtered_meta_df = meta_df.loc[selected_idx].copy()
             fig = create_heatmap(
-                expression_df=expr_df,
-                metadata_df=meta_df,
-                genes=selected_genes,
+                expression_df=filtered_expr_df,
+                metadata_df=filtered_meta_df,
                 annotation_column=annotation_column,
-                apply_log2=apply_log2,
                 zscore_by_gene=zscore_by_gene,
                 cluster_samples=cluster_samples,
                 cluster_genes=cluster_genes,

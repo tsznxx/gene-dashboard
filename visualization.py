@@ -552,9 +552,7 @@ def create_gene_boxplot(
 def create_heatmap(
     expression_df,
     metadata_df,
-    genes,
     annotation_column,
-    apply_log2=False,
     zscore_by_gene=True,
     cluster_samples=True,
     cluster_genes=True,
@@ -563,145 +561,508 @@ def create_heatmap(
     colorscale="RdBu_r",
     zmin=None,
     zmid=None,
-    zmax=None
+    zmax=None,
 ):
+    """
+    Create an expression heatmap from pre-filtered data.
 
+    Parameters
+    ----------
+    expression_df : pandas.DataFrame
+        Filtered expression matrix.
 
-    #
-    # Expression matrix
-    #
+        Rows:
+            Genes
 
-    expr = expression_df
+        Columns:
+            Samples
 
-    expr = expr.apply(
+    metadata_df : pandas.DataFrame
+        Filtered metadata table.
+
+        Rows:
+            Samples
+
+        The metadata index must match the expression
+        matrix columns.
+
+    annotation_column : str
+        Metadata column displayed as a sample annotation
+        bar above the expression heatmap.
+
+    zscore_by_gene : bool
+        If True, standardize each gene across samples.
+
+    cluster_samples : bool
+        If True, hierarchically cluster samples.
+
+    cluster_genes : bool
+        If True, hierarchically cluster genes.
+
+    width : int
+        Figure width in pixels.
+
+    height : int
+        Figure height in pixels.
+
+    colorscale : str or list
+        Plotly colorscale for expression values.
+
+    zmin, zmid, zmax : float or None
+        Optional expression color-scale limits and center.
+
+    Returns
+    -------
+    plotly.graph_objects.Figure
+        Interactive expression heatmap with sample annotation.
+    """
+
+    # ==================================================
+    # NUMERIC EXPRESSION MATRIX
+    # ==================================================
+
+    expr = expression_df.apply(
         pd.to_numeric,
-        errors="coerce"
-    )
+        errors="coerce",
+    ).T
 
-    #
-    # Keep selected genes
-    #
-    valid_genes = [
-        g for g in genes
-        if g in expr.index
-    ]
 
-    expr = expr.loc[
-        valid_genes
-    ]
+    # ==================================================
+    # GENE-WISE Z-SCORE
+    # ==================================================
 
-    #
-    # Z-score by gene
-    #
     if zscore_by_gene:
 
-        expr = expr.sub(
-            expr.mean(axis=1),
-            axis=0
-        ).div(
-            expr.std(axis=1),
-            axis=0
+        row_means = expr.mean(
+            axis=1,
         )
 
-        expr = expr.fillna(0)
-    #
-    # Cluster genes
-    #
+        row_stds = expr.std(
+            axis=1,
+            ddof=1,
+        )
+
+        row_stds = row_stds.replace(
+            0,
+            np.nan,
+        )
+
+        expr = (
+            expr
+            .sub(
+                row_means,
+                axis=0,
+            )
+            .div(
+                row_stds,
+                axis=0,
+            )
+            .fillna(0.0)
+        )
+
+    # ==================================================
+    # CLUSTER GENES
+    # ==================================================
+
     if (
         cluster_genes
         and expr.shape[0] > 1
     ):
-
         gene_linkage = linkage(
-            expr,
-            method="average"
+            expr.to_numpy(
+                dtype=float,
+            ),
+            method="average",
+            metric="euclidean",
         )
 
         gene_order = leaves_list(
-            gene_linkage
+            gene_linkage,
         )
 
         expr = expr.iloc[
-            gene_order
+            gene_order,
+            :,
         ]
 
-    #
-    # Cluster samples
-    #
+    # ==================================================
+    # CLUSTER SAMPLES
+    # ==================================================
+
     if (
         cluster_samples
         and expr.shape[1] > 1
     ):
-
         sample_linkage = linkage(
-            expr.T,
-            method="average"
+            expr.T.to_numpy(
+                dtype=float,
+            ),
+            method="average",
+            metric="euclidean",
         )
 
         sample_order = leaves_list(
-            sample_linkage
+            sample_linkage,
         )
 
         expr = expr.iloc[
             :,
-            sample_order
+            sample_order,
         ]
 
-    #
-    # Sample labels
-    #
-    sample_labels = []
+    # Reorder metadata to match the final sample order.
+    metadata_df = metadata_df.loc[
+        expr.columns
+    ]
 
-    annotation_map = (
-        metadata_df
-        [annotation_column]
-        .to_dict()
+    # ==================================================
+    # PREPARE SAMPLE ANNOTATION
+    # ==================================================
+
+    annotation_values = (
+        metadata_df[
+            annotation_column
+        ]
     )
 
-    for sample in expr.columns:
-
-        value = annotation_map.get(
-            sample,
-            ""
+    annotation_is_numeric = (
+        pd.api.types.is_numeric_dtype(
+            annotation_values
         )
-
-        sample_labels.append(
-            f"{sample}<br>{value}"
-        )
-
-    fig = px.imshow(
-        expr,
-        color_continuous_scale=colorscale,
-        zmin=zmin,
-        zmax=zmax,
-        aspect="auto"
+        and annotation_values.nunique(
+            dropna=True
+        ) > 10
     )
-    if zmid is not None:
 
-        fig.update_coloraxes(
-            cmid=zmid
+    if annotation_is_numeric:
+
+        annotation_numeric = pd.to_numeric(
+            annotation_values,
+            errors="coerce",
         )
 
-    fig.update_xaxes(
-        tickvals=list(
-            range(
-                len(expr.columns)
+        annotation_fill_value = (
+            annotation_numeric.median()
+        )
+
+        annotation_numeric = (
+            annotation_numeric.fillna(
+                annotation_fill_value,
             )
-        ),
-        ticktext=sample_labels
+        )
+
+        annotation_z = [
+            annotation_numeric
+            .to_numpy(
+                dtype=float,
+            )
+            .tolist()
+        ]
+
+        annotation_colorscale = "Viridis"
+
+        annotation_tickvals = None
+        annotation_ticktext = None
+
+        annotation_zmin = float(
+            annotation_numeric.min()
+        )
+
+        annotation_zmax = float(
+            annotation_numeric.max()
+        )
+
+        annotation_hover = np.array(
+            [
+                [
+                    (
+                        f"Sample: {sample}"
+                        f"<br>{annotation_column}: "
+                        f"{annotation_values.loc[sample]}"
+                    )
+                    for sample in expr.columns
+                ]
+            ]
+        )
+
+    else:
+
+        annotation_text = (
+            annotation_values
+            .fillna("Missing")
+            .astype(str)
+        )
+
+        annotation_categories = (
+            annotation_text
+            .drop_duplicates()
+            .tolist()
+        )
+
+        annotation_code_map = {
+            category: index
+            for index, category
+            in enumerate(
+                annotation_categories
+            )
+        }
+
+        annotation_codes = annotation_text.map(
+            annotation_code_map
+        )
+
+        annotation_z = [
+            annotation_codes
+            .to_numpy(
+                dtype=float,
+            )
+            .tolist()
+        ]
+
+        category_count = len(
+            annotation_categories
+        )
+
+        if category_count == 1:
+            annotation_zmin = -0.5
+            annotation_zmax = 0.5
+        else:
+            annotation_zmin = -0.5
+            annotation_zmax = (
+                category_count - 0.5
+            )
+
+        # Construct a discrete Plotly colorscale
+        # using the globally defined TAB10 palette.
+        annotation_colorscale = []
+
+        for index, category in enumerate(
+            annotation_categories
+        ):
+            color = TAB10[
+                index % len(TAB10)
+            ]
+
+            start = (
+                index / category_count
+            )
+
+            end = (
+                (index + 1)
+                / category_count
+            )
+
+            annotation_colorscale.extend(
+                [
+                    [start, color],
+                    [end, color],
+                ]
+            )
+
+        annotation_tickvals = list(
+            range(
+                category_count
+            )
+        )
+
+        annotation_ticktext = (
+            annotation_categories
+        )
+
+        annotation_hover = np.array(
+            [
+                [
+                    (
+                        f"Sample: {sample}"
+                        f"<br>{annotation_column}: "
+                        f"{annotation_text.loc[sample]}"
+                    )
+                    for sample in expr.columns
+                ]
+            ]
+        )
+
+    # ==================================================
+    # CREATE FIGURE
+    # ==================================================
+
+    fig = make_subplots(
+        rows=2,
+        cols=1,
+        shared_xaxes=True,
+        vertical_spacing=0.025,
+        row_heights=[
+            0.08,
+            0.92,
+        ],
     )
+
+    # ==================================================
+    # SAMPLE ANNOTATION BAR
+    # ==================================================
+
+    annotation_heatmap = go.Heatmap(
+        z=annotation_z,
+        x=expr.columns.tolist(),
+        y=[annotation_column],
+        colorscale=annotation_colorscale,
+        zmin=annotation_zmin,
+        zmax=annotation_zmax,
+        customdata=annotation_hover,
+        hovertemplate=(
+            "%{customdata}"
+            "<extra></extra>"
+        ),
+        showscale=True,
+        colorbar={
+            "title": {
+                "text": annotation_column,
+                "side": "right",
+            },
+            "x": 1.13,
+            "y": 0.94,
+            "len": 0.16,
+            "thickness": 16,
+            "outlinecolor": "black",
+            "outlinewidth": 1,
+            "tickvals": annotation_tickvals,
+            "ticktext": annotation_ticktext,
+        },
+    )
+
+    fig.add_trace(
+        annotation_heatmap,
+        row=1,
+        col=1,
+    )
+
+    # ==================================================
+    # EXPRESSION HEATMAP
+    # ==================================================
+
+    expression_colorbar_title = (
+        "Gene Z-score"
+        if zscore_by_gene
+        else "Expression"
+    )
+
+    expression_heatmap = go.Heatmap(
+        z=expr.to_numpy(
+            dtype=float,
+        ),
+        x=expr.columns.tolist(),
+        y=expr.index.tolist(),
+        colorscale=colorscale,
+        zmin=zmin,
+        zmid=zmid,
+        zmax=zmax,
+        customdata=np.broadcast_to(
+            expr.columns.to_numpy(),
+            expr.shape,
+        ),
+        hovertemplate=(
+            "Gene: %{y}"
+            "<br>Sample: %{customdata}"
+            "<br>Value: %{z:.3f}"
+            "<extra></extra>"
+        ),
+        showscale=True,
+        colorbar={
+            "title": {
+                "text": expression_colorbar_title,
+                "side": "right",
+            },
+            "x": 1.02,
+            "y": 0.44,
+            "len": 0.72,
+            "thickness": 16,
+            "outlinecolor": "black",
+            "outlinewidth": 1,
+        },
+    )
+
+    fig.add_trace(
+        expression_heatmap,
+        row=2,
+        col=1,
+    )
+
+    # ==================================================
+    # FIGURE LAYOUT
+    # ==================================================
 
     fig.update_layout(
-        width=width,
-        height=height,
+        title={
+            "text": "Gene Expression Heatmap",
+            "x": 0.5,
+            "xanchor": "center",
+        },
+        width=int(width),
+        height=int(height),
         template="plotly_white",
-        xaxis_title="Samples",
-        yaxis_title="Genes"
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+        margin={
+            "l": 120,
+            "r": 240,
+            "t": 80,
+            "b": 140,
+        },
     )
 
-    #fig = apply_publication_style(fig)
+    # Annotation-axis formatting.
+    fig.update_yaxes(
+        title_text="",
+        showgrid=False,
+        showline=False,
+        ticks="",
+        row=1,
+        col=1,
+    )
+
+    # Hide annotation-panel x labels because the same
+    # sample labels are displayed under the main heatmap.
+    fig.update_xaxes(
+        showticklabels=False,
+        showgrid=False,
+        row=1,
+        col=1,
+    )
+
+    # Expression-axis formatting.
+    fig.update_xaxes(
+        title_text="Samples",
+        showgrid=False,
+        ticks="outside",
+        tickangle=45,
+        ticklen=5,
+        tickwidth=1,
+        tickcolor="black",
+        showline=True,
+        linecolor="black",
+        linewidth=1,
+        mirror=True,
+        row=2,
+        col=1,
+    )
+
+    fig.update_yaxes(
+        title_text="Genes",
+        showgrid=False,
+        ticks="outside",
+        ticklen=5,
+        tickwidth=1,
+        tickcolor="black",
+        showline=True,
+        linecolor="black",
+        linewidth=1,
+        mirror=True,
+        autorange="reversed",
+        row=2,
+        col=1,
+    )
+
     return fig
-    
     
 def create_correlation_scatter(
     plot_df,
