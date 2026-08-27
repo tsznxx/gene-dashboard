@@ -6,6 +6,8 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
+from plotly.subplots import make_subplots
+
 from scipy.cluster.hierarchy import (
     linkage,
     leaves_list
