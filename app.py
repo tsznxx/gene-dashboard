@@ -31,6 +31,102 @@ from visualization import (
     create_correlation_heatmap,
     #format_correlation_results
 )
+
+
+import platform
+import sys
+
+from importlib.metadata import (
+    PackageNotFoundError,
+    version
+)
+
+
+REQUIRED_PACKAGES = [
+    "streamlit",
+    "pandas",
+    "numpy",
+    "scipy",
+    "statsmodels",
+    "scikit-learn",
+    "plotly",
+    "pycombat",
+]
+
+
+def get_environment_versions(
+    package_names=None
+):
+    """
+    Return Python, platform, and installed package versions.
+
+    Parameters
+    ----------
+    package_names : list[str] or None
+        Python distribution names, such as:
+        "scikit-learn", not "sklearn".
+
+    Returns
+    -------
+    dict
+        Environment information and package versions.
+    """
+
+    if package_names is None:
+        package_names = REQUIRED_PACKAGES
+
+    package_versions = {}
+
+    for package_name in package_names:
+
+        try:
+
+            package_versions[
+                package_name
+            ] = version(
+                package_name
+            )
+
+        except PackageNotFoundError:
+
+            package_versions[
+                package_name
+            ] = "Not installed"
+
+    return {
+        "python": platform.python_version(),
+        "python_implementation":
+            platform.python_implementation(),
+        "platform": platform.platform(),
+        "packages": package_versions,
+    }
+
+
+def build_pinned_requirements(
+    package_versions
+):
+    """
+    Create pinned requirements.txt content.
+    """
+
+    requirement_lines = []
+
+    for package_name, package_version in (
+        package_versions.items()
+    ):
+
+        if package_version == "Not installed":
+            continue
+
+        requirement_lines.append(
+            f"{package_name}=={package_version}"
+        )
+
+    return (
+        "\n".join(requirement_lines)
+        + "\n"
+    )
+
             
 st.title("Gene Expression Dashboard")
 
@@ -345,6 +441,86 @@ with st.sidebar:
             mime="text/tab-separated-values",
             key="download_example_meta",
         )
+
+    # ==================================================
+    # ENVIRONMENT INFORMATION
+    # ==================================================
+
+    st.divider()
+
+    with st.expander(
+        "Environment Information",
+        expanded=False
+    ):
+
+        environment = (
+            get_environment_versions()
+        )
+
+        st.write(
+            f"**Python:** "
+            f"{environment['python']}"
+        )
+
+        st.write(
+            f"**Implementation:** "
+            f"{environment['python_implementation']}"
+        )
+
+        st.write(
+            f"**Platform:** "
+            f"{environment['platform']}"
+        )
+
+        st.markdown(
+            "#### Installed packages"
+        )
+
+        package_table = pd.DataFrame(
+            [
+                {
+                    "Package": package_name,
+                    "Version": package_version,
+                }
+                for package_name, package_version
+                in environment[
+                    "packages"
+                ].items()
+            ]
+        )
+
+        st.dataframe(
+            package_table,
+            width="stretch",
+            hide_index=True,
+        )
+
+        pinned_requirements = (
+            build_pinned_requirements(
+                environment[
+                    "packages"
+                ]
+            )
+        )
+
+        st.download_button(
+            label=(
+                "Download Pinned "
+                "requirements.txt"
+            ),
+            data=(
+                pinned_requirements
+                .encode("utf-8")
+            ),
+            file_name=(
+                "requirements-pinned.txt"
+            ),
+            mime="text/plain",
+            key=(
+                "download_pinned_requirements"
+            ),
+        )
+
 
 
 #
