@@ -274,77 +274,156 @@ def create_volcano_plot(
     
     
 def create_gene_boxplot(
-    expression_df,
-    metadata_df,
-    genes,
+    expr_df,
+    meta_df,
     group_column,
-    apply_log2=False,
-    plot_mode="Combined",
-    selected_gene=None,
     width=1200,
     height=600,
-    y_range=None
+    y_range=None,
+    show_points=True,
+    point_size=3,
+    point_jitter=0.7
 ):
+    """
+    Create a gene-expression boxplot from pre-filtered data.
 
-    expr = expression_df
+    Parameters
+    ----------
+    expr_df : pandas.DataFrame
+        Pre-filtered expression matrix.
 
-    expr = expr.apply(
-        pd.to_numeric,
-        errors="coerce"
+        Rows:
+            Genes
+
+        Columns:
+            Samples
+
+        The expression matrix must contain at least one gene
+        and one sample.
+
+    meta_df : pandas.DataFrame
+        Pre-filtered metadata table.
+
+        Rows:
+            Samples
+
+        The metadata index must match the expression-matrix
+        columns.
+
+    group_column : str
+        Metadata column used to group and color samples.
+
+    width : int
+        Figure width in pixels.
+
+    height : int
+        Figure height in pixels.
+
+    y_range : list or tuple or None
+        Optional y-axis range:
+
+            [y_min, y_max]
+
+        If None, Plotly determines the range automatically.
+
+    show_points : bool
+        Whether to overlay individual sample points.
+
+    point_size : int or float
+        Size of the strip-plot points.
+
+    point_jitter : float
+        Horizontal jitter for the strip-plot points.
+
+    Returns
+    -------
+    plotly.graph_objects.Figure
+        Plotly boxplot figure.
+
+    Notes
+    -----
+    Plot mode is inferred automatically:
+
+        One gene:
+            Single-gene boxplot
+
+        More than one gene:
+            Combined boxplot
+    """
+
+    mdf = pandas.concat([expr_df.transpose(),meta_df[[group_column]],axis=1)
+    mdf.index.name = 'Sample'
+    long_mdf = mdf.melt(id_vars=['Sample',group_column],value_vars=expr_df.index.values,
+
+    # --------------------------------------------------
+    # Convert expression data to long format
+    # --------------------------------------------------
+
+    plot_df = (
+        expr_df
+        .rename_axis("Gene")
+        .reset_index()
+        .melt(
+            id_vars="Gene",
+            var_name="Sample",
+            value_name="Expression"
+        )
     )
 
-    plot_records = []
-
-    for gene in genes:
-
-        if gene not in expr.index:
-            continue
-
-        for sample in expr.columns:
-
-            plot_records.append(
-                {
-                    "Gene": gene,
-                    "Sample": sample,
-                    "Expression": expr.loc[
-                        gene,
-                        sample
-                    ]
-                }
-            )
-
-    plot_df = pd.DataFrame(
-        plot_records
-    )
+    # --------------------------------------------------
+    # Add group metadata
+    # --------------------------------------------------
 
     plot_df = plot_df.merge(
-        metadata_df,
-        left_index=True,
-        right_index=True,
-        how="left"
+        meta_df[[group_column]],
+        on="Sample",
+        how="inner",
+        validate="one_to_one"
     )
 
-    groups = (
-        plot_df[group_column]
-        .dropna()
-        .unique()
+
+    # --------------------------------------------------
+    # Preserve supplied gene and group order
+    # --------------------------------------------------
+
+    gene_order = (
+        expr_df.index
+        .tolist()
     )
+
+    group_order = (
+        meta_df[group_column]
+        .drop_duplicates()
+        .tolist()
+    )
+
+    # --------------------------------------------------
+    # Build TAB10 color mapping
+    # --------------------------------------------------
 
     color_map = {
-        group: TAB10[i % len(TAB10)]
-        for i, group in enumerate(groups)
+        group: TAB10[
+            index % len(TAB10)
+        ]
+        for index, group
+        in enumerate(group_order)
     }
 
-    if plot_mode == "Single Gene":
+    # --------------------------------------------------
+    # Infer plot mode from number of genes
+    # --------------------------------------------------
 
-        if selected_gene is None:
-            selected_gene = genes[0]
+    single_gene_mode = (
+        expr_df.shape[0] == 1
+    )
 
-        plot_df = plot_df[
-            plot_df["Gene"]
-            ==
-            selected_gene
-        ]
+    # ==================================================
+    # SINGLE-GENE MODE
+    # ==================================================
+
+    if single_gene_mode:
+
+        selected_gene = gene_order[0]
 
         fig = px.box(
             plot_df,
@@ -352,64 +431,134 @@ def create_gene_boxplot(
             y="Expression",
             color=group_column,
             color_discrete_map=color_map,
+            category_orders={
+                group_column: group_order
+            },
             points=False,
             title=f"{selected_gene} Expression"
         )
 
-        strip_fig = px.strip(
-            plot_df,
-            x=group_column,
-            y="Expression"
-        )
+        if show_points:
 
-        for trace in strip_fig.data:
+            strip_fig = px.strip(
+                plot_df,
+                x=group_column,
+                y="Expression",
+                color=group_column,
+                category_orders={
+                    group_column: group_order
+                }
+            )
 
-            trace.marker.color = "black"
-            trace.marker.size = 3
-            trace.jitter = 1.0
-            trace.showlegend = False
+            for trace in strip_fig.data:
 
-            fig.add_trace(trace)
+                trace.marker.color = "black"
+                trace.marker.size = point_size
+                trace.marker.opacity = 0.7
+                trace.jitter = point_jitter
+                trace.showlegend = False
+                trace.hovertemplate = (
+                    "Expression=%{y}<extra></extra>"
+                )
+
+                fig.add_trace(
+                    trace
+                )
+
+        x_axis_title = group_column
+
+    # ==================================================
+    # COMBINED MODE
+    # ==================================================
 
     else:
+
         fig = px.box(
             plot_df,
             x="Gene",
             y="Expression",
             color=group_column,
             color_discrete_map=color_map,
-            points=False
+            category_orders={
+                "Gene": gene_order,
+                group_column: group_order
+            },
+            points=False,
+            title="Gene Expression"
         )
 
-        strip_fig = px.strip(
-            plot_df,
-            x="Gene",
-            y="Expression",
-            color=group_column
-        )
+        if show_points:
 
-        for trace in strip_fig.data:
+            # Color must be supplied here even though all
+            # markers are later changed to black. This makes
+            # Plotly apply the same horizontal grouping offsets
+            # used by the boxplot traces.
+            strip_fig = px.strip(
+                plot_df,
+                x="Gene",
+                y="Expression",
+                color=group_column,
+                category_orders={
+                    "Gene": gene_order,
+                    group_column: group_order
+                }
+            )
 
-            trace.marker.color = "black"
-            trace.marker.size = 3
-            trace.jitter = 0.8
-            trace.showlegend = False
+            for trace in strip_fig.data:
 
-            fig.add_trace(trace)
+                trace.marker.color = "black"
+                trace.marker.size = point_size
+                trace.marker.opacity = 0.7
+                trace.jitter = point_jitter
+                trace.showlegend = False
+                trace.hovertemplate = (
+                    "Expression=%{y}<extra></extra>"
+                )
 
+                fig.add_trace(
+                    trace
+                )
+
+        x_axis_title = "Gene"
+
+    # --------------------------------------------------
+    # Figure layout
+    # --------------------------------------------------
 
     fig.update_layout(
-        template="plotly_white",
-        width=width,
-        height=height
+        width=int(width),
+        height=int(height),
+        boxmode="group",
+        xaxis_title=x_axis_title,
+        yaxis_title="Expression",
+        legend_title_text=group_column
     )
 
     if y_range is not None:
 
+        if (
+            len(y_range) != 2
+            or y_range[0] >= y_range[1]
+        ):
+
+            raise ValueError(
+                "y_range must contain a minimum and maximum, "
+                "with minimum smaller than maximum."
+            )
+
         fig.update_yaxes(
-            range=y_range
+            range=[
+                float(y_range[0]),
+                float(y_range[1])
+            ]
         )
-    fig = apply_publication_style(fig)
+
+    # Apply this last so that axes, ticks, backgrounds,
+    # frames, and legend settings are consistent.
+    fig = apply_publication_style(
+        fig
+    )
+
     return fig
     
 def create_heatmap(

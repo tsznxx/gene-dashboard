@@ -417,7 +417,7 @@ if not matching_result["matching"]:
         st.write(matching_result["missing_in_expression"])
 
     st.stop()
-
+meta_df = meta_df.reindex(index=expr_df.columns) # match the sample names.
 st.success("Data loaded successfully.")
 
 
@@ -1471,6 +1471,31 @@ with tab_box:
     group_column = st.selectbox(
         "Group By", meta_df.columns.tolist(), key="boxplot_group"
     )
+    available_groups = (
+        meta_df[group_column]
+        .dropna()
+        .unique()
+        .tolist()
+    )
+
+    available_groups = sorted(
+        available_groups,
+        key=str
+    )
+
+    selected_groups = st.multiselect(
+        "Groups to Include",
+        options=available_groups,
+        default=available_groups,
+        key="corr_selected_groups"
+    )
+
+    if len(selected_groups) == 0:
+
+        st.warning(
+            "Select at least one group."
+        )
+
 
     # ----------------------------------
     # Plot Mode
@@ -1547,18 +1572,20 @@ with tab_box:
             st.warning("Please specify at least one gene.")
 
         else:
-
+            genes = selected_genes if plot_mode == "Combined" else [selected_gene]
+            selected_idx = meta_df[group_column].isin(selected_groups)
+            filtered_expr_df = expr_df.loc[genes,selected_idx].copy()
+            filtered_meta_df = meta_df.loc[selected_idx].copy()
             fig = create_gene_boxplot(
-                expression_df=expr_df,
-                metadata_df=meta_df,
-                genes=selected_genes,
+                expr_df=filtered_expr_df,
+                meta_df=filtered_meta_df,
                 group_column=group_column,
-                apply_log2=apply_log2,
-                plot_mode=plot_mode,
-                selected_gene=selected_gene,
                 width=plot_width,
                 height=plot_height,
                 y_range=y_range,
+                show_points=True,
+                point_size=3,
+                point_jitter=0.7
             )
 
             filename = (
