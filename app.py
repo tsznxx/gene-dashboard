@@ -426,9 +426,10 @@ st.success("Data loaded successfully.")
 #
 if "all_genes" not in st.session_state:
 
-    st.session_state["all_genes"] = (
+    st.session_state["all_genes"] = sorted(
         expr_df.index.unique().astype(str)
-        .tolist()
+        .tolist(),
+        key=str.casefold
     )
 
 # ==================================================
@@ -1245,10 +1246,11 @@ with tab_de_volcano:
             with colag1:
                 gene_to_add = st.selectbox(
                     "Type Gene Name",
-                    options=[g for g in st.session_state.get("all_genes", []) if not g in st.session_state["highlight_genes"]] ,
+                    options=st.session_state.get("all_genes", []),
                     index=None,
                     placeholder="Type to search...",
                     key="volcano_gene_search",
+                    filter_mode="substring"
                 )
             with colag2:
                 if st.button("Add Gene", key="volcano_add_gene"):
@@ -1446,6 +1448,7 @@ with tab_box:
             index=None,
             placeholder="Type to search...",
             key="boxplot_gene_search",
+            filter_mode="substring"
         )
     with colag2:
         if st.button("Add Gene", key="boxplot_add_gene"):
@@ -1682,6 +1685,7 @@ with tab_heatmap:
             index=None,
             placeholder="Type to search...",
             key="heatmap_gene_search",
+            filter_mode="substring"
         )
     with colag2:
         if st.button("Add Gene", key="heatmap_add_gene"):

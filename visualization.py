@@ -366,10 +366,6 @@ def create_gene_boxplot(
         )
     )
 
-    # --------------------------------------------------
-    # Add group metadata
-    # --------------------------------------------------
-
     plot_df = plot_df.merge(
         meta_df[[group_column]],
         left_on='Sample',
@@ -378,17 +374,12 @@ def create_gene_boxplot(
         validate="many_to_one"
     )
 
-
-    # --------------------------------------------------
-    # Preserve supplied gene and group order
-    # --------------------------------------------------
-
     gene_order = (
         expr_df.index
         .tolist()
     )
 
-    group_order = (
+    group_order = sorted(
         meta_df[group_column]
         .drop_duplicates()
         .tolist()
