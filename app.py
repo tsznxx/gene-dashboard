@@ -216,11 +216,33 @@ with st.sidebar:
         # ----------------------
 
         uploaded_expression = st.file_uploader(
-            "Expression Matrix", type=["csv", "tsv", "txt"], key="expression_upload"
+            "Expression Matrix",
+            type=[
+                "csv",
+                "tsv",
+                "txt",
+                "gz",
+            ],
+            key="expression_upload",
+            help=(
+                "Supported formats: CSV, TSV, TXT, "
+                "CSV.GZ, TSV.GZ, and TXT.GZ"
+            ),
         )
 
         uploaded_metadata = st.file_uploader(
-            "Metadata Table", type=["csv", "tsv", "txt"], key="metadata_upload"
+            "Metadata Table",
+            type=[
+                "csv",
+                "tsv",
+                "txt",
+                "gz",
+            ],
+            key="metadata_upload",
+            help=(
+                "Supported formats: CSV, TSV, TXT, "
+                "CSV.GZ, TSV.GZ, and TXT.GZ"
+            ),
         )
 
         if uploaded_expression is not None and uploaded_metadata is not None:
@@ -545,56 +567,59 @@ if not st.session_state.get(
 expr_df = st.session_state["expr_df"]
 meta_df = st.session_state["meta_df"]
 
-#
-# Validate expression matrix
-#
-expr_validation = validate_expression_matrix(expr_df)
+if st.session_state.get('data_validated',False):
+
+    #
+    # Validate expression matrix
+    #
+    expr_validation = validate_expression_matrix(expr_df)
 
 
-if expr_validation:
+    if expr_validation:
 
-    st.error(expr_validation)
+        st.error(expr_validation)
 
-    st.stop()
+        st.stop()
 
-#
-# Validate metadata
-#
+    #
+    # Validate metadata
+    #
 
-meta_validation = validate_metadata(meta_df)
+    meta_validation = validate_metadata(meta_df)
 
 
-if meta_validation:
+    if meta_validation:
 
-    st.error(meta_validation)
+        st.error(meta_validation)
 
-    st.stop()
+        st.stop()
 
-#
-# sample matching
-#
+    #
+    # sample matching
+    #
 
-matching_result = validate_sample_matching(expr_df, meta_df)
+    matching_result = validate_sample_matching(expr_df, meta_df)
 
-if not matching_result["matching"]:
+    if not matching_result["matching"]:
 
-    st.error("Sample mismatch detected.")
+        st.error("Sample mismatch detected.")
 
-    if matching_result["missing_in_metadata"]:
+        if matching_result["missing_in_metadata"]:
 
-        st.write("Missing in metadata:")
+            st.write("Missing in metadata:")
 
-        st.write(matching_result["missing_in_metadata"])
+            st.write(matching_result["missing_in_metadata"])
 
-    if matching_result["missing_in_expression"]:
+        if matching_result["missing_in_expression"]:
 
-        st.write("Missing in expression matrix:")
+            st.write("Missing in expression matrix:")
 
-        st.write(matching_result["missing_in_expression"])
+            st.write(matching_result["missing_in_expression"])
 
-    st.stop()
-meta_df = meta_df.reindex(index=expr_df.columns) # match the sample names.
-st.success("Data loaded successfully.")
+        st.stop()
+    meta_df = meta_df.reindex(index=expr_df.columns) # match the sample names.
+    st.success("Data loaded successfully.")
+    st.session_state['data_validated'] = True
 
 
 #
@@ -800,7 +825,6 @@ tab_data, tab_pca, tab_de_volcano, tab_correlation,  tab_box, tab_heatmap = st.t
 with tab_data:
 
     st.subheader("Dataset Summary")
-    #st.write(st.session_state['expr_versions'].keys())
 
     expr_summary = summarize_expression(expr_df)
 
