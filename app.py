@@ -1885,7 +1885,7 @@ with tab_heatmap:
     # ----------------------------------
 
     annotation_column = st.selectbox(
-        "Annotation Column", meta_df.columns.tolist(), index=1, key="heatmap_annotation"
+        "Annotation Column", meta_df.columns.tolist(), index=0, key="heatmap_annotation"
     )
     available_groups = (
         meta_df[annotation_column]
