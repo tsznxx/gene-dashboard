@@ -624,7 +624,7 @@ def create_heatmap(
     expr = expression_df.apply(
         pd.to_numeric,
         errors="coerce",
-    ).T
+    )
 
 
     # ==================================================
