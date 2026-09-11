@@ -897,7 +897,7 @@ with tab_pca:
 
             pca_df, variance = run_pca(expr_df, apply_log2=apply_log2)
 
-            pca_df = pca_df.merge(meta_df, on="Sample", how="left")
+            pca_df = pca_df.merge(meta_df, left_on="Sample", right_index=True,how="left")
 
             fig = create_pca_plot(
                 pca_df=pca_df,
