@@ -5,17 +5,14 @@ import numpy as np
 
 
 def load_table(file):
-    if file.name.endswith(".csv"):
+    if file.name.endswith(".csv") or file.name.endswith('.csv.gz'):
         df = pd.read_csv(file,index_col=0)
     elif (
-        file.name.endswith(".tsv")
-        or file.name.endswith(".txt")
+        file.name.endswith(".tsv") or file.name.endswith(".tsv.gz")
+        or file.name.endswith(".txt") or file.name.endswith(".txt.gz")
     ):
-
         df =  pd.read_csv(file,sep="\t",index_col=0)
-
     else:
-
         raise ValueError(
             "Unsupported file type."
         )
